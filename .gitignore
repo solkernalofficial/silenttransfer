@@ -137,3 +137,8 @@ apps/api/.env.render
 apps/api/.env.*
 !.env.example
 
+
+# Local agent notes (not for public)
+AGENTS.md
+Agents.md
+
