@@ -2,14 +2,18 @@
 
 **Private transfer infrastructure for public blockchains.**
 
-SilentTransfer provides a professional console and API for private receive, private transfer, payment discovery, and sponsored settlement—without KYC in the product path. The protocol asset is **SILENT** (hard-capped at 1,000,000,000).
+SilentTransfer provides a professional console and API for private receive, private transfer, payment discovery, and settlement—without KYC in the product path. The protocol asset is **SILENT** (hard-capped at 1,000,000,000).
 
 | | |
 |--|--|
-| Product | SilentTransfer |
+| Product | [SilentTransfer](https://silenttransfer.com) |
+| Organization | [github.com/SilentTransfer](https://github.com/SilentTransfer) |
 | Protocol asset | SILENT (1B hard cap, 0% VC allocation) |
 | Primary network (current) | Robinhood Chain Testnet (`46630`) |
-| License | See repository (add `LICENSE` as needed) |
+| Live console | [silenttransfer.com](https://silenttransfer.com) · [Docs](https://silenttransfer.com/docs) |
+| License | See `LICENSE` |
+
+> **Honesty:** On testnet, private send can move **real** ETH to a one-time address and claim on-chain. Privacy is **partial** (not full anonymity). See `docs/PRIVACY_STATUS.md`.
 
 ---
 
