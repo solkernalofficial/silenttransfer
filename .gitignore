@@ -129,3 +129,11 @@ sessions/
 .roo
 .trae
 .windsurf
+
+apps/api/.env
+apps/api/.env.compute
+apps/api/.env.localpg
+apps/api/.env.render
+apps/api/.env.*
+!.env.example
+

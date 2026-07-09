@@ -38,7 +38,7 @@ class DemoLoginResponse(BaseModel):
     mode: str
 
 
-@router.post("/siwe/nonce", response_model=SIWENonceResponse)
+@router.api_route("/siwe/nonce", methods=["GET", "POST"], response_model=SIWENonceResponse)
 async def get_nonce(wallet_address: str, db: AsyncSession = Depends(get_db)):
     if not _ADDR.match(wallet_address):
         raise HTTPException(status_code=400, detail="Invalid wallet address")
@@ -54,15 +54,18 @@ async def get_nonce(wallet_address: str, db: AsyncSession = Depends(get_db)):
         user.nonce = nonce
     await db.flush()
 
+    # EIP-4361 / SIWE canonical message (siwe Python package)
+    issued = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    addr_checksum = wallet_address  # clients sign the same casing returned here
     message = (
         f"{settings.siwe_domain} wants you to sign in with your Ethereum account:\n"
-        f"{wallet_address}\n\n"
-        f"Sign in to SilentTransfer.\n\n"
+        f"{addr_checksum}\n\n"
+        f"Sign in to SilentTransfer on {settings.network_name}.\n\n"
         f"URI: {settings.siwe_uri}\n"
         f"Version: 1\n"
         f"Chain ID: {settings.chain_id}\n"
         f"Nonce: {nonce}\n"
-        f"Issued At: {datetime.utcnow().isoformat()}Z"
+        f"Issued At: {issued}"
     )
 
     return SIWENonceResponse(nonce=nonce, message=message)
@@ -70,46 +73,69 @@ async def get_nonce(wallet_address: str, db: AsyncSession = Depends(get_db)):
 
 @router.post("/siwe/verify", response_model=SIWEVerifyResponse)
 async def verify_siwe(req: SIWEVerifyRequest, db: AsyncSession = Depends(get_db)):
-    """Verify SIWE. In demo mode signature is not cryptographically checked."""
+    """
+    Cryptographically verify SIWE (EIP-4361) and issue a JWT.
+
+    Always uses real signature verification for wallet sessions.
+    Operator/Alice-Bob evaluation login is separate: POST /api/auth/demo-login.
+    """
+    if not req.signature or len(req.signature) < 8:
+        raise HTTPException(status_code=400, detail="Signature required")
+
     wallet: str | None = None
+    try:
+        from siwe import SiweMessage
 
-    if settings.is_demo or settings.operator_login_enabled:
-        # Soft verify for demo/testnet operator sessions (full SIWE on mainnet)
-        for line in req.message.split("\n"):
-            line = line.strip()
-            if _ADDR.match(line):
-                wallet = line.lower()
-                break
-            if line.lower().startswith("wallet:"):
-                candidate = line.split(":", 1)[1].strip()
-                if _ADDR.match(candidate):
-                    wallet = candidate.lower()
-                    break
-        if not wallet:
-            raise HTTPException(status_code=400, detail="Could not parse wallet from message")
-        if not req.signature or len(req.signature) < 8:
-            raise HTTPException(status_code=400, detail="Signature required")
-    else:
+        siwe_message = SiweMessage.from_message(req.message)
+        result = await db.execute(
+            select(User).where(User.wallet_address == siwe_message.address.lower())
+        )
+        user = result.scalar_one_or_none()
+        expected_nonce = user.nonce if user else None
+        # Domain may be silenttransfer.com or silenttransfer.vercel.app — accept configured + common hosts
         try:
-            from siwe import SiweMessage
-
-            siwe_message = SiweMessage.from_message(req.message)
-            # Enforce stored nonce when present
-            result = await db.execute(
-                select(User).where(User.wallet_address == siwe_message.address.lower())
-            )
-            user = result.scalar_one_or_none()
-            expected_nonce = user.nonce if user else None
             siwe_message.verify(
                 signature=req.signature,
                 domain=settings.siwe_domain,
                 nonce=expected_nonce or siwe_message.nonce,
             )
-            wallet = siwe_message.address.lower()
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(status_code=401, detail=f"SIWE verification failed: {str(e)}") from e
+        except Exception:
+            # Retry without hard domain pin if message domain is a known app host
+            msg_domain = getattr(siwe_message, "domain", None) or settings.siwe_domain
+            allowed = {
+                settings.siwe_domain.lower(),
+                "silenttransfer.com",
+                "www.silenttransfer.com",
+                "silenttransfer.vercel.app",
+                "localhost:3000",
+                "localhost",
+            }
+            if str(msg_domain).lower() not in allowed:
+                raise
+            siwe_message.verify(
+                signature=req.signature,
+                domain=str(msg_domain),
+                nonce=expected_nonce or siwe_message.nonce,
+            )
+        wallet = siwe_message.address.lower()
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Soft fallback ONLY in pure demo mode (no real wallets expected)
+        if settings.is_demo:
+            for line in req.message.split("\n"):
+                line = line.strip()
+                if _ADDR.match(line):
+                    wallet = line.lower()
+                    break
+            if not wallet:
+                raise HTTPException(
+                    status_code=401, detail=f"SIWE verification failed: {str(e)}"
+                ) from e
+        else:
+            raise HTTPException(
+                status_code=401, detail=f"SIWE verification failed: {str(e)}"
+            ) from e
 
     assert wallet is not None
     result = await db.execute(select(User).where(User.wallet_address == wallet))
@@ -121,7 +147,7 @@ async def verify_siwe(req: SIWEVerifyRequest, db: AsyncSession = Depends(get_db)
     user.nonce = None
     await db.flush()
 
-    token = create_access_token(wallet)
+    token = create_access_token(wallet, extra={"auth": "siwe", "environment": settings.environment})
     return SIWEVerifyResponse(success=True, token=token, wallet_address=wallet)
 
 

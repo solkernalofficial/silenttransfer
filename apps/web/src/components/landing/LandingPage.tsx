@@ -87,7 +87,7 @@ const STEPS = [
     step: '02',
     image: '/brand/feature-stealth.jpg',
     title: 'Execute private transfer',
-    body: 'The sender creates a one-time destination and records the private transfer (default asset: SILENT).',
+    body: 'The sender creates a one-time destination and records the private transfer (default asset: ETH).',
   },
   {
     step: '03',

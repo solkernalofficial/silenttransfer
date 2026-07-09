@@ -20,8 +20,12 @@ export const SILENT_ADDRESS =
     ? silentFromEnv
     : SILENT_FALLBACK;
 
-/** Deployed token addresses + SILENT product token. */
+/** Native ETH uses zero address; remaining entries are ERC-20s. */
+export const NATIVE_ETH_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+/** Deployed token addresses + native ETH + SILENT product token. */
 export const TOKENS: Record<string, string> = {
+  ETH: NATIVE_ETH_ADDRESS,
   SILENT: SILENT_ADDRESS,
   USDG: '0x03592B5E147d7752000723A9AA23fc6c70d968Ce',
   AAPL: '0x702175Be5D1888a054E5545312849464Daf29a24',
@@ -34,7 +38,8 @@ export const TOKEN_META: Record<
   string,
   { name: string; primary?: boolean; decimals: number }
 > = {
-  SILENT: { name: 'Silent', primary: true, decimals: 18 },
+  ETH: { name: 'Ether', primary: true, decimals: 18 },
+  SILENT: { name: 'Silent', decimals: 18 },
   USDG: { name: 'USDG Stablecoin', decimals: 18 },
   AAPL: { name: 'Apple Stock Token', decimals: 18 },
   NVDA: { name: 'NVIDIA Stock Token', decimals: 18 },
@@ -42,13 +47,13 @@ export const TOKEN_META: Record<
   MSFT: { name: 'Microsoft Stock Token', decimals: 18 },
 };
 
-/** SILENT first in dropdowns. */
+/** ETH first in dropdowns (default send asset). */
 export const TOKEN_LIST = [
-  'SILENT',
-  ...Object.keys(TOKENS).filter((k) => k !== 'SILENT'),
+  'ETH',
+  ...Object.keys(TOKENS).filter((k) => k !== 'ETH'),
 ];
 
-export const DEFAULT_TOKEN = 'SILENT';
+export const DEFAULT_TOKEN = 'ETH';
 
 /** Demo personas for one-click walkthrough (not real keys). */
 export const DEMO_WALLETS = {

@@ -273,7 +273,7 @@ export default function DocsPage() {
             </p>
             <p>
               SilentTransfer’s product token is <strong className="text-[var(--text)]">SILENT</strong>{' '}
-              (see §9). The console defaults to SILENT for demo private transfers. There is{' '}
+              (see §9). The console defaults to ETH for private transfers (SILENT and other tokens optional). There is{' '}
               <strong className="text-[var(--text)]">no KYC</strong> in the product surface.
             </p>
           </Section>
@@ -494,7 +494,7 @@ export default function DocsPage() {
                   n: '2',
                   icon: Layers,
                   title: 'Send — private transfer log',
-                  body: `Alice authenticates as sender, chooses recipient Bob, token (default SILENT), and amount. The app creates a random one-time stealth address and posts /api/announce with caller, to_address, amount, token, and ephemeral pubkey fields. Success message is a recorded private-send log — not a claim of mainnet settlement.`,
+                  body: `Alice authenticates as sender, chooses recipient Bob, token (default ETH), and amount. The app creates a random one-time stealth address and posts /api/announce with caller, to_address, amount, token, and ephemeral pubkey fields. Success message is a recorded private-send log — not a claim of mainnet settlement.`,
                 },
                 {
                   n: '3',

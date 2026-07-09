@@ -38,6 +38,14 @@ export default function SettingsTab() {
     typeof process !== 'undefined'
       ? process.env.NEXT_PUBLIC_SILENT_ADDRESS || ''
       : '';
+  const wcProjectId =
+    typeof process !== 'undefined'
+      ? process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || ''
+      : '';
+  const siweDomain =
+    typeof process !== 'undefined'
+      ? process.env.NEXT_PUBLIC_SIWE_DOMAIN || 'silenttransfer.com'
+      : 'silenttransfer.com';
 
   const handleTestConnection = async () => {
     setTesting(true);
@@ -61,13 +69,14 @@ export default function SettingsTab() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      {/* Wallet extensions tip */}
-      <div className="rh-card p-4 border border-amber-200 bg-amber-50/60">
-        <p className="text-xs text-amber-900 leading-relaxed">
-          <strong>Note:</strong> Browser errors such as{' '}
-          <code className="font-mono text-[11px]">Cannot redefine property: ethereum</code> originate
-          from wallet extensions, not this application. Operator login uses the header connect flow
-          (address or Alice/Bob). Disable conflicting extensions if needed.
+      {/* Wallet tip */}
+      <div className="rh-card p-4 border border-sky-200 bg-sky-50/60">
+        <p className="text-xs text-sky-950 leading-relaxed">
+          <strong>Wallets:</strong> Connect MetaMask, browser wallets, or WalletConnect, then sign
+          SIWE on Robinhood Chain Testnet ({chainId}). Alice/Bob remain available as{' '}
+          <em>operator</em> evaluation logins (no signature). Extension races such as{' '}
+          <code className="font-mono text-[11px]">Cannot redefine property: ethereum</code> come from
+          wallets, not this app.
         </p>
       </div>
 
@@ -82,6 +91,11 @@ export default function SettingsTab() {
             { label: 'Network', value: networkName },
             { label: 'Chain ID', value: chainId },
             { label: 'RPC URL', value: rpcUrl },
+            { label: 'SIWE domain', value: siweDomain },
+            {
+              label: 'WalletConnect',
+              value: wcProjectId ? `${wcProjectId.slice(0, 8)}…` : 'not configured',
+            },
             {
               label: 'SILENT',
               value: silentAddress

@@ -2,14 +2,12 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, useState } from 'react';
+import { WagmiProvider } from 'wagmi';
+import { wagmiConfig } from '@/lib/wagmi';
 
 /**
- * Demo mode uses session wallet (localStorage + JWT) — no MetaMask / window.ethereum.
- * Skipping Wagmi avoids multi-wallet extension fights:
- *   "Cannot redefine property: ethereum" (Phantom, MetaMask, etc.)
- *
- * When wiring real wallet connect later, add Wagmi only behind
- * NEXT_PUBLIC_DEMO_MODE=false and a single connector strategy.
+ * Wagmi (WalletConnect + injected + MetaMask) for real testnet wallets.
+ * Session/operator login still works via SIWE or demo-login for Alice/Bob.
  */
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -25,5 +23,9 @@ export function Providers({ children }: { children: ReactNode }) {
       })
   );
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </WagmiProvider>
+  );
 }

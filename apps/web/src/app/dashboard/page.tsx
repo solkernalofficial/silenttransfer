@@ -3,6 +3,7 @@
 import { Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
+import WalletGate from '@/components/WalletGate';
 import { ToastProvider } from '@/components/Toast';
 import DashboardTab from '@/components/tabs/DashboardTab';
 import SendTab from '@/components/tabs/SendTab';
@@ -74,9 +75,11 @@ function DashboardContent() {
   };
 
   return (
-    <DashboardLayout activeTab={activeTab} onTabChange={onTabChange}>
-      {renderTab()}
-    </DashboardLayout>
+    <WalletGate>
+      <DashboardLayout activeTab={activeTab} onTabChange={onTabChange}>
+        {renderTab()}
+      </DashboardLayout>
+    </WalletGate>
   );
 }
 

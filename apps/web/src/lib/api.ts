@@ -1,6 +1,9 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 const TOKEN_KEY = 'rh_access_token';
 const WALLET_KEY = 'rh_auth_wallet';
+const AUTH_MODE_KEY = 'rh_auth_mode'; // 'siwe' | 'operator'
+
+export type AuthMode = 'siwe' | 'operator';
 
 export function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -12,18 +15,29 @@ export function getStoredWallet(): string | null {
   return localStorage.getItem(WALLET_KEY);
 }
 
-export function setAuthSession(token: string, wallet: string) {
+export function getAuthMode(): AuthMode | null {
+  if (typeof window === 'undefined') return null;
+  const m = localStorage.getItem(AUTH_MODE_KEY);
+  return m === 'siwe' || m === 'operator' ? m : null;
+}
+
+export function setAuthSession(token: string, wallet: string, mode: AuthMode = 'operator') {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(WALLET_KEY, wallet.toLowerCase());
+  localStorage.setItem(AUTH_MODE_KEY, mode);
 }
 
 export function clearAuthSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(WALLET_KEY);
+  localStorage.removeItem(AUTH_MODE_KEY);
 }
 
-/** Demo-only: mint a JWT for a wallet so mutating API calls work. */
-export async function ensureDemoAuth(wallet: string): Promise<string | null> {
+/**
+ * Operator / evaluation login (Alice, Bob, or any 0x address) — no wallet signature.
+ * Available when API ALLOW_OPERATOR_LOGIN=true (demo + testnet).
+ */
+export async function ensureOperatorAuth(wallet: string): Promise<string | null> {
   const addr = wallet.toLowerCase();
   const existingToken = getStoredToken();
   const existingWallet = getStoredWallet();
@@ -39,15 +53,22 @@ export async function ensureDemoAuth(wallet: string): Promise<string | null> {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || 'Demo login failed');
+      throw new Error(
+        typeof err.detail === 'string' ? err.detail : 'Operator login failed'
+      );
     }
     const data = (await res.json()) as { token: string; wallet_address: string };
-    setAuthSession(data.token, data.wallet_address);
+    setAuthSession(data.token, data.wallet_address, 'operator');
     return data.token;
   } catch (e) {
-    console.warn('ensureDemoAuth failed', e);
+    console.warn('ensureOperatorAuth failed', e);
     return null;
   }
+}
+
+/** @deprecated use ensureOperatorAuth — kept for call-site compatibility */
+export async function ensureDemoAuth(wallet: string): Promise<string | null> {
+  return ensureOperatorAuth(wallet);
 }
 
 export async function api<T = unknown>(
@@ -62,11 +83,18 @@ export async function api<T = unknown>(
 
   if (opts?.auth) {
     let token = getStoredToken();
+    // Only auto-mint operator JWT when already in operator mode or no SIWE session
     if (opts.wallet) {
-      token = (await ensureDemoAuth(opts.wallet)) || token;
+      const mode = getAuthMode();
+      const stored = getStoredWallet();
+      if (!token || stored !== opts.wallet.toLowerCase()) {
+        if (mode !== 'siwe') {
+          token = (await ensureOperatorAuth(opts.wallet)) || token;
+        }
+      }
     }
     if (!token) {
-      throw new Error('Not authenticated');
+      throw new Error('Not authenticated — connect wallet and sign in');
     }
     headers.Authorization = `Bearer ${token}`;
   } else {
@@ -88,7 +116,6 @@ export async function api<T = unknown>(
           : Array.isArray(detail)
             ? detail.map((d: { msg?: string }) => d.msg).join(', ')
             : err.error || res.statusText || 'API Error';
-      // Auth-required mutations should surface errors; public GETs stay soft-fail
       if (opts?.auth) throw new Error(msg);
       console.warn('API error', path, msg);
       return null;
@@ -102,7 +129,15 @@ export async function api<T = unknown>(
 }
 
 export function useApi() {
-  return { api, API_BASE, ensureDemoAuth, getStoredToken, getStoredWallet };
+  return {
+    api,
+    API_BASE,
+    ensureDemoAuth,
+    ensureOperatorAuth,
+    getStoredToken,
+    getStoredWallet,
+    getAuthMode,
+  };
 }
 
 export { API_BASE };

@@ -210,8 +210,8 @@ export default function SilentTokenPage() {
           </h2>
           <ul className="text-sm text-[var(--text-muted)] space-y-2.5 leading-relaxed list-disc pl-5">
             <li>
-              <strong className="text-[var(--text)]">Default transfer asset</strong> in private send /
-              claim console.
+              <strong className="text-[var(--text)]">Supported transfer asset</strong> in private send /
+              claim console (default send asset is ETH; SILENT remains available).
             </li>
             <li>
               <strong className="text-[var(--text)]">Fees now:</strong> {feePct} product fee (bps=

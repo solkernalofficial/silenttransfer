@@ -54,8 +54,29 @@ async def announce(
             detail="Cannot send to the same wallet (from and to must differ)",
         )
 
+    from src.models.database import Registration
+    from src.services.stealth import derive_stealth_address
+
+    stealth = req.stealth_address.lower()
+    derived = None
+    # If recipient registered, prefer ECDH-shaped derived stealth address
+    if req.to_address:
+        reg = await db.execute(
+            select(Registration).where(
+                Registration.user_address == req.to_address.lower()
+            )
+        )
+        recipient = reg.scalar_one_or_none()
+        if recipient and recipient.viewing_pubkey:
+            derived = derive_stealth_address(
+                viewing_pubkey=recipient.viewing_pubkey,
+                ephemeral_pubkey=req.ephemeral_pubkey,
+                sender=req.caller.lower(),
+            )
+            stealth = derived
+
     existing = await db.execute(
-        select(Announcement).where(Announcement.stealth_address == req.stealth_address.lower())
+        select(Announcement).where(Announcement.stealth_address == stealth)
     )
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Stealth address already announced")
@@ -65,10 +86,13 @@ async def announce(
         meta["to_address"] = req.to_address.lower()
         meta["from_address"] = req.caller.lower()
         meta["private_transfer"] = True
+    if derived:
+        meta["stealth_derived"] = True
+        meta["derivation"] = "silenttransfer-v1"
 
     ann = Announcement(
         scheme_id=1,
-        stealth_address=req.stealth_address.lower(),
+        stealth_address=stealth,
         caller=req.caller.lower(),
         ephemeral_pubkey=req.ephemeral_pubkey,
         announce_metadata=meta,
@@ -90,6 +114,7 @@ async def announce(
         "mode": settings.environment,
         "chain_id": settings.chain_id,
         "network_name": settings.network_name,
+        "stealth_derived": bool(derived),
     }
 
 

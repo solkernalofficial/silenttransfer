@@ -177,4 +177,7 @@ async def _send_relayer_settlement_tx(
     tx_hash = w3.eth.send_raw_transaction(raw)
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
     gas_used = int(receipt.get("gasUsed") or 0)
-    return tx_hash.hex() if hasattr(tx_hash, "hex") else str(tx_hash), gas_used
+    hx = tx_hash.hex() if hasattr(tx_hash, "hex") else str(tx_hash)
+    if not hx.startswith("0x"):
+        hx = "0x" + hx
+    return hx, gas_used

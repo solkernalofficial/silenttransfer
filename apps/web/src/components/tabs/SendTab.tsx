@@ -67,7 +67,7 @@ export default function SendTab() {
         caller: fromWallet.toLowerCase(),
         to_address: toWallet.toLowerCase(),
         ephemeral_pubkey,
-        token_address: TOKENS[token] || TOKENS.USDG,
+        token_address: TOKENS[token] || TOKENS.ETH,
         amount: toWeiString(amount),
         block_number: 0,
         metadata: {
@@ -248,9 +248,9 @@ export default function SendTab() {
             <EyeOff className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
             <div className="text-[11px] text-[var(--text-muted)] leading-relaxed space-y-1">
               <p>
-                Default asset is <strong>SILENT</strong> (hard-capped protocol token; no KYC). In
-                evaluation environments, transfers are recorded for workflow testing; production
-                settlement is staged separately.
+                Default asset is <strong>ETH</strong> (native). You can switch to SILENT or other
+                tokens. In evaluation environments, transfers are recorded for workflow testing;
+                production settlement is staged separately.
               </p>
               <p className="text-[var(--text-faint)]">{FEE_COPY.send}</p>
             </div>

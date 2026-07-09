@@ -59,12 +59,34 @@ async def scan_for_address(viewer: str, db: AsyncSession = Depends(get_db)):
             detail="Enable private receive for this wallet first",
         )
 
-    # Pull recent announcements and filter for recipient (works on SQLite + Postgres)
+    # Pull recent announcements and match via to_address OR stealth derivation
+    from src.services.stealth import announcement_matches_viewer
+
     result = await db.execute(
         select(Announcement).order_by(Announcement.announced_at.desc()).limit(200)
     )
     rows = result.scalars().all()
-    matched = [r for r in rows if _meta_to(r) == viewer]
+
+    viewing_pubkey = None
+    if registered:
+        reg_row = await db.execute(
+            select(Registration).where(Registration.user_address == viewer)
+        )
+        r0 = reg_row.scalar_one_or_none()
+        if r0:
+            viewing_pubkey = r0.viewing_pubkey
+
+    matched = []
+    for r in rows:
+        if announcement_matches_viewer(
+            viewer=viewer,
+            viewing_pubkey=viewing_pubkey,
+            ephemeral_pubkey=r.ephemeral_pubkey,
+            caller=r.caller,
+            stealth_address=r.stealth_address,
+            meta_to=_meta_to(r),
+        ):
+            matched.append(r)
 
     msg = None
     if not registered and settings.environment != "mainnet":
@@ -74,6 +96,8 @@ async def scan_for_address(viewer: str, db: AsyncSession = Depends(get_db)):
         )
     if not matched:
         msg = msg or "No private payments found for this wallet yet."
+    elif viewing_pubkey:
+        msg = msg or "Matched via to_address and/or stealth derivation (testnet ECDH-shaped)."
 
     return ScanResponse(
         viewer=viewer,

@@ -17,13 +17,14 @@ import {
   RefreshCw,
   Plug,
   Wallet,
-  Check,
   BookOpen,
   Coins,
+  Loader2,
+  Shield,
+  AlertTriangle,
 } from 'lucide-react';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
-import { DEMO_WALLETS, truncAddr } from '@/lib/tokens';
-import { isValidAddress } from '@/lib/session';
+import { truncAddr } from '@/lib/tokens';
 import { BrandMark, DOCS_URL, SILENT_PAGE_URL } from '@/components/BrandLogo';
 
 type Tab =
@@ -61,10 +62,18 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [connectOpen, setConnectOpen] = useState(false);
-  const [manualAddr, setManualAddr] = useState('');
   const [connectError, setConnectError] = useState('');
-  const { wallet, isConnected, connect, disconnect } = useSessionWallet();
+  const {
+    wallet,
+    isConnected,
+    connectWallet,
+    signInWithEthereum,
+    disconnect,
+    authBusy,
+    chainName,
+    wrongChain,
+    needsSiwe,
+  } = useSessionWallet();
   const envLabel =
     typeof process !== 'undefined' && process.env.NEXT_PUBLIC_ENVIRONMENT
       ? String(process.env.NEXT_PUBLIC_ENVIRONMENT).toUpperCase()
@@ -78,15 +87,13 @@ export default function DashboardLayout({
 
   const pageTitle = navItems.find((n) => n.id === activeTab)?.label || 'Dashboard';
 
-  const handleConnect = async (addr: string) => {
-    if (!isValidAddress(addr)) {
-      setConnectError('Enter a valid 0x address');
-      return;
-    }
+  const handleWalletConnect = async () => {
     setConnectError('');
-    await connect(addr);
-    setConnectOpen(false);
-    setManualAddr('');
+    try {
+      await connectWallet();
+    } catch (e) {
+      setConnectError(e instanceof Error ? e.message : 'Wallet connection failed');
+    }
   };
 
   return (
@@ -205,49 +212,29 @@ export default function DashboardLayout({
 
             {isConnected && wallet ? (
               <div className="flex items-center gap-1.5">
-                {/* Quick switch Alice / Bob for demo walkthrough */}
-                <div className="hidden sm:flex items-center gap-1 mr-0.5">
-                  <button
-                    type="button"
-                    onClick={() => handleConnect(DEMO_WALLETS.alice)}
-                    className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-colors ${
-                      wallet === DEMO_WALLETS.alice
-                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                        : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50'
-                    }`}
-                    title="Switch to Alice (sender)"
+                {wrongChain && (
+                  <span
+                    className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200"
+                    title={`Switch to ${chainName}`}
                   >
-                    Alice
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleConnect(DEMO_WALLETS.bob)}
-                    className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-colors ${
-                      wallet === DEMO_WALLETS.bob
-                        ? 'bg-sky-100 text-sky-800 border-sky-300'
-                        : 'bg-white text-sky-700 border-sky-200 hover:bg-sky-50'
-                    }`}
-                    title="Switch to Bob (receiver)"
-                  >
-                    Bob
-                  </button>
-                </div>
-                <div
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-mono font-medium shadow-sm ${
-                    wallet === DEMO_WALLETS.bob
-                      ? 'bg-sky-50 border-sky-200 text-sky-800'
-                      : 'bg-[var(--accent-soft)] border-[#bbf7d0] text-[var(--accent)]'
-                  }`}
-                >
-                  <Wallet className="w-3.5 h-3.5" />
-                  <span>
-                    {wallet === DEMO_WALLETS.alice
-                      ? 'Alice '
-                      : wallet === DEMO_WALLETS.bob
-                        ? 'Bob '
-                        : ''}
-                    {truncAddr(wallet)}
+                    <AlertTriangle className="w-3 h-3" />
+                    Wrong network
                   </span>
+                )}
+                {needsSiwe && (
+                  <button
+                    type="button"
+                    disabled={authBusy}
+                    onClick={() => signInWithEthereum().catch(() => {})}
+                    className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-violet-50 text-violet-800 border border-violet-200 hover:bg-violet-100"
+                  >
+                    <Shield className="w-3 h-3" />
+                    Sign in
+                  </button>
+                )}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-mono font-medium shadow-sm bg-violet-50 border-violet-200 text-violet-900">
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>{truncAddr(wallet)}</span>
                   <button
                     onClick={() => disconnect()}
                     className="ml-0.5 text-[var(--text-faint)] hover:text-red-600 transition-colors"
@@ -260,59 +247,27 @@ export default function DashboardLayout({
             ) : (
               <button
                 type="button"
-                onClick={() => setConnectOpen((v) => !v)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold shadow-sm transition-colors"
+                disabled={authBusy}
+                onClick={() => {
+                  setConnectError('');
+                  void handleWalletConnect().catch((e) =>
+                    setConnectError(e instanceof Error ? e.message : 'Connect failed')
+                  );
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold shadow-sm transition-colors disabled:opacity-60"
               >
-                <Plug className="w-3.5 h-3.5" />
+                {authBusy ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Plug className="w-3.5 h-3.5" />
+                )}
                 Connect wallet
               </button>
             )}
-
-            {connectOpen && !isConnected && (
-              <div className="absolute right-0 top-full mt-2 w-80 rh-card p-4 shadow-xl z-50 border border-[var(--border)]">
-                <p className="text-xs font-semibold text-[var(--text)] mb-2">Connect wallet</p>
-                <p className="text-[11px] text-[var(--text-muted)] mb-3 leading-relaxed">
-                  Testnet operator login: enter any valid 0x address or select a reference profile
-                  (Alice / Bob). Chain {typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_CHAIN_ID || '46630' : '46630'}.
-                </p>
-                <div className="flex gap-2 mb-3">
-                  <button
-                    type="button"
-                    onClick={() => handleConnect(DEMO_WALLETS.alice)}
-                    className="flex-1 text-xs font-semibold py-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
-                  >
-                    Alice
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleConnect(DEMO_WALLETS.bob)}
-                    className="flex-1 text-xs font-semibold py-2 rounded-lg bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100"
-                  >
-                    Bob
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={manualAddr}
-                  onChange={(e) => {
-                    setManualAddr(e.target.value);
-                    setConnectError('');
-                  }}
-                  placeholder="0x… your address"
-                  className="rh-input font-mono text-xs mb-2"
-                />
-                {connectError && (
-                  <p className="text-red-600 text-[11px] mb-2">{connectError}</p>
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleConnect(manualAddr)}
-                  className="w-full flex items-center justify-center gap-1.5 rh-btn-primary text-xs py-2"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  Continue with address
-                </button>
-              </div>
+            {connectError && (
+              <span className="absolute right-0 top-full mt-1 text-[10px] text-red-600 max-w-[14rem] text-right">
+                {connectError}
+              </span>
             )}
           </div>
         </header>
