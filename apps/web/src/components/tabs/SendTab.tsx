@@ -26,6 +26,8 @@ import {
 import { FEE_COPY } from '@/lib/fees';
 import { explorerTxUrl } from '@/lib/explorer';
 import { appChain, wagmiConfig } from '@/lib/wagmi';
+import { switchOrAddAppChain } from '@/lib/addChain';
+import NetworkSwitchBanner from '@/components/NetworkSwitchBanner';
 import {
   Send,
   Loader2,
@@ -100,6 +102,7 @@ export default function SendTab() {
     expectedChainId,
   } = useSessionWallet();
   const { switchChainAsync } = useSwitchChain();
+  // expectedChainId / chainName from session for wrong-chain messaging
 
   const [toWallet, setToWallet] = useState('');
   const [token, setToken] = useState(DEFAULT_TOKEN);
@@ -206,9 +209,16 @@ export default function SendTab() {
       setResult(null);
 
       try {
-        await switchChainAsync({ chainId: expectedChainId });
-      } catch {
-        throw new Error(`Switch wallet network to ${chainName} (chain ${expectedChainId})`);
+        await switchOrAddAppChain({
+          currentChainId: undefined,
+          switchChain: (args) => switchChainAsync(args),
+        });
+      } catch (e) {
+        throw new Error(
+          e instanceof Error
+            ? e.message
+            : `Add / switch wallet network to ${chainName} (chain ${expectedChainId})`
+        );
       }
 
       await ensureAuth(fromWallet);
@@ -416,11 +426,7 @@ export default function SendTab() {
           </div>
         )}
 
-        {wrongChain && (
-          <div className="mb-4 p-3 rounded-lg rh-alert-error text-xs">
-            Switch wallet network to <strong>{chainName}</strong> (chain {expectedChainId}).
-          </div>
-        )}
+        {wrongChain && <NetworkSwitchBanner variant="full" className="mb-4" />}
 
         <div className="mb-6 flex items-center justify-center gap-2 text-xs font-medium">
           <span className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">

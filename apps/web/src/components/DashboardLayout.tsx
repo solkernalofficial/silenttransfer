@@ -21,11 +21,11 @@ import {
   Coins,
   Loader2,
   Shield,
-  AlertTriangle,
 } from 'lucide-react';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import { truncAddr } from '@/lib/tokens';
 import { BrandMark, DOCS_URL, SILENT_PAGE_URL } from '@/components/BrandLogo';
+import NetworkSwitchBanner from '@/components/NetworkSwitchBanner';
 
 type Tab =
   | 'dashboard'
@@ -70,7 +70,6 @@ export default function DashboardLayout({
     signInWithEthereum,
     disconnect,
     authBusy,
-    chainName,
     wrongChain,
     needsSiwe,
   } = useSessionWallet();
@@ -213,12 +212,8 @@ export default function DashboardLayout({
             {isConnected && wallet ? (
               <div className="flex items-center gap-1.5">
                 {wrongChain && (
-                  <span
-                    className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200"
-                    title={`Switch to ${chainName}`}
-                  >
-                    <AlertTriangle className="w-3 h-3" />
-                    Wrong network
+                  <span className="hidden sm:inline-flex">
+                    <NetworkSwitchBanner variant="compact" />
                   </span>
                 )}
                 {needsSiwe && (
@@ -272,7 +267,14 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          {wrongChain && (
+            <div className="mb-4 max-w-3xl">
+              <NetworkSwitchBanner variant="full" />
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

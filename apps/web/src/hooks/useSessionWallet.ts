@@ -23,6 +23,7 @@ import {
 } from '@/lib/api';
 import { loginWithSiwe } from '@/lib/siwe';
 import { appChain } from '@/lib/wagmi';
+import { switchOrAddAppChain } from '@/lib/addChain';
 
 export type ConnectSource = 'wallet' | 'operator';
 
@@ -74,17 +75,24 @@ export function useSessionWallet() {
 
   const isConnected = Boolean(wallet);
 
+  /**
+   * Switch to app chain; if wallet does not know it, prompt wallet_addEthereumChain
+   * with Robinhood (or env) RPC / explorer details.
+   */
   const ensureCorrectChain = useCallback(async () => {
-    if (chainId !== appChain.id) {
-      try {
-        await switchChainAsync({ chainId: appChain.id });
-      } catch (e) {
-        // Wallet may need user to add chain manually
-        console.warn('switchChain failed', e);
-        throw new Error(
-          `Switch wallet network to ${appChain.name} (chain ${appChain.id})`
-        );
-      }
+    if (chainId === appChain.id) return 'already' as const;
+    try {
+      return await switchOrAddAppChain({
+        currentChainId: chainId,
+        switchChain: (args) => switchChainAsync(args),
+      });
+    } catch (e) {
+      console.warn('switchOrAddAppChain failed', e);
+      throw e instanceof Error
+        ? e
+        : new Error(
+            `Add / switch wallet network to ${appChain.name} (chain ${appChain.id})`
+          );
     }
   }, [chainId, switchChainAsync]);
 
@@ -237,6 +245,7 @@ export function useSessionWallet() {
     expectedChainId: appChain.id,
     chainName: appChain.name,
     wrongChain: Boolean(address && chainId && chainId !== appChain.id),
+    ensureCorrectChain,
     needsSiwe,
     wagmiStatus: status,
   };

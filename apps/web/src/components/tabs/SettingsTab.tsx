@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
-import { ToggleLeft, Globe, Wifi, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import NetworkSwitchBanner from '@/components/NetworkSwitchBanner';
+import { getNetworkDetails, formatNetworkDetailsForCopy } from '@/lib/addChain';
+import { ToggleLeft, Globe, Wifi, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 
 export default function SettingsTab() {
   const { showToast } = useToast();
@@ -67,24 +69,50 @@ export default function SettingsTab() {
     }
   };
 
+  const net = getNetworkDetails();
+
   return (
     <div className="max-w-2xl space-y-6">
       {/* Wallet tip */}
       <div className="rh-card p-4 border border-sky-200 bg-sky-50/60">
         <p className="text-xs text-sky-950 leading-relaxed">
           <strong>Wallets:</strong> Connect MetaMask, browser wallets, or WalletConnect, then sign
-          SIWE on Robinhood Chain Testnet ({chainId}). Alice/Bob remain available as{' '}
-          <em>operator</em> evaluation logins (no signature). Extension races such as{' '}
-          <code className="font-mono text-[11px]">Cannot redefine property: ethereum</code> come from
-          wallets, not this app.
+          SIWE on Robinhood Chain Testnet ({chainId}). If your wallet is on another network, use{' '}
+          <strong>Add / switch</strong> below — we send full RPC + chain details to the wallet.
+          Alice/Bob remain available as <em>operator</em> evaluation logins (no signature).
         </p>
       </div>
 
+      <NetworkSwitchBanner variant="full" />
+
       {/* Network config */}
       <div className="rh-card p-6">
-        <h2 className="text-sm font-semibold text-[var(--text)] mb-4 flex items-center gap-2">
-          <Globe className="w-4 h-4 text-[var(--accent)]" /> Network configuration
-        </h2>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="text-sm font-semibold text-[var(--text)] flex items-center gap-2">
+            <Globe className="w-4 h-4 text-[var(--accent)]" /> Network configuration
+          </h2>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(formatNetworkDetailsForCopy());
+                showToast('success', 'Robinhood network details copied');
+              } catch {
+                showToast('error', 'Copy failed');
+              }
+            }}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--accent)] hover:underline"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            Copy for MetaMask
+          </button>
+        </div>
+        <p className="text-[11px] text-[var(--text-muted)] mb-3 leading-relaxed">
+          Manual add in MetaMask: Networks → Add network → use{' '}
+          <strong className="text-[var(--text)]">{net.name}</strong>, chain{' '}
+          <strong className="font-mono text-[var(--text)]">{net.chainId}</strong>, RPC{' '}
+          <span className="font-mono break-all">{net.rpcUrl}</span>.
+        </p>
         <div className="space-y-3 text-xs font-mono">
           {[
             { label: 'Environment', value: environment },

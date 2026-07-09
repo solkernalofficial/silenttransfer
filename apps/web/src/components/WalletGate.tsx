@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { Wallet, Loader2, Shield, ArrowLeft } from 'lucide-react';
+import { Wallet, Loader2, Shield, ArrowLeft, Network } from 'lucide-react';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import { BrandMark } from '@/components/BrandLogo';
+import { getNetworkDetails } from '@/lib/addChain';
 
 /**
  * Console unlocks only after a real wallet session.
@@ -101,7 +102,7 @@ export default function WalletGate({ children }: { children: ReactNode }) {
             <Shield className="w-6 h-6" />
           </div>
           <h1 className="text-lg font-bold text-[var(--text)] mb-1">Connect wallet</h1>
-          <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-6">
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-4">
             {detected ? (
               <>
                 Detected <strong className="text-[var(--text)]">{detected}</strong>. Connect and
@@ -114,6 +115,30 @@ export default function WalletGate({ children }: { children: ReactNode }) {
               </>
             )}
           </p>
+
+          <div className="mb-5 text-left rounded-lg border border-[var(--border)] bg-[var(--bg-muted)]/60 p-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--text-secondary)]">
+              <Network className="w-3.5 h-3.5 text-[var(--accent)]" />
+              Required network (auto-added if missing)
+            </div>
+            {(() => {
+              const n = getNetworkDetails();
+              return (
+                <ul className="text-[10px] font-mono text-[var(--text-muted)] space-y-0.5 leading-relaxed">
+                  <li>
+                    <span className="text-[var(--text-faint)]">Name</span> {n.name}
+                  </li>
+                  <li>
+                    <span className="text-[var(--text-faint)]">Chain ID</span> {n.chainId} (
+                    {n.chainIdHex})
+                  </li>
+                  <li className="break-all">
+                    <span className="text-[var(--text-faint)]">RPC</span> {n.rpcUrl}
+                  </li>
+                </ul>
+              );
+            })()}
+          </div>
 
           <button
             type="button"
@@ -135,7 +160,9 @@ export default function WalletGate({ children }: { children: ReactNode }) {
           </button>
 
           {error && (
-            <p className="text-red-600 text-[11px] mt-4 leading-snug text-left">{error}</p>
+            <p className="text-red-600 text-[11px] mt-4 leading-snug text-left whitespace-pre-wrap">
+              {error}
+            </p>
           )}
         </div>
       </main>
