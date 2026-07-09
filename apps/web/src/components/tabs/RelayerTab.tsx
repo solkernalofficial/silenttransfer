@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { api, ensureDemoAuth, API_BASE } from '@/lib/api';
+import {
+  api,
+  ensureDemoAuth,
+  getAuthMode,
+  getStoredToken,
+  getStoredWallet,
+  API_BASE,
+} from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import {
@@ -20,7 +27,8 @@ import {
   clearPendingWithdraw,
   getPendingWithdraw,
 } from '@/lib/pendingWithdraw';
-import { Repeat, Loader2, AlertCircle, CheckCircle, History, Sparkles } from 'lucide-react';
+import { explorerTxUrl } from '@/lib/explorer';
+import { Repeat, Loader2, AlertCircle, CheckCircle, History, Sparkles, ExternalLink } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 
 interface RelayRecord {
@@ -54,7 +62,13 @@ function humanAmount(raw: string): string {
 
 export default function RelayerTab() {
   const { showToast } = useToast();
-  const { wallet: sessionWallet, connect } = useSessionWallet();
+  const {
+    wallet: sessionWallet,
+    connect,
+    source,
+    signInWithEthereum,
+    needsSiwe,
+  } = useSessionWallet();
   const [stealthAddr, setStealthAddr] = useState('');
   const [target, setTarget] = useState('');
   const [token, setToken] = useState(DEFAULT_TOKEN);
@@ -62,6 +76,7 @@ export default function RelayerTab() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [bobBusy, setBobBusy] = useState(false);
   const [prefillNote, setPrefillNote] = useState('');
+  const [lastClaimTx, setLastClaimTx] = useState<string | null>(null);
   const feePreview = formatFeePreview(amount);
   const feePct = protocolFeePercentLabel();
 
@@ -87,6 +102,28 @@ export default function RelayerTab() {
     connect(pending.target_owner).catch(() => {});
   }, [connect]);
 
+  const ensureClaimAuth = async (addr: string) => {
+    const mode = getAuthMode();
+    const stored = getStoredWallet();
+    const tokenJwt = getStoredToken();
+    if (tokenJwt && stored === addr.toLowerCase()) {
+      // Real wallet path: require SIWE when available
+      if (source === 'wallet' || mode === 'siwe') {
+        if (mode === 'siwe' && !needsSiwe) return;
+        if (mode === 'siwe' && needsSiwe) {
+          await signInWithEthereum();
+          return;
+        }
+      }
+      return;
+    }
+    if (source === 'wallet' || mode === 'siwe') {
+      await signInWithEthereum();
+      return;
+    }
+    await ensureDemoAuth(addr);
+  };
+
   const { data: relayHistory, isLoading: historyLoading, refetch } = useQuery<RelayRecord[]>({
     queryKey: ['relay-history'],
     queryFn: async () => (await api<RelayRecord[]>('/api/relay/history')) || [],
@@ -95,14 +132,14 @@ export default function RelayerTab() {
   const withdrawMutation = useMutation({
     mutationFn: async () => {
       await connect(target);
-      await ensureDemoAuth(target);
+      await ensureClaimAuth(target);
       return api<{ tx_hash: string; success: boolean; mode: string; message?: string }>(
         '/api/relay/withdraw',
         'POST',
         {
           stealth_address: stealthAddr.toLowerCase(),
           target_owner: target.toLowerCase(),
-          fee_token: TOKENS[token] || TOKENS.USDG,
+          fee_token: TOKENS[token] || TOKENS.ETH,
           amount: toWeiString(amount),
         },
         { auth: true, wallet: target }
@@ -110,7 +147,13 @@ export default function RelayerTab() {
     },
     onSuccess: (data) => {
       if (data?.success) {
-        showToast('success', `Withdrawal complete: ${truncAddr(data.tx_hash || '')}`);
+        setLastClaimTx(data.tx_hash || null);
+        showToast(
+          'success',
+          data.mode === 'live'
+            ? `Claimed on-chain: ${truncAddr(data.tx_hash || '')}`
+            : `Withdrawal recorded: ${truncAddr(data.tx_hash || '')}`
+        );
         setStealthAddr('');
         setAmount('');
         setPrefillNote('');
@@ -232,7 +275,12 @@ export default function RelayerTab() {
     <div className="max-w-xl space-y-6">
       <div className="rh-card p-6">
         <div className="flex items-start justify-between gap-3 mb-1">
-          <h2 className="text-base font-semibold text-[var(--text)]">Sponsored settlement</h2>
+          <div>
+            <h2 className="text-base font-semibold text-[var(--text)]">Claim private payment</h2>
+            <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
+              Real on-chain when funded
+            </span>
+          </div>
           <div className="flex flex-col sm:flex-row gap-1.5 shrink-0">
             <button
               type="button"
@@ -245,7 +293,7 @@ export default function RelayerTab() {
               ) : (
                 <Sparkles className="w-3.5 h-3.5" />
               )}
-              Load recipient payment
+              Load demo payment
             </button>
             <button
               type="button"
@@ -258,13 +306,13 @@ export default function RelayerTab() {
               ) : (
                 <Repeat className="w-3.5 h-3.5" />
               )}
-              Settle as recipient
+              Demo settle (Bob)
             </button>
           </div>
         </div>
         <p className="text-xs text-[var(--text-muted)] mb-4 leading-relaxed">
-          Settle funds from a one-time destination via the sponsored path. In evaluation mode,
-          completion is simulated with a synthetic transaction reference.
+          Connect the recipient wallet, load the payment from Scanner, and claim. Funded private
+          sends sweep real ETH from the one-time address into your wallet on-chain.
         </p>
 
         {prefillNote && (
@@ -358,17 +406,37 @@ export default function RelayerTab() {
             ) : (
               <Repeat className="w-4 h-4" />
             )}
-            {withdrawMutation.isPending ? 'Submitting…' : 'Submit settlement'}
+            {withdrawMutation.isPending ? 'Claiming…' : 'Claim into my wallet'}
           </button>
         </form>
 
         {withdrawMutation.data?.success && (
-          <div className="mt-4 p-3 rounded-lg rh-alert-success flex items-start gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-            <div className="text-xs font-mono text-[var(--success-text)]">
-              Mode: {withdrawMutation.data.mode} | Tx:{' '}
-              {truncAddr(withdrawMutation.data.tx_hash || '')}
+          <div className="mt-4 p-3 rounded-lg rh-alert-success space-y-2">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+              <div className="text-xs font-mono text-[var(--success-text)]">
+                Mode: {withdrawMutation.data.mode} | Tx:{' '}
+                {truncAddr(withdrawMutation.data.tx_hash || '')}
+              </div>
             </div>
+            {withdrawMutation.data.message && (
+              <p className="text-[11px] text-emerald-800/80 leading-relaxed">
+                {withdrawMutation.data.message}
+              </p>
+            )}
+            {(lastClaimTx || withdrawMutation.data.tx_hash) &&
+              explorerTxUrl(lastClaimTx || withdrawMutation.data.tx_hash || '') && (
+                <a
+                  href={
+                    explorerTxUrl(lastClaimTx || withdrawMutation.data.tx_hash || '') || '#'
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 underline"
+                >
+                  View claim on explorer <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
           </div>
         )}
 

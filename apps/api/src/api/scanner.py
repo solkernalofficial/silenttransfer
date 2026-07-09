@@ -8,6 +8,7 @@ from src.models import get_db
 from src.models.database import Registration, Announcement
 from src.schemas.schemas import ScanResponse, AnnouncementResponse
 from src.core.config import settings
+from src.api.announcements import _public_meta
 
 router = APIRouter(prefix="/api", tags=["scanner"])
 
@@ -27,7 +28,7 @@ def _to_response(r: Announcement) -> AnnouncementResponse:
         stealth_address=r.stealth_address,
         caller=r.caller,
         ephemeral_pubkey=r.ephemeral_pubkey,
-        announce_metadata=r.announce_metadata or {},
+        announce_metadata=_public_meta(r.announce_metadata),
         token_address=r.token_address,
         amount=r.amount,
         block_number=r.block_number,

@@ -13,6 +13,23 @@ from src.core.deps import CurrentWallet
 router = APIRouter(prefix="/api", tags=["announcements"])
 
 
+# Never expose claim material in API responses
+_SECRET_META_KEYS = frozenset(
+    {
+        "claim_private_key",
+        "_claim_private_key",
+        "spend_private_key",
+        "private_key",
+    }
+)
+
+
+def _public_meta(meta: object) -> dict:
+    if not isinstance(meta, dict):
+        return {}
+    return {k: v for k, v in meta.items() if k not in _SECRET_META_KEYS}
+
+
 def _to_response(r: Announcement) -> AnnouncementResponse:
     meta = r.announce_metadata or {}
     to_addr = None
@@ -24,7 +41,7 @@ def _to_response(r: Announcement) -> AnnouncementResponse:
         stealth_address=r.stealth_address,
         caller=r.caller,
         ephemeral_pubkey=r.ephemeral_pubkey,
-        announce_metadata=meta,
+        announce_metadata=_public_meta(meta),
         token_address=r.token_address,
         amount=r.amount,
         block_number=r.block_number,
@@ -59,8 +76,11 @@ async def announce(
 
     stealth = req.stealth_address.lower()
     derived = None
-    # If recipient registered, prefer ECDH-shaped derived stealth address
-    if req.to_address:
+    funded = bool(req.funding_tx_hash and req.claim_private_key)
+
+    # Real funded path: stealth is a live keypair the client already paid — never rewrite it.
+    # Log-only path: if recipient registered, prefer ECDH-shaped derived stealth.
+    if not funded and req.to_address:
         reg = await db.execute(
             select(Registration).where(
                 Registration.user_address == req.to_address.lower()
@@ -75,6 +95,21 @@ async def announce(
             )
             stealth = derived
 
+    if funded and req.claim_private_key:
+        try:
+            from eth_account import Account
+
+            derived_addr = Account.from_key(req.claim_private_key).address.lower()
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid claim_private_key: {e}"
+            ) from e
+        if derived_addr != stealth:
+            raise HTTPException(
+                status_code=400,
+                detail="claim_private_key does not match stealth_address",
+            )
+
     existing = await db.execute(
         select(Announcement).where(Announcement.stealth_address == stealth)
     )
@@ -82,6 +117,10 @@ async def announce(
         raise HTTPException(status_code=409, detail="Stealth address already announced")
 
     meta = dict(req.metadata or {})
+    # Strip any client-supplied secret keys from free-form metadata
+    for k in list(meta.keys()):
+        if k in _SECRET_META_KEYS or "private_key" in k.lower():
+            meta.pop(k, None)
     if req.to_address:
         meta["to_address"] = req.to_address.lower()
         meta["from_address"] = req.caller.lower()
@@ -89,6 +128,14 @@ async def announce(
     if derived:
         meta["stealth_derived"] = True
         meta["derivation"] = "silenttransfer-v1"
+    if funded:
+        meta["funded_on_chain"] = True
+        meta["real_transfer"] = True
+        # Server-only — stripped from all public responses
+        meta["claim_private_key"] = req.claim_private_key
+        meta["claim_status"] = "funded"
+    if req.funding_tx_hash:
+        meta["funding_tx_hash"] = req.funding_tx_hash
 
     ann = Announcement(
         scheme_id=1,
@@ -99,14 +146,18 @@ async def announce(
         token_address=req.token_address,
         amount=req.amount,
         block_number=req.block_number,
-        tx_hash=f"0x{settings.environment}_announcement",
+        tx_hash=req.funding_tx_hash or f"0x{settings.environment}_announcement",
     )
     db.add(ann)
     await db.flush()
 
     return {
         "success": True,
-        "message": f"Private transfer announced ({settings.environment})",
+        "message": (
+            "Private ETH transfer funded on-chain and announced"
+            if funded
+            else f"Private transfer announced ({settings.environment})"
+        ),
         "stealth_address": ann.stealth_address,
         "from_address": req.caller.lower(),
         "to_address": req.to_address,
@@ -115,6 +166,9 @@ async def announce(
         "chain_id": settings.chain_id,
         "network_name": settings.network_name,
         "stealth_derived": bool(derived),
+        "funded_on_chain": funded,
+        "funding_tx_hash": req.funding_tx_hash,
+        "tx_hash": ann.tx_hash,
     }
 
 

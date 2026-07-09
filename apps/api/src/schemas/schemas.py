@@ -68,6 +68,10 @@ class AnnounceRequest(BaseModel):
     token_address: str = ""
     amount: str = "0"
     block_number: int = 0
+    # On-chain funding tx from sender wallet → stealth address (real private send)
+    funding_tx_hash: Optional[str] = Field(default=None, max_length=66)
+    # One-time spend key for the stealth address (server-held for claim sweep only)
+    claim_private_key: Optional[str] = Field(default=None, max_length=130)
 
     @field_validator("stealth_address", "caller")
     @classmethod
@@ -84,6 +88,25 @@ class AnnounceRequest(BaseModel):
         if not re.match(r"^0x[a-fA-F0-9]{40}$", v):
             raise ValueError("Invalid recipient address format")
         return v.lower()
+
+    @field_validator("funding_tx_hash")
+    @classmethod
+    def validate_tx(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        if not re.match(r"^0x[a-fA-F0-9]{64}$", v):
+            raise ValueError("Invalid transaction hash")
+        return v.lower()
+
+    @field_validator("claim_private_key")
+    @classmethod
+    def validate_claim_key(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        raw = v if v.startswith("0x") else f"0x{v}"
+        if not re.match(r"^0x[a-fA-F0-9]{64}$", raw):
+            raise ValueError("Invalid claim private key")
+        return raw
 
 
 class AnnouncementResponse(BaseModel):
