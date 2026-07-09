@@ -28,6 +28,7 @@ import { explorerTxUrl } from '@/lib/explorer';
 import { appChain, wagmiConfig } from '@/lib/wagmi';
 import { switchOrAddAppChain } from '@/lib/addChain';
 import NetworkSwitchBanner from '@/components/NetworkSwitchBanner';
+import FaucetLinks from '@/components/FaucetLinks';
 import {
   Send,
   Loader2,
@@ -428,6 +429,12 @@ export default function SendTab() {
 
         {wrongChain && <NetworkSwitchBanner variant="full" className="mb-4" />}
 
+        {isRealWallet && balance && balance.value === BigInt(0) && (
+          <div className="mb-4">
+            <FaucetLinks variant="card" title="Wallet balance is 0 — get test ETH" />
+          </div>
+        )}
+
         <div className="mb-6 flex items-center justify-center gap-2 text-xs font-medium">
           <span className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
             You
@@ -630,6 +637,9 @@ export default function SendTab() {
         <p className="text-[11px] text-[var(--text-faint)] mt-3">
           Network: {appChain.name} (chain {appChain.id})
         </p>
+        <div className="mt-3 pt-3 border-t border-[var(--border)]">
+          <FaucetLinks variant="inline" />
+        </div>
       </div>
     </div>
   );

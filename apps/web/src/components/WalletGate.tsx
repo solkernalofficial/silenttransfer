@@ -6,6 +6,7 @@ import { Wallet, Loader2, Shield, ArrowLeft, Network } from 'lucide-react';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import { BrandMark } from '@/components/BrandLogo';
 import { getNetworkDetails } from '@/lib/addChain';
+import FaucetLinks from '@/components/FaucetLinks';
 
 /**
  * Console unlocks only after a real wallet session.
@@ -138,6 +139,9 @@ export default function WalletGate({ children }: { children: ReactNode }) {
                 </ul>
               );
             })()}
+            <div className="pt-2 mt-2 border-t border-[var(--border)]">
+              <FaucetLinks variant="compact" />
+            </div>
           </div>
 
           <button

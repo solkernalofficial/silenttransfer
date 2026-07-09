@@ -18,6 +18,7 @@ import {
   switchOrAddAppChain,
 } from '@/lib/addChain';
 import { useToast } from '@/components/Toast';
+import FaucetLinks from '@/components/FaucetLinks';
 
 type Props = {
   /** compact = header chip; full = detailed card with copyable fields */
@@ -185,6 +186,8 @@ export default function NetworkSwitchBanner({
         MetaMask: if the prompt does not appear, open Settings → Networks → Add
         network manually with the details above (or paste from Copy).
       </p>
+
+      <FaucetLinks variant="card" className="!bg-white/70 !border-amber-100" />
     </div>
   );
 }

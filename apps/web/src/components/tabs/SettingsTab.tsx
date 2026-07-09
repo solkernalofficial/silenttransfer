@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import NetworkSwitchBanner from '@/components/NetworkSwitchBanner';
+import FaucetLinks from '@/components/FaucetLinks';
 import { getNetworkDetails, formatNetworkDetailsForCopy } from '@/lib/addChain';
 import { ToggleLeft, Globe, Wifi, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 
@@ -85,6 +86,8 @@ export default function SettingsTab() {
 
       <NetworkSwitchBanner variant="full" />
 
+      <FaucetLinks variant="card" />
+
       {/* Network config */}
       <div className="rh-card p-6">
         <div className="flex items-center justify-between gap-3 mb-4">
@@ -113,6 +116,9 @@ export default function SettingsTab() {
           <strong className="font-mono text-[var(--text)]">{net.chainId}</strong>, RPC{' '}
           <span className="font-mono break-all">{net.rpcUrl}</span>.
         </p>
+        <div className="mb-4">
+          <FaucetLinks variant="inline" />
+        </div>
         <div className="space-y-3 text-xs font-mono">
           {[
             { label: 'Environment', value: environment },

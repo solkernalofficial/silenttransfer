@@ -55,15 +55,22 @@ export function getAddEthereumChainParams() {
 
 export function formatNetworkDetailsForCopy(): string {
   const d = getNetworkDetails();
-  return [
+  const lines = [
     `Network name: ${d.name}`,
     `Chain ID: ${d.chainId} (${d.chainIdHex})`,
     `Currency: ${d.currencySymbol}`,
     `RPC URL: ${d.rpcUrl}`,
     d.explorerUrl ? `Block explorer: ${d.explorerUrl}` : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
+  ];
+  if (d.chainId === 46630) {
+    lines.push(
+      '',
+      'Testnet faucets:',
+      'https://faucet.testnet.chain.robinhood.com/',
+      'https://faucet.zalalena.com/robinhood'
+    );
+  }
+  return lines.filter((x) => x !== null).join('\n');
 }
 
 function isUnrecognizedChainError(err: unknown): boolean {
