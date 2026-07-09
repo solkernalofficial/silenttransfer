@@ -54,9 +54,17 @@ async def get_nonce(wallet_address: str, db: AsyncSession = Depends(get_db)):
         user.nonce = nonce
     await db.flush()
 
-    # EIP-4361 / SIWE canonical message (siwe Python package)
+    # EIP-4361 / SIWE: address in message MUST be EIP-55 checksummed
+    # (siwe Python package rejects lowercase 0x… with value_error)
     issued = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-    addr_checksum = wallet_address  # clients sign the same casing returned here
+    try:
+        from eth_utils import to_checksum_address
+
+        addr_checksum = to_checksum_address(wallet_address)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid wallet address: {e}"
+        ) from e
     message = (
         f"{settings.siwe_domain} wants you to sign in with your Ethereum account:\n"
         f"{addr_checksum}\n\n"
