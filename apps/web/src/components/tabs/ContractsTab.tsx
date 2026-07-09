@@ -33,7 +33,7 @@ const FALLBACK: ApiContract[] = [
     name: 'SilentPaymaster',
     address: '0x0000000000000000000000000000000000000000',
     network: 'Not configured',
-    description: 'Gasless paymaster interface (demo path today).',
+    description: 'Gasless paymaster interface (ERC-4337 path staged; live claim uses EOA sweep).',
   },
   {
     name: 'SilentToken (SILENT)',
@@ -152,10 +152,10 @@ export default function ContractsTab() {
               <span className="text-[10px] text-[var(--accent)] font-bold">4</span>
             </div>
             <div>
-              <span className="text-[var(--text-faint)] font-semibold">Sponsored settlement</span>
+              <span className="text-[var(--text-faint)] font-semibold">Claim settlement</span>
               <br />
-              In evaluation mode, settlement is simulated with a synthetic transaction reference—not
-              mainnet execution.
+              Funded private sends can sweep on-chain on testnet (live settlement). Full ERC-4337
+              paymaster gasless UserOps remain staged — not mainnet production.
             </div>
           </div>
         </div>
@@ -163,9 +163,9 @@ export default function ContractsTab() {
         <div className="mt-6 p-3 rounded-lg bg-yellow-50 border border-yellow-200 flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-[var(--warn-text)] shrink-0 mt-0.5" />
           <div className="text-[11px] text-yellow-900/80">
-            Contract addresses may be configured from network deployments. The interactive console
-            path is primarily API-driven in evaluation environments until full on-chain wiring is
-            completed.
+            Addresses come from network deployment config. Real ETH private send uses wallet txs to
+            one-time addresses; registry/messenger contracts support the longer ERC-5564 roadmap.
+            Privacy is partial — see Docs.
           </div>
         </div>
       </div>

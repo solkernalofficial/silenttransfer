@@ -53,26 +53,26 @@ const FEATURES = [
   {
     icon: Zap,
     image: '/brand/feature-gasless.jpg',
-    title: 'Sponsored settlement path',
-    body: 'A gas-sponsored claim flow for recipients. Evaluation environments simulate completion; production settlement is staged separately.',
+    title: 'On-chain claim path',
+    body: 'Recipients claim into their wallet. On testnet, funded private sends can sweep real ETH from the one-time address. Full ERC-4337 gasless paymaster remains staged.',
   },
   {
     icon: Network,
     image: '/brand/feature-standards.jpg',
-    title: 'Standards-aligned',
-    body: 'Architecture aligned with ERC-6538 registry and ERC-5564 announcement patterns for interoperability.',
+    title: 'Standards-aligned design',
+    body: 'Architecture aligned with ERC-6538 registry and ERC-5564 announcement patterns. Live path is privacy-oriented; full viewing-key-only stealth is roadmap.',
   },
   {
     icon: ScanSearch,
     image: '/brand/feature-discovery.jpg',
     title: 'Private discovery',
-    body: 'Recipients locate payments intended for them without relying on a public inbox or reused deposit addresses.',
+    body: 'Recipients locate payments intended for them without a reused public deposit address as the funding destination.',
   },
   {
     icon: Shield,
     image: '/brand/feature-stealth.jpg',
     title: 'Operations console',
-    body: 'Register, send, discover, settle, and review history from a single professional control surface.',
+    body: 'Connect wallet, send privately, scan, claim, and review history from one console. Honest docs on what is and is not private.',
   },
 ];
 
@@ -80,20 +80,20 @@ const STEPS = [
   {
     step: '01',
     image: '/brand/feature-enterprise.jpg',
-    title: 'Enable private receive',
-    body: 'The recipient registers spending and viewing public keys once for their wallet.',
+    title: 'Connect wallet',
+    body: 'Connect MetaMask or WalletConnect on Robinhood Chain Testnet and sign in with SIWE.',
   },
   {
     step: '02',
     image: '/brand/feature-stealth.jpg',
-    title: 'Execute private transfer',
-    body: 'The sender creates a one-time destination and records the private transfer (default asset: ETH).',
+    title: 'Private transfer (real funds)',
+    body: 'Sender enters recipient + amount. Wallet funds a one-time address on-chain (default asset: ETH), then the payment is announced for the recipient.',
   },
   {
     step: '03',
     image: '/brand/feature-discovery.jpg',
-    title: 'Discover and settle',
-    body: 'The recipient discovers payments and completes settlement through the sponsored claim path when available.',
+    title: 'Discover and claim',
+    body: 'Recipient scans for payments and claims into their wallet. Partial privacy: better than a direct public A→B send, not full anonymity.',
   },
 ];
 
@@ -240,10 +240,10 @@ export default function LandingPage() {
               <span className="lp-h1-accent"> without identity gates</span>
             </h1>
             <p className="lp-lead">
-              SilentTransfer enables private transfers using one-time destinations, recipient
-              discovery, and a sponsored settlement path—without KYC. Protocol asset:{' '}
-              <strong>$SILENT</strong>, hard-capped at 1B. Scope and limitations are documented with
-              precision.
+              SilentTransfer enables private transfers using one-time destinations and recipient
+              claim—without KYC. On testnet, send is real on-chain ETH to a fresh address. Privacy is
+              partial (not full anonymity). Protocol asset: <strong>$SILENT</strong>, hard-capped at
+              1B.
             </p>
             <div className="lp-hero-cta">
               <Link href="/dashboard" className="lp-btn lp-btn--primary lp-btn--lg">
@@ -284,15 +284,15 @@ export default function LandingPage() {
                 <div className="space-y-2 py-2">
                   <div className="text-sm font-semibold text-[var(--text)]">SilentTransfer</div>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    End-to-end private transfer workflow in four steps. Production settlement is
-                    staged and documented separately.
+                    Connect wallet → real private send on testnet → scan → claim. Full ERC-5564
+                    privacy and mainnet production remain roadmap.
                   </p>
                 </div>
                 <div className="lp-panel-rows">
                   {[
-                    ['Receive', 'Registration', 'Available'],
-                    ['Send', 'Private transfer', 'Available'],
-                    ['Settle', 'Sponsored path', 'Staged'],
+                    ['Connect', 'Wallet + SIWE', 'Live'],
+                    ['Send', 'On-chain one-time', 'Testnet live'],
+                    ['Claim', 'Sweep to wallet', 'Testnet live'],
                   ].map(([a, b, c]) => (
                     <div key={a} className="lp-panel-row">
                       <span>{a}</span>
@@ -490,18 +490,18 @@ export default function LandingPage() {
           <div className="lp-security-grid">
             <div className="lp-security-card">
               <Building2 className="w-5 h-5" />
-              <h3>Staged settlement</h3>
+              <h3>Testnet live · mainnet staged</h3>
               <p>
-                Sponsored settlement in evaluation environments is simulated. Production mainnet
-                settlement is staged and subject to independent review.
+                Real private send and claim run on Robinhood Chain Testnet. Mainnet production
+                money movement remains staged and should not be assumed audited.
               </p>
             </div>
             <div className="lp-security-card">
               <Shield className="w-5 h-5" />
               <h3>Documented threat model</h3>
               <p>
-                Documentation covers privacy properties and residual risks—including metadata, IP
-                exposure, and operational key management.
+                Docs cover partial privacy, public chain metadata, timing linkability, and trusted
+                API limits—not fake “untraceable” claims.
               </p>
             </div>
             <div className="lp-security-card">
@@ -509,6 +509,7 @@ export default function LandingPage() {
               <h3>No KYC requirement</h3>
               <p>
                 The product path does not collect identity or route through a compliance oracle.
+                Users remain responsible for local law.
               </p>
             </div>
           </div>
@@ -541,8 +542,8 @@ export default function LandingPage() {
             <div>
               <h2 className="lp-h2">Operate private transfers from the console</h2>
               <p className="lp-section-lead lp-section-lead--left">
-                Configure receive, execute private transfer, discover payments, and review
-                settlement. Full technical detail is in Documentation.
+                Connect a real wallet, send privately on testnet, discover payments, and claim.
+                Limitations and privacy scope are documented honestly.
               </p>
             </div>
             <div className="lp-cta-actions">
@@ -598,8 +599,8 @@ export default function LandingPage() {
         </div>
         <div className="lp-container lp-footer-bottom">
           <p>
-            Evaluation environments may use synthetic settlement data. Protocol asset: SILENT
-            (hard-capped). Scope and limitations are documented.
+            Testnet private send is real on-chain; privacy is partial (not full anonymity). Protocol
+            asset: SILENT (hard-capped). Scope and limitations are in Docs.
           </p>
           <p>© {new Date().getFullYear()} SilentTransfer</p>
         </div>

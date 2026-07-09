@@ -67,7 +67,7 @@ export default function AnalyticsTab() {
           </div>
           <div className="text-2xl font-mono font-bold text-[var(--accent)]">{relays}</div>
           <div className="text-[10px] text-[var(--text-muted)] mt-1">
-            Completed settlement records{demo ? ' · evaluation mode' : ''}
+            Completed settlement records{demo ? ' · demo environment' : ' · live / testnet API'}
           </div>
         </div>
       </div>

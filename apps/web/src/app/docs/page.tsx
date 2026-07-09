@@ -32,15 +32,15 @@ import {
 export const metadata: Metadata = {
   title: 'Docs — SilentTransfer',
   description:
-    'Deep documentation: stealth addresses (ERC-5564 / ERC-6538), how SilentTransfer works today, privacy limits, fees, $SILENT, roadmap — honest, no fake claims.',
+    'Honest documentation: real testnet private send, claim sweep, privacy limits, fees, $SILENT — no fake completion claims.',
 };
 
 const TOC = [
   { id: 'overview', label: '1. Overview' },
   { id: 'problem', label: '2. Problem we solve' },
   { id: 'stealth-theory', label: '3. Stealth addresses (standards)' },
-  { id: 'product-vs-ideal', label: '4. Ideal crypto vs our demo' },
-  { id: 'how-demo', label: '5. How SilentTransfer works today' },
+  { id: 'product-vs-ideal', label: '4. Ideal crypto vs live product' },
+  { id: 'how-live', label: '5. How SilentTransfer works today' },
   { id: 'architecture', label: '6. Architecture' },
   { id: 'privacy', label: '7. Privacy guarantees & limits' },
   { id: 'fees', label: '8. Fees' },
@@ -53,81 +53,83 @@ const TOC = [
 
 const DONE = [
   {
-    title: 'Private receive setup',
+    title: 'Real wallet connect + SIWE',
     detail:
-      'Console + API register spend/view public keys for a wallet (demo auth). No KYC gate.',
+      'MetaMask / WalletConnect + EIP-4361 sign-in (EIP-55 checksum). Operator JWT (Alice/Bob) remains optional for evaluation only — not for real funding.',
   },
   {
-    title: 'Private send log (Alice → Bob)',
+    title: 'Real on-chain private send (testnet)',
     detail:
-      'Authenticated announce records one-time stealth address, amount, token, and intended recipient (to_address) in the API database.',
+      'Sender wallet funds a fresh one-time address with real ETH (or ERC-20 transfer). Funding tx is confirmed on-chain, then /api/announce records the payment for the intended recipient.',
+  },
+  {
+    title: 'Live claim sweep (funded payments)',
+    detail:
+      'With settlement_mode=live, recipient claim can sweep native ETH (and supported tokens) from the one-time address to the recipient wallet. Not full ERC-4337 EntryPoint yet.',
   },
   {
     title: 'Recipient scan',
     detail:
-      'Scanner matches payments where metadata.to_address equals the viewer wallet — Bob can find payments meant for him.',
+      'Scanner matches announcements where metadata.to_address equals the viewer wallet. Claim secrets are stripped from public list/scan responses.',
   },
   {
-    title: 'Demo gasless claim',
+    title: 'Wrong-network helper',
     detail:
-      'Relayer withdraw returns a synthetic tx hash in DEMO_MODE and records fee/history. Not EntryPoint-executed mainnet settlement.',
+      'If the wallet is on another chain, the UI offers wallet_addEthereumChain for Robinhood Chain Testnet (RPC, chain ID, explorer).',
   },
   {
     title: 'SilentToken (SILENT)',
     detail:
-      'Non-upgradeable ERC-20, no transfer whitelist, hard-capped at 1B (no mint above max). Deploy mints up to 1B. Fees 0% now; planned 0.5% for ops + buyback.',
+      'Non-upgradeable ERC-20, no transfer whitelist, hard-capped at 1B. Product fees 0% now; planned 0.5% on sponsored claims for ops + buyback.',
   },
   {
-    title: 'Operator console + landing',
+    title: 'Console + docs + landing',
     detail:
-      'Send / Receive / Scanner / Relayer, Alice–Bob demo helpers, docs + $SILENT pages, honest demo labels.',
-  },
-  {
-    title: 'Smoke tests',
-    detail:
-      'End-to-end user journey (register → send → scan → claim) and security smoke for auth boundaries.',
+      'Send / Receive / Scanner / Relayer / Settings; public docs state live vs ideal privacy without overselling anonymity.',
   },
 ];
 
 const NOT_DONE = [
   {
-    title: 'Full cryptographic stealth derivation in the UI path',
+    title: 'Full ERC-5564 viewing-key-only discovery',
     detail:
-      'Ideal ERC-5564 uses ECDH shared secrets so only Bob can recognize payments. The live demo path primarily matches by to_address in the announcement log for usability.',
+      'Ideal stealth uses ECDH so only Bob’s viewing key recognizes payments. Live path still stores intended to_address for scan usability and may hold claim material server-side for funded sweeps.',
   },
   {
-    title: 'Live mainnet money movement',
+    title: 'No trusted API for claim keys',
     detail:
-      'Console private send does not currently complete a real on-chain ERC-20 transfer + messenger announce as one atomic user product path.',
+      'Funded private sends currently allow the API to assist claim by holding the one-time spend key until claim. That is not “server cannot see the payment.” Roadmap: client-held spend path.',
+  },
+  {
+    title: 'Mainnet production money + audit',
+    detail:
+      'Live path is Robinhood Chain Testnet. Mainnet TVL, audited contracts, and renounced/hardened ops are not claimed.',
   },
   {
     title: 'Production ERC-4337 paymaster',
     detail:
-      'SilentPaymaster is a mock: fee math + events. No EntryPoint.handleOps gas sponsorship of real sweeps yet.',
+      'SilentPaymaster is staged/mock for gasless UserOps. Live claim today is EOA sweep from the one-time key (or relayer marker for non-funded paths), not EntryPoint.handleOps.',
   },
   {
-    title: 'On-chain token vesting / allocation locks',
+    title: 'On-chain vesting locks',
     detail:
-      '1B allocation (60/35/15, VC 0%) is published policy. Vesting contracts are not claimed deployed.',
+      '1B allocation policy is published. Vesting lock contracts are not claimed as fully live.',
   },
   {
-    title: 'Independent security audit',
-    detail: 'Contracts and API have not been marketed as audited.',
-  },
-  {
-    title: 'SIWE-only production auth',
-    detail: 'Demo JWT login remains the primary UX for the walkthrough.',
+    title: 'Sender privacy / amount privacy / ZK',
+    detail:
+      'Sender address and amount remain public on the funding transaction. This is not a mixer and not full anonymity.',
   },
 ];
 
 const FUTURE = [
-  'Wire real on-chain path: transfer SILENT to stealth address + ERC-5564-style announce.',
-  'Client-side or SDK path for true viewing-key scan (shared-secret match), not only to_address.',
-  'Relayer that executes real withdrawals with transparent fee deduction.',
-  'Optional self-withdraw (user pays gas, 0% protocol fee).',
-  'Publish team vesting schedule when locks go on-chain.',
-  'Host app.silenttransfer.com + docs.silenttransfer.com in production.',
-  'External audit before any mainnet treasury or public TVL claims.',
+  'Move claim material off the server — client or viewing-key derived spend only.',
+  'Default path: full ERC-5564 ECDH stealth + ERC-6538 registry lookup in the UI.',
+  'On-chain messenger announce as the primary discovery channel (not only API metadata).',
+  'Optional self-withdraw (user pays gas, 0% protocol fee) without server sweep.',
+  'ERC-4337 paymaster for true gasless claim when ready.',
+  'External audit before mainnet treasury or public TVL claims.',
+  'On-chain vesting when allocation locks ship.',
 ];
 
 function Section({
@@ -226,13 +228,13 @@ export default function DocsPage() {
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                Privacy-first
+                Live testnet send
               </span>
               <span className="text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
                 No KYC
               </span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                Scope documented
+              <span className="text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
+                Partial privacy — not full anonymity
               </span>
             </div>
           </div>
@@ -273,9 +275,16 @@ export default function DocsPage() {
             </p>
             <p>
               SilentTransfer’s product token is <strong className="text-[var(--text)]">SILENT</strong>{' '}
-              (see §9). The console defaults to ETH for private transfers (SILENT and other tokens optional). There is{' '}
+              (see §9). The console defaults to <strong className="text-[var(--text)]">ETH</strong>{' '}
+              for private transfers (SILENT optional). There is{' '}
               <strong className="text-[var(--text)]">no KYC</strong> in the product surface.
             </p>
+            <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/80 text-emerald-950 text-xs leading-relaxed not-prose">
+              <strong>Live today (testnet):</strong> a connected wallet can send <em>real</em> ETH
+              on-chain to a one-time address, announce the payment, and the recipient can claim a
+              real sweep. This is <strong>not</strong> full ERC-5564-only privacy and{' '}
+              <strong>not</strong> mainnet production guarantees — see §4 and §7.
+            </div>
           </Section>
 
           <Section id="problem" icon={EyeOff} title="2. Problem we solve">
@@ -301,8 +310,11 @@ export default function DocsPage() {
               </li>
             </ul>
             <p>
-              SilentTransfer focuses on a walkable product path: register → private send → scan →
-              claim, with fees and tokenomics stated in plain language.
+              SilentTransfer focuses on a usable path:{' '}
+              <strong className="text-[var(--text)]">
+                connect wallet → private send (on-chain) → scan → claim
+              </strong>
+              , with fees, privacy limits, and tokenomics stated in plain language.
             </p>
           </Section>
 
@@ -414,11 +426,13 @@ export default function DocsPage() {
             </p>
           </Section>
 
-          <Section id="product-vs-ideal" icon={AlertTriangle} title="4. Ideal crypto vs our demo (critical)">
+          <Section id="product-vs-ideal" icon={AlertTriangle} title="4. Ideal crypto vs live product (critical)">
             <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-950 text-sm leading-relaxed">
-              <strong>Read this carefully.</strong> Many stealth docs describe the full ECDH
-              protocol. SilentTransfer’s <em>clickable demo today</em> prioritizes a usable Alice→Bob
-              walkthrough. That means parts of the flow are simplified for product testing.
+              <strong>Read this carefully.</strong> Ideal stealth docs describe full ECDH privacy.
+              SilentTransfer’s <em>live testnet product</em> moves <strong>real funds</strong> to a
+              one-time address and can claim them on-chain — but discovery and claim still trust the
+              API more than pure viewing-key-only stealth. We do <strong>not</strong> claim full
+              anonymity.
             </div>
             <div className="overflow-x-auto mt-2">
               <table className="w-full text-xs border-collapse">
@@ -426,35 +440,40 @@ export default function DocsPage() {
                   <tr className="border-b border-[var(--border)] text-left text-[var(--text-faint)]">
                     <th className="py-2 pr-3 font-medium">Capability</th>
                     <th className="py-2 pr-3 font-medium">Full ERC-5564 ideal</th>
-                    <th className="py-2 font-medium">SilentTransfer demo today</th>
+                    <th className="py-2 font-medium">SilentTransfer live (testnet)</th>
                   </tr>
                 </thead>
                 <tbody className="text-[var(--text-muted)]">
                   {[
                     [
                       'Recipient discovery',
-                      'Viewing-key scan over announcements',
-                      'Scan by viewer wallet vs metadata.to_address',
+                      'Viewing-key scan over announcements only',
+                      'Scan by viewer wallet vs metadata.to_address (+ optional register path)',
                     ],
                     [
-                      'Stealth address',
-                      'ECDH-derived one-time address',
-                      'Random one-time address recorded in API log',
+                      'One-time address',
+                      'ECDH-derived from recipient meta-address',
+                      'Client-generated fresh EOA; funds go there on-chain',
                     ],
                     [
                       'On-chain transfer',
-                      'ERC-20/ETH to stealth address',
-                      'Demo log — not guaranteed live settlement',
+                      'ETH/ERC-20 to stealth address',
+                      'Yes — sender wallet signs real funding tx (default ETH)',
                     ],
                     [
                       'Announce',
                       'Messenger contract event',
-                      'API /api/announce (+ contracts exist for future wire)',
+                      'API /api/announce after funding (messenger contracts staged for fuller wire)',
                     ],
                     [
-                      'Gasless claim',
-                      'ERC-4337 paymaster + real UserOp',
-                      'SilentPaymaster mock + synthetic tx hash in DEMO_MODE',
+                      'Claim',
+                      'Recipient spends with derived key; optional 4337 gasless',
+                      'Live EOA sweep from one-time key when funded; not full EntryPoint paymaster',
+                    ],
+                    [
+                      'Who sees from/to',
+                      'Chain: limited; no server spend key',
+                      'Chain: funding + claim public; API: intended to + claim assist (trusted backend)',
                     ],
                     ['KYC', 'Optional external products', 'None in product surface'],
                   ].map(([a, b, c]) => (
@@ -473,40 +492,44 @@ export default function DocsPage() {
               <code className="text-[11px] bg-[var(--bg-muted)] px-1 rounded">ERC5564Messenger</code>,{' '}
               <code className="text-[11px] bg-[var(--bg-muted)] px-1 rounded">SilentPaymaster</code>,{' '}
               <code className="text-[11px] bg-[var(--bg-muted)] px-1 rounded">SilentToken</code>
-              ) are real Solidity artifacts. The gap is the{' '}
-              <strong className="text-[var(--text)]">end-to-end product wire</strong> to full
-              cryptographic + on-chain settlement — not pretend that gap does not exist.
+              ) are real Solidity artifacts. The remaining gap is{' '}
+              <strong className="text-[var(--text)]">full cryptographic privacy + 4337 gasless</strong>
+              — not “no money moves.” Real ETH can move on testnet today.
             </p>
           </Section>
 
-          <Section id="how-demo" icon={Workflow} title="5. How SilentTransfer works today">
-            <p>The console walkthrough is four steps. Use Alice / Bob demo wallets or any valid 0x addresses.</p>
+          <Section id="how-live" icon={Workflow} title="5. How SilentTransfer works today">
+            <p>
+              Primary path uses a <strong className="text-[var(--text)]">real wallet</strong> on{' '}
+              <strong className="text-[var(--text)]">Robinhood Chain Testnet (46630)</strong>.
+              Operator Alice/Bob logins cannot fund on-chain transfers.
+            </p>
 
             <div className="space-y-4 not-prose">
               {[
                 {
                   n: '1',
                   icon: Radio,
-                  title: 'Receive — turn on private receive',
-                  body: 'Bob connects (demo JWT) and registers spending + viewing public keys for his wallet. In demo mode keys can be auto-generated for convenience. The registry list shows wallets ready to receive privately. There is no identity or KYC check.',
+                  title: 'Connect — wallet + SIWE',
+                  body: 'Connect MetaMask or WalletConnect. Sign SIWE to get an API session. Switch/add Robinhood Chain if needed (site can prompt wallet_addEthereumChain with RPC + chain ID).',
                 },
                 {
                   n: '2',
                   icon: Layers,
-                  title: 'Send — private transfer log',
-                  body: `Alice authenticates as sender, chooses recipient Bob, token (default ETH), and amount. The app creates a random one-time stealth address and posts /api/announce with caller, to_address, amount, token, and ephemeral pubkey fields. Success message is a recorded private-send log — not a claim of mainnet settlement.`,
+                  title: 'Send — real private transfer',
+                  body: `Sender enters recipient 0x address, amount, and asset (default ETH). App generates a one-time address, wallet sends real funds on-chain, then posts /api/announce with funding_tx_hash. Product fee: ${feePct}. Network gas applies.`,
                 },
                 {
                   n: '3',
                   icon: EyeOff,
                   title: 'Scanner — find my payments',
-                  body: 'Bob opens Scanner, pastes his wallet (or Scan as Bob). The API returns announcements whose metadata recipient matches Bob. Each hit can hand off to Relayer via “Withdraw”.',
+                  body: 'Recipient opens Scanner with their wallet. API returns announcements where to_address matches. Hand off to Relayer to claim.',
                 },
                 {
                   n: '4',
                   icon: Repeat2,
-                  title: 'Relayer — gasless claim (demo)',
-                  body: `Bob submits stealth address + owner + amount. In DEMO_MODE the API simulates completion, returns a synthetic transaction hash, and records fee history. Protocol fee on gasless claim defaults to ${feePct} of amount; private send product fee is 0%.`,
+                  title: 'Claim — on-chain sweep',
+                  body: `Recipient claims into their wallet. Funded payments: live settlement can sweep ETH from the one-time address (settlement_mode=live). Product fee on claim: ${feePct}. Not mainnet; not full 4337 paymaster.`,
                 },
               ].map((step) => (
                 <div
@@ -532,33 +555,34 @@ export default function DocsPage() {
 
           <Section id="architecture" icon={Server} title="6. Architecture">
             <pre className="text-[11px] font-mono bg-slate-900 text-slate-100 p-4 rounded-xl overflow-x-auto leading-relaxed">
-{`┌─────────────┐     REST / JWT      ┌──────────────┐
+{`┌─────────────┐   SIWE / JWT REST    ┌──────────────┐
 │  apps/web   │ ──────────────────► │  apps/api    │
 │  Next.js    │                     │  FastAPI     │
-│  console    │                     │  SQLite/PG   │
-└─────────────┘                     └──────┬───────┘
-                                           │ (future full wire)
-                                           ▼
-                                    ┌──────────────┐
-                                    │  contracts/  │
-                                    │  Registry    │
-                                    │  Messenger   │
-                                    │  Paymaster   │
-                                    │  SilentToken │
-                                    └──────────────┘`}
+│  wagmi/viem │                     │  Postgres    │
+└──────┬──────┘                     └──────┬───────┘
+       │ wallet txs                         │ live claim sweep
+       ▼                                    │ (funded path)
+┌─────────────┐                             │
+│  Chain RPC  │ ◄───────────────────────────┘
+│  RH testnet │
+│  46630      │
+└─────────────┘
+       │
+       ▼ (deployed / staged)
+ contracts: Registry · Messenger · Paymaster · SilentToken`}
             </pre>
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 <strong className="text-[var(--text)]">apps/web</strong> — landing, docs, $SILENT,
-                dashboard tabs; demo session wallet (no forced MetaMask).
+                dashboard; real wallet send + SIWE; optional operator login for evaluation only.
               </li>
               <li>
-                <strong className="text-[var(--text)]">apps/api</strong> — auth (demo-login + JWT),
-                register, announce, scan, relay, stats, contracts config.
+                <strong className="text-[var(--text)]">apps/api</strong> — SIWE + operator auth,
+                register, announce (with funding_tx_hash), scan, relay/claim settlement, stats.
               </li>
               <li>
-                <strong className="text-[var(--text)]">contracts</strong> — Hardhat project; SilentToken
-                (1B deploy mint), registry/messenger/paymaster sources and tests.
+                <strong className="text-[var(--text)]">contracts</strong> — Hardhat; SilentToken (1B),
+                registry/messenger/paymaster sources. Full 5564 product wire still staged.
               </li>
             </ul>
           </Section>
@@ -602,10 +626,12 @@ export default function DocsPage() {
               </li>
             </ul>
             <p>
-              SilentTransfer’s demo path stores recipient association in API metadata for product
-              scanning. Treat that as{' '}
-              <strong className="text-[var(--text)]">weaker than pure viewing-key-only discovery</strong>{' '}
-              until full cryptographic scan is productized.
+              <strong className="text-[var(--text)]">Live path honesty:</strong> the API stores
+              recipient association for scanning and may hold claim material for funded sweeps.
+              Treat privacy as{' '}
+              <strong className="text-[var(--text)]">partial (one-time destination)</strong>, weaker
+              than pure viewing-key-only discovery, and weaker than mixers/ZK. Chain funding + claim
+              txs remain public and may be correlated by amount and timing.
             </p>
           </Section>
 
@@ -613,25 +639,24 @@ export default function DocsPage() {
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 <strong className="text-[var(--text)]">Now:</strong> product fees are{' '}
-                <strong className="text-[var(--text)]">{feePct}</strong> on private send and gasless
-                claim (demo). Network gas still applies only when a real on-chain path is used.
+                <strong className="text-[var(--text)]">{feePct}</strong> on private send and claim.
+                On-chain sends and claims still pay <strong className="text-[var(--text)]">network gas</strong>.
               </li>
               <li>
                 <strong className="text-[var(--text)]">Soon:</strong> planned{' '}
-                <strong className="text-[var(--text)]">{plannedPct}</strong> fee on gasless / protocol
-                use. Proceeds are intended for{' '}
-                <strong className="text-[var(--text)]">protocol running costs</strong> and to{' '}
-                <strong className="text-[var(--text)]">buy SILENT from the open market (buyback)</strong>
-                — not VC extraction.
+                <strong className="text-[var(--text)]">{plannedPct}</strong> fee on sponsored / protocol
+                claim paths. Proceeds intended for{' '}
+                <strong className="text-[var(--text)]">protocol ops</strong> and{' '}
+                <strong className="text-[var(--text)]">open-market SILENT buyback</strong> — not VC
+                extraction.
               </li>
               <li>
-                <strong className="text-[var(--text)]">Private send</strong> stays{' '}
-                <strong className="text-[var(--text)]">0%</strong> product fee in the plan (user pays
-                network gas on-chain).
+                <strong className="text-[var(--text)]">Private send</strong> product fee stays{' '}
+                <strong className="text-[var(--text)]">0%</strong> in the plan (user pays network gas).
               </li>
               <li>
                 <strong className="text-[var(--text)]">Self-withdraw</strong> (user pays gas): 0%
-                product fee when that path ships.
+                product fee when that path ships as a first-class option.
               </li>
             </ul>
             <p className="text-xs text-[var(--text-faint)]">{FEE_COPY.policy}</p>
@@ -739,25 +764,30 @@ export default function DocsPage() {
           <Section id="threats" icon={Shield} title="12. Threat model notes">
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong className="text-[var(--text)]">API / JWT compromise</strong> — demo auth is
-                for product testing; production needs hardened SIWE, secrets, rate limits, and ops
-                hygiene.
+                <strong className="text-[var(--text)]">API / JWT compromise</strong> — SIWE is the
+                real-wallet path; operator login is evaluation-only. Production still needs secrets
+                hygiene, rate limits, and minimal claim-key retention.
               </li>
               <li>
-                <strong className="text-[var(--text)]">Owner key on SilentToken</strong> — unlimited
-                mint risk until ownership is renounced or supply is capped by design.
+                <strong className="text-[var(--text)]">Server-held claim keys</strong> — while claim
+                material lives on the API, a compromised backend can sweep unclaimed funded payments.
+              </li>
+              <li>
+                <strong className="text-[var(--text)]">Owner key on SilentToken</strong> — treat
+                ownership and mint policy as operational risk until renounce/cap is verified for
+                mainnet.
               </li>
               <li>
                 <strong className="text-[var(--text)]">User seed phishing</strong> — no contract can
                 save a user who signs away keys.
               </li>
               <li>
-                <strong className="text-[var(--text)]">Metadata & timing</strong> — always assume a
-                motivated observer can correlate patterns.
+                <strong className="text-[var(--text)]">Metadata & timing</strong> — funding and claim
+                txs on a public chain can be linked by amount, time, and graph analysis.
               </li>
               <li>
-                <strong className="text-[var(--text)]">Demo vs money</strong> — never deposit funds
-                you cannot lose into unaudited demo infrastructure.
+                <strong className="text-[var(--text)]">Testnet vs mainnet</strong> — only risk funds
+                you can lose on testnet; no audited mainnet TVL claim.
               </li>
             </ul>
           </Section>
