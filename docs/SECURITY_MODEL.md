@@ -2,11 +2,14 @@
 
 This document describes the privacy guarantees, limitations, and threat model of the SilentTransfer protocol. It is intended for security researchers, integrators, and users who want to understand exactly what privacy the system provides and what it does not.
 
+> **Live product vs target model:** The sections below describe the **target / protocol** stealth model (ERC-5564-shaped).  
+> For an honest **“what ships today on testnet”** summary (server-assisted one-time addresses + claim), use **[PRIVACY_STATUS.md](./PRIVACY_STATUS.md)**.
+
 ---
 
 ## How Stealth Addresses Work
 
-SilentTransfer implements **ERC-5564** (Stealth Addresses) and **ERC-6538** (Stealth Meta-Address Registry) to enable private token transfers on public blockchains.
+SilentTransfer’s **protocol design** follows **ERC-5564** (Stealth Addresses) and **ERC-6538** (Stealth Meta-Address Registry) to enable private token transfers on public blockchains.
 
 ### Key Generation
 

@@ -2,11 +2,14 @@
 
 **Last updated: July 2026**
 
+**Current live product status (what is private now vs roadmap):**  
+see **[PRIVACY_STATUS.md](./PRIVACY_STATUS.md)** — use that for marketing and support wording.
+
 ---
 
 ## 1. No Guarantee of Complete Anonymity
 
-SilentTransfer implements stealth address technology (ERC-5564 / ERC-6538) to provide **recipient privacy** for token transfers on public blockchains. However, this technology **does not guarantee complete anonymity**. Users should be aware of the following limitations:
+SilentTransfer aims to provide **recipient-oriented privacy** for transfers on public blockchains (one-time destinations; longer-term ERC-5564 / ERC-6538-style stealth). The **live funded path** may still use a trusted API for payment discovery and claim assistance. This technology **does not guarantee complete anonymity**. Users should be aware of the following limitations:
 
 - **Metadata leakage:** Transaction timestamps, gas amounts, calldata patterns, and contract interaction sequences are publicly visible on the blockchain and can be used for statistical analysis.
 - **Timing analysis:** The timing between announcement creation and scanning/withdrawal may reveal links between stealth addresses and their recipients.
