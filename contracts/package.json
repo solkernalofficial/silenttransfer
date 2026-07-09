@@ -1,0 +1,42 @@
+{
+  "name": "silenttransfer-contracts",
+  "version": "1.0.0",
+  "description": "SilentTransfer smart contracts (SILENT token, registry, messenger, paymaster)",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:silent": "hardhat run scripts/deploy-silent.js --network hardhat",
+    "deploy:silent:rh-testnet": "hardhat run scripts/deploy-silent.js --network robinhoodTestnet",
+    "deploy:rh-testnet": "hardhat run scripts/deploy.js --network robinhoodTestnet",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network robinhoodTestnet",
+    "deploy:hoodi": "hardhat run scripts/deploy.js --network hoodiTestnet",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "deploy:rh-mainnet": "hardhat run scripts/deploy.js --network robinhoodMainnet",
+    "wire:apps": "node scripts/wire-apps-from-deployment.js robinhoodTestnet",
+    "wire:apps:sepolia": "node scripts/wire-apps-from-deployment.js sepolia",
+    "wire:apps:hardhat": "node scripts/wire-apps-from-deployment.js hardhat"
+  },
+  "keywords": ["silenttransfer", "silent", "privacy", "stealth"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.2",
+    "@nomicfoundation/hardhat-ethers": "^3.1.3",
+    "@nomicfoundation/hardhat-network-helpers": "^1.1.2",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
+    "@nomicfoundation/hardhat-verify": "^2.1.3",
+    "@openzeppelin/contracts": "^5.6.1",
+    "@openzeppelin/test-helpers": "^0.5.16",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/chai": "^4.3.20",
+    "chai": "^4.5.0",
+    "dotenv": "^17.4.2",
+    "hardhat": "^2.28.6",
+    "hardhat-gas-reporter": "^2.3.0",
+    "solidity-coverage": "^0.8.17",
+    "typescript": "^7.0.2"
+  }
+}

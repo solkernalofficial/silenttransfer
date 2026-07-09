@@ -1,0 +1,131 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# SilentTransfer — public repository ignore rules
+# Never commit secrets, local DBs, build caches, or internal work product.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Secrets & environment ──────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+**/.env
+!**/.env.example
+!/.env.example
+apps/web/.env.local
+contracts/deployments/*.env
+contracts/deployments/*.api.env
+contracts/deployments/*.web.env
+contracts/deployments/*.silent.env
+.private/
+private/
+secrets/
+
+# ── Dependencies ───────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+apps/**/node_modules/
+contracts/node_modules/
+apps/api/venv/
+venv/
+.venv/
+
+# ── Build outputs ──────────────────────────────────────────────────────────
+.next/
+out/
+dist/
+build/
+.turbo/
+coverage/
+*.tsbuildinfo
+apps/web/tsconfig.tsbuildinfo
+
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Databases (local) ──────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+apps/api/dev.db
+database/
+**/dev.db
+
+# ── Hardhat / Solidity ─────────────────────────────────────────────────────
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/coverage/
+coverage.json
+gasReporterOutput.json
+
+# ── Logs & OS ──────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.bak
+*.orig
+.cache/
+.tmp/
+temp/
+
+# ── Docker local ───────────────────────────────────────────────────────────
+.docker/
+
+# ── Internal / non-public work product (keep local only) ───────────────────
+FINAL_STATUS.md
+GAP_ANALYSIS.md
+PRODUCTION_CHECKLIST.md
+report.html
+report*.md
+index (3).html
+c25ebd69*.png
+*.prd.md
+PRD*
+prd/
+reference/
+internal/
+_internal/
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
+# Root-only legacy (do NOT use bare "app.py" — it would ignore apps/**/app.py)
+/app.py
+/frontend/
+/ERC6538Registry.sol
+SMOKE_TEST.md
+
+# ── Session / agent tooling ────────────────────────────────────────────────
+.grok/
+.agents/
+sessions/
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf

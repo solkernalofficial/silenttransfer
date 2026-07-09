@@ -1,0 +1,43 @@
+{
+  "network": "robinhoodTestnet",
+  "chainId": 46630,
+  "deployer": "0x9d41FF3cC91b341113a89e96AF1D75c0aC06B26B",
+  "deployedAt": "2026-07-09T10:54:05.224Z",
+  "product": "SilentTransfer",
+  "contracts": {
+    "registry": "0x4d5aCC956c3D4a576dC6545c8B8975febDc2B125",
+    "messenger": "0x5EA9fA89796fA28dA351E3A187478eC863AFE45C",
+    "oracle": "0x0fA63a04f44a6eFd55406b5901Af6723775a77df",
+    "paymaster": "0x25D8241235f5e71f008605b2E29999978C92AAC0",
+    "silent": "0xE429a44C3572353E3EE6a3c9100FF9BeC74498C4",
+    "silentNote": "Deployed on Robinhood Chain Testnet 46630",
+    "protocolFeeBps": 0,
+    "tokens": [
+      {
+        "symbol": "SILENT",
+        "address": "0xE429a44C3572353E3EE6a3c9100FF9BeC74498C4",
+        "name": "Silent"
+      },
+      {
+        "symbol": "USDG",
+        "address": "0x03592B5E147d7752000723A9AA23fc6c70d968Ce"
+      },
+      {
+        "symbol": "AAPL",
+        "address": "0x702175Be5D1888a054E5545312849464Daf29a24"
+      },
+      {
+        "symbol": "NVDA",
+        "address": "0xFb97026d12bA25e36A3D95fF5E8eF455Df6597fF"
+      },
+      {
+        "symbol": "GOOGL",
+        "address": "0x9A0bFeb84A8b2b849825190c6699280B7e9a4B04"
+      },
+      {
+        "symbol": "MSFT",
+        "address": "0x1548B9503201f6ceC79a3b71caB9432Cf905C1eB"
+      }
+    ]
+  }
+}
