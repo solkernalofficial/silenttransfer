@@ -1,1 +1,1 @@
-# src/services/__init__.py
+"""Domain services for SilentTransfer API."""

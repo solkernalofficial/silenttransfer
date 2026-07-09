@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import os
-import time
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,12 +9,9 @@ from src.models.database import RelayRequest
 from src.schemas.schemas import RelayWithdrawRequest, RelayWithdrawResponse, RelayHistoryResponse
 from src.core.config import settings
 from src.core.deps import CurrentWallet
+from src.services.settlement import execute_settlement
 
 router = APIRouter(prefix="/api/relay", tags=["relay"])
-
-
-def synthetic_tx_hash() -> str:
-    return "0x" + hashlib.sha256(os.urandom(32)).hexdigest()
 
 
 @router.post("/withdraw", response_model=RelayWithdrawResponse)
@@ -30,8 +23,8 @@ async def relay_withdraw(
     """
     Relay a sponsored withdrawal.
 
-    - demo / testnet_simulated: record completion with synthetic receipt
-    - live: requires relayer key + bundler (not yet fully implemented)
+    - demo / testnet_simulated: synthetic receipt
+    - live: real on-chain tx via RELAYER_PRIVATE_KEY + RPC
     """
     owner = req.target_owner.lower()
     if owner != wallet:
@@ -40,67 +33,49 @@ async def relay_withdraw(
             detail="target_owner must match authenticated wallet",
         )
 
-    mode = settings.settlement_mode
-
-    if mode == "live":
-        if not settings.relayer_private_key or not settings.bundler_url:
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "Live settlement requires RELAYER_PRIVATE_KEY and BUNDLER_URL. "
-                    "Set SIMULATE_SETTLEMENT=true for testnet operator mode."
-                ),
-            )
-        raise HTTPException(
-            status_code=501,
-            detail=(
-                "On-chain EntryPoint/bundler execution is not fully implemented. "
-                "Set SIMULATE_SETTLEMENT=true on testnet for workflow settlement receipts."
-            ),
+    try:
+        result = await execute_settlement(
+            stealth_address=req.stealth_address.lower(),
+            target_owner=owner,
+            fee_token=req.fee_token.lower(),
+            amount=req.amount,
         )
-
-    # demo or testnet_simulated
-    gas = 148000 + int(time.time()) % 5000
-    amount_int = int(req.amount) if req.amount.isdigit() else 0
-    bps = max(0, min(int(settings.protocol_fee_bps), 1000))
-    fee_int = (amount_int * bps) // 10000 if amount_int > 0 else 0
-    fee = str(fee_int)
-    txh = synthetic_tx_hash()
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
     relay = RelayRequest(
         stealth_address=req.stealth_address.lower(),
         target_owner=owner,
         fee_token=req.fee_token.lower(),
         amount=req.amount,
-        fee_amount=fee,
-        gas_used=gas,
-        tx_hash=txh,
+        fee_amount=result["fee_amount"],
+        gas_used=result["gas_used"],
+        tx_hash=result["tx_hash"],
         status="completed",
     )
     db.add(relay)
     await db.flush()
 
-    pct = bps / 100
-    env_label = "testnet" if settings.is_testnet else "demo"
     return RelayWithdrawResponse(
         success=True,
-        tx_hash=txh,
-        gas_sponsored=gas,
-        fee_deducted=fee,
-        message=(
-            f"Sponsored settlement recorded ({env_label}, {mode}). "
-            f"Protocol fee {pct:g}% ({fee} units). "
-            f"Private send product fee 0%. "
-            f"Chain {settings.chain_id} ({settings.network_name})."
-        ),
-        mode=mode,
+        tx_hash=result["tx_hash"],
+        gas_sponsored=result["gas_used"],
+        fee_deducted=result["fee_amount"],
+        message=result["message"],
+        mode=result["mode"],
     )
 
 
 @router.get("/history", response_model=list[RelayHistoryResponse])
-async def relay_history(db: AsyncSession = Depends(get_db)):
+async def relay_history(
+    wallet: CurrentWallet,
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
-        select(RelayRequest).order_by(RelayRequest.created_at.desc()).limit(50)
+        select(RelayRequest)
+        .where(RelayRequest.target_owner == wallet)
+        .order_by(RelayRequest.created_at.desc())
+        .limit(50)
     )
     rows = result.scalars().all()
     return [

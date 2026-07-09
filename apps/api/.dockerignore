@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.dev.db
+dev.db
+.env
+.env.*
+!.env.example
+.git
+*.md
+.pytest_cache/
+.mypy_cache/

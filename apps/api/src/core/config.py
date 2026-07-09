@@ -75,11 +75,19 @@ class Settings(BaseSettings):
 
     @property
     def settlement_mode(self) -> str:
+        """
+        demo — synthetic only
+        testnet_simulated — API records claims without chain write
+        live — RELAYER_PRIVATE_KEY + RPC broadcast real testnet txs
+                (full ERC-4337 bundler is optional; BUNDLER_URL not required)
+        """
         if self.is_demo:
             return "demo"
-        if self.simulate_settlement or not (self.relayer_private_key and self.bundler_url):
+        if self.simulate_settlement:
             return "testnet_simulated"
-        return "live"
+        if self.relayer_private_key and self.rpc_url:
+            return "live"
+        return "testnet_simulated"
 
 
 settings = Settings()
