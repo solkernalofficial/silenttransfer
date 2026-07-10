@@ -34,6 +34,7 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
         total_relay_requests=relays_count,
         completed_relays=completed_count,
         total_volume_wei=str(total_vol),
-        privacy_score=0.0,  # Computed by privacy service in production
+        # Placeholder only — UI must not present this as a real 0–100 privacy grade.
+        privacy_score=0.0,
         demo_mode=settings.is_demo,
     )

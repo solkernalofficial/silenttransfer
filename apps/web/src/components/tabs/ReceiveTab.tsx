@@ -254,7 +254,8 @@ export default function ReceiveTab() {
             <div>
               <div className="text-sm font-medium text-[var(--text)]">Spending public key</div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                Enables control of private destinations. Generated automatically when empty.
+                Registration field for discovery. When empty, a <strong>testnet helper</strong>{' '}
+                hex key is derived for API registration — not a full ERC-5564 spend keypair yet.
               </p>
             </div>
           </div>
@@ -265,7 +266,8 @@ export default function ReceiveTab() {
             <div>
               <div className="text-sm font-medium text-[var(--text)]">Viewing public key</div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                Supports payment discovery. Generated automatically when empty.
+                Same helper path for registration. Live private send funds a one-time EOA; full
+                viewing-key-only discovery is on the roadmap.
               </p>
             </div>
           </div>

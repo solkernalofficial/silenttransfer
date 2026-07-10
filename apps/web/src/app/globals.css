@@ -1604,7 +1604,7 @@ body {
     grid-template-columns: 1.2fr 1.4fr;
   }
   .lp-footer-cols {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .lp-footer-bottom {
     flex-direction: row;

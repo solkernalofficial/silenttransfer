@@ -13,7 +13,12 @@ import {
   SILENT_TOTAL_SUPPLY_LABEL,
   SILENT_TOTAL_SUPPLY_SHORT,
   SILENT_VC_PERCENT,
+  SILENT_TEAM_PERCENT,
   SILENT_HARD_CAP_NOTE,
+  SILENT_LAUNCH_NOTE,
+  SILENT_COMMUNITY_PERCENT,
+  SILENT_PROTOCOL_PERCENT,
+  silentAllocationSummary,
 } from '@/lib/tokenomics';
 import AllocationPie from '@/components/AllocationPie';
 import {
@@ -25,21 +30,18 @@ import {
   AlertTriangle,
   Users,
   Building2,
-  Briefcase,
 } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: '$SILENT — SilentTransfer token',
-  description:
-    'SILENT: 1B total supply. 60% community, 35% foundation/protocol (locked), 15% team. No VC.',
+  description: `SILENT: 1B total supply. ${silentAllocationSummary()}. Virtual-style fair launch. No VC.`,
 };
 
 const DECIMALS = 18;
 
 const ICONS = {
   community: Users,
-  foundation: Building2,
-  team: Briefcase,
+  protocol: Building2,
 } as const;
 
 export default function SilentTokenPage() {
@@ -90,7 +92,7 @@ export default function SilentTokenPage() {
             <strong className="text-[var(--text)]">Silent</strong>. Ticker:{' '}
             <strong className="text-[var(--text)]">SILENT</strong>. Total supply{' '}
             <strong className="text-[var(--text)]">{SILENT_TOTAL_SUPPLY_SHORT}</strong>.{' '}
-            <strong className="text-[var(--text)]">No VC allocation.</strong>
+            <strong className="text-[var(--text)]">Community-majority · no VC.</strong>
           </p>
         </div>
 
@@ -100,8 +102,8 @@ export default function SilentTokenPage() {
             <div>
               <strong>Testnet:</strong> {networkName} (chain {chainId}). SILENT contract{' '}
               <span className="font-mono text-xs">{truncAddr(SILENT_ADDRESS)}</span>. Allocation
-              below is the published tokenomics policy. On-chain vesting contracts will be linked
-              when deployed.
+              below is published policy for a Virtual-style fair launch. On-chain distribution
+              mechanics follow the launch venue.
             </div>
           </div>
         )}
@@ -139,9 +141,10 @@ export default function SilentTokenPage() {
         {/* Allocation — pie chart */}
         <section className="rh-card p-6 space-y-6">
           <div>
-            <h2 className="text-lg font-semibold">Allocation (no VC)</h2>
+            <h2 className="text-lg font-semibold">Allocation (Virtual-style)</h2>
             <p className="text-xs text-[var(--text-muted)] mt-1">
-              1B SILENT · Community 60% · Foundation / Protocol 35% (locked) · Team 15% · VC 0%
+              1B SILENT · {silentAllocationSummary()} · VC {SILENT_VC_PERCENT}% · Team pool{' '}
+              {SILENT_TEAM_PERCENT}%
             </p>
           </div>
 
@@ -152,7 +155,7 @@ export default function SilentTokenPage() {
 
             <div className="space-y-3 min-w-0">
               {SILENT_ALLOCATION.map((row) => {
-                const Icon = ICONS[row.id as keyof typeof ICONS] || Coins;
+                const Icon = ICONS[row.id] || Coins;
                 return (
                   <div
                     key={row.id}
@@ -173,9 +176,9 @@ export default function SilentTokenPage() {
                         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between gap-1 sm:gap-2">
                           <div className="text-sm font-semibold text-[var(--text)]">
                             {row.label}
-                            {row.id === 'foundation' ? (
+                            {row.id === 'protocol' ? (
                               <span className="ml-1.5 text-[10px] font-bold uppercase tracking-wide text-sky-800 bg-white/70 px-1.5 py-0.5 rounded">
-                                locked
+                                ops
                               </span>
                             ) : null}
                           </div>
@@ -198,9 +201,9 @@ export default function SilentTokenPage() {
           </div>
 
           <p className="text-[11px] text-[var(--text-faint)] leading-relaxed border-t border-[var(--border)] pt-3">
-            Allocations sum to 100% (60 + 35 + 15). Foundation and protocol holdings are intended
-            for locked operational use and are not venture supply. Team vesting terms will be
-            published when on-chain lock contracts are deployed.
+            Allocations sum to 100% ({SILENT_COMMUNITY_PERCENT} + {SILENT_PROTOCOL_PERCENT}).{' '}
+            {SILENT_LAUNCH_NOTE} Protocol share stays in the 5–10% band for operations—not venture
+            supply.
           </p>
         </section>
 
@@ -210,8 +213,8 @@ export default function SilentTokenPage() {
           </h2>
           <ul className="text-sm text-[var(--text-muted)] space-y-2.5 leading-relaxed list-disc pl-5">
             <li>
-              <strong className="text-[var(--text)]">Supported transfer asset</strong> in private send /
-              claim console (default send asset is ETH; SILENT remains available).
+              <strong className="text-[var(--text)]">Supported transfer asset</strong> in private
+              send / claim console (default send asset is ETH; SILENT remains available).
             </li>
             <li>
               <strong className="text-[var(--text)]">Fees now:</strong> {feePct} product fee (bps=
@@ -225,12 +228,12 @@ export default function SilentTokenPage() {
               Not VC revenue.
             </li>
             <li>
-              <strong className="text-[var(--text)]">Community 60%</strong> for ecosystem / users —
-              not VC.
+              <strong className="text-[var(--text)]">Community {SILENT_COMMUNITY_PERCENT}%</strong>{' '}
+              via fair-launch rails — not VC.
             </li>
             <li>
-              <strong className="text-[var(--text)]">Not claimed:</strong> CEX listings, market price,
-              or yield product.
+              <strong className="text-[var(--text)]">Not claimed:</strong> CEX listings, market
+              price, or yield product.
             </li>
           </ul>
           <p className="text-xs text-[var(--text-faint)] border-t border-[var(--border)] pt-3">
@@ -249,10 +252,17 @@ export default function SilentTokenPage() {
                   ['Name', 'Silent'],
                   ['Ticker', 'SILENT'],
                   ['Hard cap', `${SILENT_TOTAL_SUPPLY_LABEL} (1B) — no mint above`],
-                  ['VC allocation', '0%'],
-                  ['Community', '60% (600M)'],
-                  ['Foundation / Protocol', '35% (350M) — locked for protocol'],
-                  ['Team', '15% (150M)'],
+                  ['Launch style', 'Virtual-style fair launch (community-majority)'],
+                  ['VC allocation', `${SILENT_VC_PERCENT}%`],
+                  ['Team (separate pool)', `${SILENT_TEAM_PERCENT}%`],
+                  [
+                    'Community',
+                    `${SILENT_COMMUNITY_PERCENT}% (${SILENT_ALLOCATION.find((a) => a.id === 'community')?.amountLabel})`,
+                  ],
+                  [
+                    'Protocol',
+                    `${SILENT_PROTOCOL_PERCENT}% (${SILENT_ALLOCATION.find((a) => a.id === 'protocol')?.amountLabel}) — ops`,
+                  ],
                   ['Fees now', '0%'],
                   ['Fees planned', '0.5% gasless → ops + market buyback'],
                   ['Standard', 'ERC-20 (OpenZeppelin)'],
@@ -274,7 +284,10 @@ export default function SilentTokenPage() {
           <h2 className="text-lg font-semibold text-[var(--text)]">Risks</h2>
           <ul className="list-disc pl-5 space-y-1.5">
             <li>Supply hard-capped at 1B — owner cannot mint past cap (contract enforced).</li>
-            <li>Allocation plan ≠ automatic on-chain vesting until those contracts ship.</li>
+            <li>
+              Allocation is product policy; actual Virtual (or other venue) parameters must match
+              at launch.
+            </li>
             <li>0.5% fee is planned policy, not charged until enabled (env / paymaster bps).</li>
             <li>Demo app does not settle mainnet money by itself.</li>
             <li>No audit claim for SilentToken yet.</li>

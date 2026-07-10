@@ -1,17 +1,33 @@
 /**
  * SILENT tokenomics — public allocation policy.
  * Hard cap: 1,000,000,000 SILENT (enforced on-chain; no mint above cap).
- * No venture capital allocation.
  *
- * Foundation/team vesting schedules will be published when lock contracts deploy.
+ * Launch model: Virtual (and similar fair-launch) style —
+ * majority community supply, small protocol share for ops. No VC. No separate team pool.
  */
 
 export const SILENT_TOTAL_SUPPLY = 1_000_000_000;
 export const SILENT_TOTAL_SUPPLY_LABEL = '1,000,000,000';
 export const SILENT_TOTAL_SUPPLY_SHORT = '1B';
 
+/** Protocol / operations share (5–10% band). Rest is community. */
+export const SILENT_PROTOCOL_PERCENT = 10;
+export const SILENT_COMMUNITY_PERCENT = 100 - SILENT_PROTOCOL_PERCENT;
+
+export const SILENT_VC_PERCENT = 0;
+export const SILENT_TEAM_PERCENT = 0;
+
+export const SILENT_HARD_CAP = true;
+export const SILENT_HARD_CAP_NOTE =
+  'Maximum supply is hard-capped at 1,000,000,000 SILENT on-chain. Minting above the cap is not permitted.';
+
+export const SILENT_LAUNCH_NOTE =
+  'Intended Virtual-style fair launch: community-majority supply with a small protocol share for operations. No venture allocation and no separate team pool.';
+
+export type SilentAllocationId = 'community' | 'protocol';
+
 export type SilentAllocationSlice = {
-  id: 'community' | 'foundation' | 'team';
+  id: SilentAllocationId;
   label: string;
   percent: number;
   amount: number;
@@ -22,50 +38,48 @@ export type SilentAllocationSlice = {
   border: string;
 };
 
+export function silentAmountFromPercent(percent: number): number {
+  return (SILENT_TOTAL_SUPPLY * percent) / 100;
+}
+
+function amountLabelFromPercent(percent: number): string {
+  return silentAmountFromPercent(percent).toLocaleString('en-US');
+}
+
 export const SILENT_ALLOCATION: SilentAllocationSlice[] = [
   {
     id: 'community',
     label: 'Community',
-    percent: 60,
-    amount: 600_000_000,
-    amountLabel: '600,000,000',
-    lock: 'Reserved for ecosystem programs, contributors, and end-user distribution under published policies.',
+    percent: SILENT_COMMUNITY_PERCENT,
+    amount: silentAmountFromPercent(SILENT_COMMUNITY_PERCENT),
+    amountLabel: amountLabelFromPercent(SILENT_COMMUNITY_PERCENT),
+    lock: 'Public / community supply via fair-launch rails (e.g. Virtual). Ecosystem, users, and open-market float—not a VC pool.',
     color: '#059669',
     soft: '#ecfdf5',
     border: '#a7f3d0',
   },
   {
-    id: 'foundation',
-    label: 'Foundation / Protocol',
-    percent: 35,
-    amount: 350_000_000,
-    amountLabel: '350,000,000',
-    lock: 'Reserved for foundation and protocol operations. Intended lock period applies; not available as venture supply.',
+    id: 'protocol',
+    label: 'Protocol',
+    percent: SILENT_PROTOCOL_PERCENT,
+    amount: silentAmountFromPercent(SILENT_PROTOCOL_PERCENT),
+    amountLabel: amountLabelFromPercent(SILENT_PROTOCOL_PERCENT),
+    lock: 'Small protocol share for ops, infra, and continuity. Not venture supply. Within the 5–10% protocol band.',
     color: '#0284c7',
     soft: '#f0f9ff',
     border: '#7dd3fc',
   },
-  {
-    id: 'team',
-    label: 'Team',
-    percent: 15,
-    amount: 150_000_000,
-    amountLabel: '150,000,000',
-    lock: 'Team allocation subject to a published vesting schedule. Not unrestricted day-one float.',
-    color: '#7c3aed',
-    soft: '#f5f3ff',
-    border: '#c4b5fd',
-  },
 ];
 
-export const SILENT_VC_PERCENT = 0;
+/** Human-readable one-liner for marketing pages. */
+export function silentAllocationSummary(): string {
+  return SILENT_ALLOCATION.map((a) => `${a.label} ${a.percent}%`).join(' · ');
+}
 
-export const SILENT_HARD_CAP = true;
-export const SILENT_HARD_CAP_NOTE =
-  'Maximum supply is hard-capped at 1,000,000,000 SILENT on-chain. Minting above the cap is not permitted.';
-
-export function silentAmountFromPercent(percent: number): number {
-  return (SILENT_TOTAL_SUPPLY * percent) / 100;
+/** True when slice percents sum to 100. */
+export function silentAllocationIsBalanced(): boolean {
+  const sum = SILENT_ALLOCATION.reduce((n, a) => n + a.percent, 0);
+  return Math.abs(sum - 100) < 1e-9;
 }
 
 export function pieSlicePath(

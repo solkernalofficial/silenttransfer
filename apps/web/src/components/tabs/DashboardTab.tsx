@@ -57,37 +57,26 @@ function weiToEth(wei: string | number | undefined): number {
   return n / 1e18;
 }
 
-function PrivacyGauge({ score }: { score: number }) {
-  const r = 48;
-  const circumference = 2 * Math.PI * r;
-  const offset = circumference - (score / 100) * circumference;
-  const color = score >= 80 ? '#15803d' : score >= 50 ? '#eab308' : '#ef4444';
-
+/** Honest privacy status — not a computed score (API score is a placeholder). */
+function PrivacyStatusCard() {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <svg width="120" height="120" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r={r} fill="none" stroke="#d4e0d6" strokeWidth="8" />
-        <circle
-          cx="60"
-          cy="60"
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform="rotate(-90 60 60)"
-          style={{ transition: 'stroke-dashoffset 1s ease' }}
-        />
-        <text x="60" y="48" textAnchor="middle" fill="#18181b" fontSize="24" fontWeight="bold" fontFamily="JetBrains Mono, monospace">
-          {score}
-        </text>
-        <text x="60" y="66" textAnchor="middle" fill="#71717a" fontSize="10" fontFamily="JetBrains Mono, monospace">
-          /100
-        </text>
-      </svg>
-      <span className="text-xs text-[var(--text-muted)]">Privacy Score</span>
+    <div className="flex flex-col items-center justify-center text-center gap-3 px-2">
+      <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+        <Shield className="w-8 h-8 text-emerald-700" />
+      </div>
+      <div>
+        <div className="text-sm font-semibold text-[var(--text)]">Partial privacy</div>
+        <p className="text-[11px] text-[var(--text-muted)] mt-1.5 leading-relaxed max-w-[14rem]">
+          One-time destinations reduce casual A→B linkage. Not full anonymity — metadata, timing,
+          and the API operator can still link activity. See docs.
+        </p>
+      </div>
+      <a
+        href="/docs#privacy"
+        className="text-[11px] font-semibold text-emerald-700 hover:underline"
+      >
+        Privacy limits →
+      </a>
     </div>
   );
 }
@@ -106,7 +95,6 @@ export default function DashboardTab() {
 
   const s = stats ?? EMPTY_STATS;
   const recentTxs = (announcements || []).slice(0, 5);
-  const privacyScore = Number.isFinite(s.privacy_score) ? Math.round(s.privacy_score) : 0;
 
   const go = (tab: string) => router.push(`/dashboard?tab=${tab}`, { scroll: false });
 
@@ -210,7 +198,7 @@ export default function DashboardTab() {
         {/* Transaction flow */}
         <div className="lg:col-span-2 rh-card p-5">
           <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-4">Transaction Flow</h3>
-          <svg viewBox="0 0 580 100" className="w-full max-w-full h-auto" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+          <svg viewBox="0 0 580 175" className="w-full max-w-full h-auto" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
             {/* Alice */}
             <rect x="10" y="25" width="70" height="40" rx="6" fill="#dcfce7" stroke="#15803d" strokeWidth="1.5" />
             <text x="45" y="50" textAnchor="middle" fill="#15803d" fontSize="11" fontWeight="bold">Alice</text>
@@ -258,16 +246,9 @@ export default function DashboardTab() {
           </div>
         </div>
 
-        {/* Privacy gauge */}
+        {/* Honest privacy status (not a fake 0–100 score) */}
         <div className="rh-card p-5 flex flex-col items-center justify-center">
-          <PrivacyGauge score={privacyScore} />
-          <div className="mt-3 text-[10px] text-[var(--text-muted)] text-center leading-relaxed">
-            <div className="flex items-center justify-center gap-1 text-emerald-700 text-xs">
-              <Shield className="w-3 h-3" />{' '}
-              {privacyScore >= 80 ? 'Strong Privacy' : privacyScore >= 50 ? 'Moderate Privacy' : 'Building Privacy'}
-            </div>
-            Stealth addresses mask on-chain links
-          </div>
+          <PrivacyStatusCard />
         </div>
       </div>
 

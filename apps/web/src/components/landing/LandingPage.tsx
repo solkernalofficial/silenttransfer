@@ -9,6 +9,8 @@ import { protocolFeePercentLabel, plannedFeePercentLabel, FEE_COPY } from '@/lib
 import {
   SILENT_TOTAL_SUPPLY_SHORT,
   SILENT_ALLOCATION,
+  SILENT_LAUNCH_NOTE,
+  silentAllocationSummary,
 } from '@/lib/tokenomics';
 import AllocationPie from '@/components/AllocationPie';
 import {
@@ -45,7 +47,7 @@ const FEATURES = [
     icon: EyeOff,
     image: '/brand/feature-stealth.jpg',
     title: 'One-time destinations',
-    body: 'Every payment lands on a fresh address. No reused deposit link. No public trail tying sender and recipient together.',
+    body: 'Every payment lands on a fresh address—not a reused deposit link. Weaker public A→B link than a plain send; not full unlinkability on a public chain.',
   },
   {
     icon: Lock,
@@ -159,7 +161,7 @@ const FAQS = [
   },
   {
     q: 'What is $SILENT?',
-    a: 'SILENT is the protocol asset—hard-capped at 1B, with 0% venture allocation. Fees are 0% today; a planned sponsored-claim fee funds operations and open-market buybacks.',
+    a: 'SILENT is the protocol asset—hard-capped at 1B. Virtual-style split: majority community, small protocol share, 0% VC / separate team pool. Fees are 0% today; a planned sponsored-claim fee funds ops and open-market buybacks.',
   },
   {
     q: 'Who is this for?',
@@ -555,10 +557,11 @@ export default function LandingPage() {
         <div className="lp-container">
           <div className="lp-section-head">
             <p className="lp-kicker">Protocol asset</p>
-            <h2 className="lp-h2">$SILENT — hard-capped. Zero VC.</h2>
+            <h2 className="lp-h2">$SILENT — hard-capped. Community-majority.</h2>
             <p className="lp-section-lead">
-              Maximum supply of <strong>{SILENT_TOTAL_SUPPLY_SHORT}</strong>. Community 60% ·
-              Foundation 35% · Team 15% · Venture capital <strong>0%</strong>.
+              Maximum supply of <strong>{SILENT_TOTAL_SUPPLY_SHORT}</strong>.{' '}
+              {silentAllocationSummary()} · Venture capital <strong>0%</strong> · separate team pool{' '}
+              <strong>0%</strong>. Virtual-style fair launch.
             </p>
           </div>
 
@@ -566,7 +569,7 @@ export default function LandingPage() {
             <div className="lp-silent-card">
               <div className="lp-silent-label">Name / ticker</div>
               <div className="lp-silent-value">Silent · SILENT</div>
-              <p className="lp-silent-hint">No KYC · zero VC allocation</p>
+              <p className="lp-silent-hint">No KYC · zero VC · community-majority</p>
             </div>
             <div className="lp-silent-card">
               <div className="lp-silent-label">Hard-capped supply</div>
@@ -605,11 +608,14 @@ export default function LandingPage() {
                   </span>
                 </div>
               ))}
-              <div className="lp-alloc-vc">Venture allocation: 0%</div>
+              <div className="lp-alloc-vc">VC + separate team pool: 0%</div>
             </div>
           </div>
 
           <div className="lp-silent-note">
+            <p>
+              <strong>Launch:</strong> {SILENT_LAUNCH_NOTE}
+            </p>
             <p>
               <strong>Hard cap:</strong> Maximum supply is 1B SILENT. The contract does not permit
               minting above the cap.
@@ -780,6 +786,23 @@ export default function LandingPage() {
               <div className="lp-footer-h">Company</div>
               <a href="#why">Why SilentTransfer</a>
               <Link href="/dashboard?tab=settings">Settings</Link>
+            </div>
+            <div>
+              <div className="lp-footer-h">Community</div>
+              <a
+                href="https://github.com/SilentTransfer"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://x.com/silenttransfer"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                X
+              </a>
             </div>
           </div>
         </div>

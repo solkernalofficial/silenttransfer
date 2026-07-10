@@ -30,7 +30,6 @@ export default function AnalyticsTab() {
   });
 
   const s = stats;
-  const privacyScore = s ? Math.round(s.privacy_score) : 0;
   const stealth = s?.total_stealth_addresses ?? 0;
   const relays = s?.completed_relays ?? 0;
   const demo = s?.demo_mode ?? true;
@@ -41,13 +40,11 @@ export default function AnalyticsTab() {
         <div className="rh-card p-5">
           <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-3">
             <Shield className="w-4 h-4 text-[var(--accent)]" />
-            <span>Privacy score</span>
+            <span>Privacy model</span>
           </div>
-          <div className="text-2xl font-mono font-bold text-[var(--accent)]">
-            {privacyScore}/100
-          </div>
+          <div className="text-2xl font-mono font-bold text-[var(--accent)]">Partial</div>
           <div className="text-[10px] text-[var(--text-muted)] mt-1">
-            Based on environment activity metrics
+            Not a 0–100 score — one-time destinations, not full anonymity
           </div>
         </div>
         <div className="rh-card p-5">
@@ -80,9 +77,9 @@ export default function AnalyticsTab() {
           <div className="h-48 flex items-center justify-center">
             <div className="text-center">
               <BarChart3 className="w-10 h-10 text-[var(--text-faint)] mx-auto mb-2" />
-              <div className="text-xs text-[var(--text-muted)]">Visualization pending</div>
+              <div className="text-xs text-[var(--text-muted)]">Charts not connected</div>
               <div className="text-[10px] text-[var(--text-faint)] mt-1">
-                Chart series will connect to live metrics when available
+                No synthetic chart data — series will appear when live metrics ship
               </div>
             </div>
           </div>
@@ -95,9 +92,9 @@ export default function AnalyticsTab() {
           <div className="h-48 flex items-center justify-center">
             <div className="text-center">
               <BarChart3 className="w-10 h-10 text-[var(--text-faint)] mx-auto mb-2" />
-              <div className="text-xs text-[var(--text-muted)]">Visualization pending</div>
+              <div className="text-xs text-[var(--text-muted)]">Charts not connected</div>
               <div className="text-[10px] text-[var(--text-faint)] mt-1">
-                Token volume series not connected in this environment
+                Token volume series not wired — no placeholder numbers
               </div>
             </div>
           </div>

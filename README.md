@@ -8,6 +8,7 @@ SilentTransfer provides a professional console and API for private receive, priv
 |--|--|
 | Product | [SilentTransfer](https://silenttransfer.com) |
 | Organization | [github.com/SilentTransfer](https://github.com/SilentTransfer) |
+| X | [x.com/silenttransfer](https://x.com/silenttransfer) |
 | Protocol asset | SILENT (1B hard cap, 0% VC allocation) |
 | Primary network (current) | Robinhood Chain Testnet (`46630`) |
 | Live console | [silenttransfer.com](https://silenttransfer.com) · [Docs](https://silenttransfer.com/docs) |
@@ -121,11 +122,13 @@ Do not push if the script reports failures.
 
 ## Tokenomics (summary)
 
+Virtual-style fair launch (community-majority):
+
 | Allocation | Share |
 |------------|-------|
-| Community | 60% |
-| Foundation / Protocol (locked policy) | 35% |
-| Team (vesting policy) | 15% |
+| Community | **90%** |
+| Protocol (ops) | **10%** |
+| Team (separate pool) | **0%** |
 | Venture capital | **0%** |
 
 Hard cap: **1B SILENT** (contract-enforced). Fees currently **0%**; planned sponsored-claim fee **0.5%** for protocol operations and open-market buybacks.

@@ -4,6 +4,8 @@ import {
   SILENT_ALLOCATION,
   SILENT_TOTAL_SUPPLY_SHORT,
   SILENT_VC_PERCENT,
+  SILENT_TEAM_PERCENT,
+  silentAllocationSummary,
   allocationPieSlices,
   pieSlicePath,
 } from '@/lib/tokenomics';
@@ -17,7 +19,7 @@ type Props = {
 };
 
 /**
- * Colored donut pie for SILENT allocation (Community / Foundation / Team).
+ * Colored donut pie for SILENT allocation (Community / Protocol).
  */
 export default function AllocationPie({
   size = 220,
@@ -37,7 +39,7 @@ export default function AllocationPie({
         height={size}
         viewBox="0 0 200 200"
         role="img"
-        aria-label="SILENT allocation pie chart: Community 60%, Foundation 35%, Team 15%"
+        aria-label={`SILENT allocation pie chart: ${silentAllocationSummary()}`}
         className="drop-shadow-sm"
       >
         {/* Soft plate */}
@@ -86,10 +88,7 @@ export default function AllocationPie({
       {/* Legend */}
       <ul className="w-full max-w-sm space-y-2.5">
         {SILENT_ALLOCATION.map((row) => (
-          <li
-            key={row.id}
-            className="flex items-center gap-3 text-sm"
-          >
+          <li key={row.id} className="flex items-center gap-3 text-sm">
             <span
               className="w-3.5 h-3.5 rounded-full shrink-0 ring-2 ring-white shadow-sm"
               style={{ backgroundColor: row.color }}
@@ -103,8 +102,10 @@ export default function AllocationPie({
         ))}
         <li className="flex items-center gap-3 text-sm pt-1 border-t border-[var(--border)]">
           <span className="w-3.5 h-3.5 rounded-full shrink-0 bg-slate-200 ring-2 ring-white" />
-          <span className="flex-1 text-[var(--text-muted)] font-medium">VC</span>
-          <span className="font-mono font-bold text-emerald-700 tabular-nums">0%</span>
+          <span className="flex-1 text-[var(--text-muted)] font-medium">VC / Team</span>
+          <span className="font-mono font-bold text-emerald-700 tabular-nums">
+            {SILENT_VC_PERCENT + SILENT_TEAM_PERCENT}%
+          </span>
         </li>
       </ul>
     </div>

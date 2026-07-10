@@ -15,9 +15,7 @@ export default function SettingsTab() {
   );
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<'idle' | 'success' | 'error'>('idle');
-  const [privacyMode, setPrivacyMode] = useState(true);
-  const [gaslessRelay, setGaslessRelay] = useState(true);
-  const [autoScan, setAutoScan] = useState(false);
+
 
   const environment =
     typeof process !== 'undefined'
@@ -198,65 +196,64 @@ export default function SettingsTab() {
         </div>
       </div>
 
-      {/* Privacy toggles */}
+      {/* Planned preferences — not wired to backend yet (honest UI) */}
       <div className="rh-card p-6">
-        <h2 className="text-sm font-semibold text-[var(--text)] mb-4 flex items-center gap-2">
-          <ToggleLeft className="w-4 h-4 text-[var(--accent)]" /> Privacy Settings
+        <h2 className="text-sm font-semibold text-[var(--text)] mb-1 flex items-center gap-2">
+          <ToggleLeft className="w-4 h-4 text-[var(--accent)]" /> Privacy preferences
         </h2>
+        <p className="text-[11px] text-[var(--text-muted)] mb-4 leading-relaxed">
+          These controls are planned. They do not change chain or API behavior yet — private send
+          already uses one-time destinations; gasless paymaster remains staged.
+        </p>
         <div className="space-y-4">
           {[
             {
               id: 'privacy-mode',
-              label: 'Stealth Privacy Mode',
-              desc: 'Route all transactions through stealth addresses by default',
-              checked: privacyMode,
-              onChange: setPrivacyMode,
+              label: 'Default one-time destinations',
+              desc: 'Always fund a fresh address on private send (live path already does this)',
             },
             {
               id: 'gasless-relay',
-              label: 'Gasless Relay',
-              desc: 'Use SilentPaymaster to sponsor gas fees automatically',
-              checked: gaslessRelay,
-              onChange: setGaslessRelay,
+              label: 'Gasless claim (paymaster)',
+              desc: 'ERC-4337 SilentPaymaster sponsorship — not enabled on testnet claim path yet',
             },
             {
               id: 'auto-scan',
-              label: 'Auto-Scan for Announcements',
-              desc: 'Periodically scan the chain for incoming stealth payments',
-              checked: autoScan,
-              onChange: setAutoScan,
+              label: 'Auto-scan for payments',
+              desc: 'Background discovery of announcements for your wallet',
             },
           ].map((s) => (
             <div
               key={s.id}
-              className="flex items-center justify-between py-3 border-b border-[var(--border)]/80 last:border-0"
+              className="flex items-center justify-between py-3 border-b border-[var(--border)]/80 last:border-0 opacity-80"
             >
-              <div>
-                <div className="text-sm text-[var(--text)]">{s.label}</div>
+              <div className="pr-3">
+                <div className="text-sm text-[var(--text)] flex items-center gap-2 flex-wrap">
+                  {s.label}
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                    Coming soon
+                  </span>
+                </div>
                 <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{s.desc}</div>
               </div>
               <button
-                onClick={() => s.onChange(!s.checked)}
-                className={`relative w-10 h-5 rounded-full transition-colors ${
-                  s.checked ? 'bg-[var(--accent)] shadow-sm shadow-green-900/20' : 'bg-slate-300'
-                }`}
+                type="button"
+                disabled
+                aria-disabled="true"
+                title="Not available yet"
+                className="relative w-10 h-5 rounded-full bg-slate-200 cursor-not-allowed shrink-0"
               >
-                <div
-                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-                    s.checked ? 'translate-x-5' : 'translate-x-0.5'
-                  }`}
-                />
+                <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white translate-x-0.5 shadow-sm" />
               </button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Demo badge */}
       {demoMode && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-xs text-yellow-800">
           <AlertCircle className="w-4 h-4 text-yellow-600 shrink-0" />
-          Running in demo mode. Some settings changes will not persist across page reloads.
+          Running in demo mode. Operator profiles and synthetic settlement may apply.
         </div>
       )}
     </div>
