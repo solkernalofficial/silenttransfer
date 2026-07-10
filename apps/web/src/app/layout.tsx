@@ -20,18 +20,19 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || 'https://silenttransfer.com'
   ),
   title: {
-    default: 'SilentTransfer — Private transfer infrastructure',
+    default: 'SilentTransfer — Send crypto privately without KYC',
     template: '%s · SilentTransfer',
   },
   description:
-    'SilentTransfer enables private transfers with one-time destinations. No KYC. Protocol asset: SILENT (hard-capped).',
+    'Private transfers on public blockchains. One-time destinations, recipient claim, no identity gates. Protocol asset: SILENT (1B hard cap).',
   icons: {
     icon: '/brand/logo.svg',
     apple: '/brand/logo.svg',
   },
   openGraph: {
-    title: 'SilentTransfer',
-    description: 'Private value transfer infrastructure for public blockchains.',
+    title: 'SilentTransfer — Private transfers without KYC',
+    description:
+      'One-time destinations and recipient claim on public chains. No identity gates. Protocol asset: SILENT.',
     images: [{ url: '/brand/hero-bg.jpg', width: 1280, height: 720 }],
   },
 };

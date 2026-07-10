@@ -20,89 +20,150 @@ import {
   Network,
   ScanSearch,
   ChevronRight,
+  ChevronDown,
   Menu,
   X,
   CheckCircle2,
-  Building2,
   BookOpen,
-  Coins,
   ExternalLink,
+  Wallet,
+  Send,
+  Inbox,
+  AlertTriangle,
 } from 'lucide-react';
 
 const NAV = [
-  { label: 'Platform', href: '#platform' },
+  { label: 'Product', href: '#product' },
   { label: 'How it works', href: '#how' },
-  { label: 'Docs', href: DOCS_URL, external: DOCS_URL.startsWith('http') },
-  { label: '$SILENT', href: SILENT_PAGE_URL },
   { label: 'Security', href: '#security' },
+  { label: '$SILENT', href: SILENT_PAGE_URL },
 ];
 
 const FEATURES = [
   {
     icon: EyeOff,
     image: '/brand/feature-stealth.jpg',
-    title: 'Stealth destinations',
-    body: 'One-time payment addresses designed to reduce the public link between sender, recipient, and transfer history.',
+    title: 'One-time destinations',
+    body: 'Every payment lands on a fresh address. No reused deposit link. No public trail tying sender and recipient together.',
   },
   {
     icon: Lock,
     image: '/brand/feature-enterprise.jpg',
-    title: 'Identity-optional by design',
-    body: 'No KYC requirement and no identity oracle in the product path. Private transfer without identity gates.',
-  },
-  {
-    icon: Zap,
-    image: '/brand/feature-gasless.jpg',
-    title: 'On-chain claim path',
-    body: 'Recipients claim into their wallet. On testnet, funded private sends can sweep real ETH from the one-time address. Full ERC-4337 gasless paymaster remains staged.',
-  },
-  {
-    icon: Network,
-    image: '/brand/feature-standards.jpg',
-    title: 'Standards-aligned design',
-    body: 'Architecture aligned with ERC-6538 registry and ERC-5564 announcement patterns. Live path is privacy-oriented; full viewing-key-only stealth is roadmap.',
+    title: 'No KYC in the path',
+    body: 'Connect a wallet and move. SilentTransfer never asks for identity and never routes payments through a compliance gate.',
   },
   {
     icon: ScanSearch,
     image: '/brand/feature-discovery.jpg',
-    title: 'Private discovery',
-    body: 'Recipients locate payments intended for them without a reused public deposit address as the funding destination.',
+    title: 'Private payment discovery',
+    body: 'Recipients scan for payments meant for them—without broadcasting a permanent public deposit address.',
+  },
+  {
+    icon: Zap,
+    image: '/brand/feature-gasless.jpg',
+    title: 'Claim into your wallet',
+    body: 'Funds sit at a one-time address until the recipient claims. On testnet, private send moves real ETH on-chain.',
+  },
+  {
+    icon: Network,
+    image: '/brand/feature-standards.jpg',
+    title: 'Standards-aligned',
+    body: 'Built around ERC-6538 registry and ERC-5564 announcement patterns—so privacy infrastructure stays interoperable.',
   },
   {
     icon: Shield,
-    image: '/brand/feature-stealth.jpg',
-    title: 'Operations console',
-    body: 'Connect wallet, send privately, scan, claim, and review history from one console. Honest docs on what is and is not private.',
+    image: '/brand/feature-compliance.jpg',
+    title: 'One operations console',
+    body: 'Send, scan, claim, and review history in a single console. Docs spell out what is private today—and what is not.',
   },
 ];
 
 const STEPS = [
   {
     step: '01',
+    icon: Wallet,
     image: '/brand/feature-enterprise.jpg',
-    title: 'Connect wallet',
-    body: 'Connect MetaMask or WalletConnect on Robinhood Chain Testnet and sign in with SIWE.',
+    title: 'Connect your wallet',
+    body: 'Open the console, connect MetaMask or WalletConnect, and sign in with SIWE. No account form. No identity upload.',
   },
   {
     step: '02',
+    icon: Send,
     image: '/brand/feature-stealth.jpg',
-    title: 'Private transfer (real funds)',
-    body: 'Sender enters recipient + amount. Wallet funds a one-time address on-chain (default asset: ETH), then the payment is announced for the recipient.',
+    title: 'Send to a one-time address',
+    body: 'Enter the recipient and amount. SilentTransfer funds a fresh destination on-chain and announces the payment for claim.',
   },
   {
     step: '03',
+    icon: Inbox,
     image: '/brand/feature-discovery.jpg',
     title: 'Discover and claim',
-    body: 'Recipient scans for payments and claims into their wallet. Partial privacy: better than a direct public A→B send, not full anonymity.',
+    body: 'The recipient scans for payments and claims into their wallet. Cleaner than a direct public send—documented as partial privacy, not full anonymity.',
+  },
+];
+
+const PROBLEMS = [
+  {
+    title: 'Public chains leak intent',
+    body: 'A direct A→B transfer is forever readable. Counterparties, amounts, and patterns sit on a public ledger anyone can query.',
+  },
+  {
+    title: 'Reused addresses create history',
+    body: 'Every payment to the same wallet builds a permanent profile. Recipients who share one deposit link give up privacy by default.',
+  },
+  {
+    title: 'Identity should not be the product',
+    body: 'Most “private” rails bolt on KYC or custody. SilentTransfer is built for transfers first—identity optional, never required.',
   },
 ];
 
 const STATS = [
-  { value: '0', label: 'KYC required' },
-  { value: '4', label: 'Core workflow steps' },
-  { value: 'SILENT', label: 'Protocol asset' },
-  { value: '1B', label: 'Hard-capped supply' },
+  { value: '0', label: 'KYC steps' },
+  { value: '1', label: 'Primary CTA: open console' },
+  { value: '1B', label: 'SILENT hard cap' },
+  { value: '0%', label: 'Venture allocation' },
 ];
+
+const FAQS = [
+  {
+    q: 'Is this full anonymity?',
+    a: 'No. SilentTransfer improves unlinkability with one-time destinations and recipient claim. On public chains, metadata and timing can still leak. We document limits instead of overselling privacy.',
+  },
+  {
+    q: 'Is private send live?',
+    a: 'Yes on Robinhood Chain Testnet: funded private sends can move real ETH to a one-time address and claim on-chain. Mainnet production remains staged.',
+  },
+  {
+    q: 'Do I need KYC?',
+    a: 'No. The product path does not collect identity or route through a compliance oracle. You remain responsible for local law.',
+  },
+  {
+    q: 'What is $SILENT?',
+    a: 'SILENT is the protocol asset—hard-capped at 1B, with 0% venture allocation. Fees are 0% today; a planned sponsored-claim fee funds operations and open-market buybacks.',
+  },
+  {
+    q: 'Who is this for?',
+    a: 'Teams and individuals who need private receive and transfer on public rails without identity gates—operators, builders, and privacy-conscious payers.',
+  },
+];
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`lp-faq-item ${open ? 'lp-faq-item--open' : ''}`}>
+      <button
+        type="button"
+        className="lp-faq-q"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>{q}</span>
+        <ChevronDown className="lp-faq-chevron" aria-hidden />
+      </button>
+      {open && <p className="lp-faq-a">{a}</p>}
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
@@ -111,38 +172,32 @@ export default function LandingPage() {
   const plannedPct = plannedFeePercentLabel();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   const NavItem = ({
     label,
     href,
-    external,
     onClick,
     className = 'lp-nav-link',
   }: {
     label: string;
     href: string;
-    external?: boolean;
     onClick?: () => void;
     className?: string;
   }) => {
-    if (external) {
-      return (
-        <a
-          href={href}
-          className={className}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={onClick}
-        >
-          {label}
-        </a>
-      );
-    }
     if (href.startsWith('#')) {
       return (
         <a href={href} className={className} onClick={onClick}>
@@ -157,11 +212,13 @@ export default function LandingPage() {
     );
   };
 
+  const closeMobile = () => setMobileOpen(false);
+
   return (
     <div className="lp">
-      <header className={`lp-nav ${scrolled ? 'lp-nav--solid' : ''}`}>
+      <header className={`lp-nav ${scrolled ? 'lp-nav--solid' : ''} ${mobileOpen ? 'lp-nav--open' : ''}`}>
         <div className="lp-container lp-nav-inner">
-          <BrandLogo size={40} subtitle="Privacy" href="/" />
+          <BrandLogo size={36} subtitle="" href="/" className="lp-brand--nav" />
 
           <nav className="lp-nav-links" aria-label="Primary">
             {NAV.map((item) => (
@@ -172,7 +229,7 @@ export default function LandingPage() {
           <div className="lp-nav-actions">
             <a
               href={DOCS_URL}
-              className="lp-btn lp-btn--ghost lp-btn--sm hidden sm:inline-flex"
+              className="lp-btn lp-btn--ghost lp-btn--sm lp-nav-docs"
               {...(DOCS_URL.startsWith('http')
                 ? { target: '_blank', rel: 'noopener noreferrer' }
                 : {})}
@@ -187,7 +244,8 @@ export default function LandingPage() {
             <button
               type="button"
               className="lp-menu-btn"
-              aria-label="Toggle menu"
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((v) => !v)}
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -196,27 +254,40 @@ export default function LandingPage() {
         </div>
 
         {mobileOpen && (
-          <div className="lp-mobile">
-            {NAV.map((item) => (
-              <NavItem
-                key={item.label}
-                {...item}
+          <div className="lp-mobile" role="dialog" aria-label="Mobile navigation">
+            <nav className="lp-mobile-nav" aria-label="Mobile primary">
+              {NAV.map((item) => (
+                <NavItem
+                  key={item.label}
+                  {...item}
+                  className="lp-mobile-link"
+                  onClick={closeMobile}
+                />
+              ))}
+              <a
+                href={DOCS_URL}
                 className="lp-mobile-link"
-                onClick={() => setMobileOpen(false)}
-              />
-            ))}
+                onClick={closeMobile}
+                {...(DOCS_URL.startsWith('http')
+                  ? { target: '_blank', rel: 'noopener noreferrer' }
+                  : {})}
+              >
+                Documentation
+              </a>
+            </nav>
             <Link
               href="/dashboard"
               className="lp-btn lp-btn--primary lp-btn--block"
-              onClick={() => setMobileOpen(false)}
+              onClick={closeMobile}
             >
               Launch app
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         )}
       </header>
 
-      {/* Hero */}
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="lp-hero">
         <div className="lp-hero-media" aria-hidden>
           <Image
@@ -233,66 +304,66 @@ export default function LandingPage() {
           <div className="lp-hero-copy">
             <div className="lp-eyebrow">
               <span className="lp-dot" />
-              Institutional private transfer infrastructure
+              Private transfer · public chains
             </div>
             <h1 className="lp-h1">
-              Private value transfer
-              <span className="lp-h1-accent"> without identity gates</span>
+              Send crypto privately
+              <span className="lp-h1-accent"> without KYC</span>
             </h1>
             <p className="lp-lead">
-              SilentTransfer enables private transfers using one-time destinations and recipient
-              claim—without KYC. On testnet, send is real on-chain ETH to a fresh address. Privacy is
-              partial (not full anonymity). Protocol asset: <strong>$SILENT</strong>, hard-capped at
-              1B.
+              SilentTransfer turns public blockchains into private payment rails.
+              One-time destinations. Recipient claim. No identity gates.
+              Open the console and move value today on testnet.
             </p>
             <div className="lp-hero-cta">
               <Link href="/dashboard" className="lp-btn lp-btn--primary lp-btn--lg">
                 Open console
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href={SILENT_PAGE_URL} className="lp-btn lp-btn--secondary lp-btn--lg">
-                <Coins className="w-4 h-4" />
-                $SILENT
-              </Link>
+              <a
+                href="#how"
+                className="lp-btn lp-btn--secondary lp-btn--lg"
+              >
+                See how it works
+              </a>
             </div>
             <div className="lp-trust-row">
               <span className="lp-trust-item">
-                <CheckCircle2 className="w-3.5 h-3.5" /> No KYC
+                <CheckCircle2 className="w-3.5 h-3.5" /> No KYC required
               </span>
               <span className="lp-trust-item">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Hard-capped supply
+                <CheckCircle2 className="w-3.5 h-3.5" /> One-time addresses
               </span>
               <span className="lp-trust-item">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Documented limitations
+                <CheckCircle2 className="w-3.5 h-3.5" /> Honest privacy docs
               </span>
             </div>
           </div>
 
           <div className="lp-hero-panel">
             <div className="lp-panel">
-              <div className="lp-panel-visual flex items-center justify-center bg-gradient-to-br from-emerald-900 to-slate-900 min-h-[180px]">
+              <div className="lp-panel-visual flex items-center justify-center bg-gradient-to-br from-emerald-900 via-slate-900 to-slate-950 min-h-[180px]">
                 <BrandMark size={88} className="!rounded-2xl !shadow-xl !ring-white/10" />
               </div>
               <div className="lp-panel-body">
                 <div className="lp-panel-top">
                   <div className="lp-panel-pills">
-                    <span className="lp-pill lp-pill--live">Console</span>
+                    <span className="lp-pill lp-pill--live">Testnet live</span>
                     <span className="lp-pill">SILENT</span>
                   </div>
-                  <span className="lp-panel-meta">Platform</span>
+                  <span className="lp-panel-meta">Console</span>
                 </div>
-                <div className="space-y-2 py-2">
-                  <div className="text-sm font-semibold text-[var(--text)]">SilentTransfer</div>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    Connect wallet → real private send on testnet → scan → claim. Full ERC-5564
-                    privacy and mainnet production remain roadmap.
+                <div className="lp-panel-intro">
+                  <div className="lp-panel-title">Private transfer flow</div>
+                  <p className="lp-panel-desc">
+                    Connect → fund a one-time address → recipient scans and claims.
                   </p>
                 </div>
                 <div className="lp-panel-rows">
                   {[
                     ['Connect', 'Wallet + SIWE', 'Live'],
-                    ['Send', 'On-chain one-time', 'Testnet live'],
-                    ['Claim', 'Sweep to wallet', 'Testnet live'],
+                    ['Send', 'One-time address', 'Testnet'],
+                    ['Claim', 'Into your wallet', 'Testnet'],
                   ].map(([a, b, c]) => (
                     <div key={a} className="lp-panel-row">
                       <span>{a}</span>
@@ -307,11 +378,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="lp-strip">
+      {/* ── Proof strip ──────────────────────────────────────────────────── */}
+      <section className="lp-strip" aria-label="Product principles">
         <div className="lp-container lp-strip-inner">
-          <p className="lp-strip-label">Built for private transfer—not identity infrastructure</p>
+          <p className="lp-strip-label">Built for transfers—not identity theater</p>
           <div className="lp-strip-items">
-            {['Stealth destinations', 'Private discovery', 'No KYC', '$SILENT', 'Operations console'].map(
+            {['One-time destinations', 'Private discovery', 'No KYC', 'ERC-5564 aligned', 'Operations console'].map(
               (t) => (
                 <span key={t} className="lp-strip-chip">
                   {t}
@@ -322,14 +394,40 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="platform" className="lp-section">
+      {/* ── Problem ──────────────────────────────────────────────────────── */}
+      <section className="lp-section lp-section--muted" id="why">
         <div className="lp-container">
           <div className="lp-section-head">
-            <p className="lp-kicker">Platform</p>
-            <h2 className="lp-h2">Privacy infrastructure you can operate</h2>
+            <p className="lp-kicker">The problem</p>
+            <h2 className="lp-h2">Public rails were never designed for private payments</h2>
             <p className="lp-section-lead">
-              Console and API for private receive, transfer, discovery, and settlement—focused on
-              recipient unlinkability, not identity collection.
+              Every direct transfer is a permanent public record. Reused wallets build history.
+              Most fixes either demand identity or overpromise anonymity. SilentTransfer does neither.
+            </p>
+          </div>
+          <div className="lp-problem-grid">
+            {PROBLEMS.map((p) => (
+              <article key={p.title} className="lp-problem-card">
+                <div className="lp-problem-icon" aria-hidden>
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <h3 className="lp-problem-title">{p.title}</h3>
+                <p className="lp-problem-body">{p.body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Product / features ───────────────────────────────────────────── */}
+      <section id="product" className="lp-section">
+        <div className="lp-container">
+          <div className="lp-section-head">
+            <p className="lp-kicker">Product</p>
+            <h2 className="lp-h2">Everything you need to move value privately</h2>
+            <p className="lp-section-lead">
+              A console and API for private receive, transfer, discovery, and claim—
+              focused on unlinkability, not collecting who you are.
             </p>
           </div>
           <div className="lp-feature-grid">
@@ -349,26 +447,38 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── How it works ─────────────────────────────────────────────────── */}
       <section id="how" className="lp-section lp-section--muted">
         <div className="lp-container">
           <div className="lp-section-head">
             <p className="lp-kicker">How it works</p>
-            <h2 className="lp-h2">Three steps from registration to settlement</h2>
+            <h2 className="lp-h2">Three steps. No identity form.</h2>
+            <p className="lp-section-lead">
+              From wallet connect to claim in one continuous flow—designed so the “aha” is the transfer, not the paperwork.
+            </p>
           </div>
           <div className="lp-steps">
-            {STEPS.map((s) => (
-              <article key={s.step} className="lp-step">
-                <div className="lp-step-media">
-                  <Image src={s.image} alt="" width={640} height={400} className="lp-step-photo" />
-                </div>
-                <div className="lp-step-num">{s.step}</div>
-                <h3 className="lp-step-title">{s.title}</h3>
-                <p className="lp-step-body">{s.body}</p>
-              </article>
-            ))}
+            {STEPS.map((s) => {
+              const Icon = s.icon;
+              return (
+                <article key={s.step} className="lp-step">
+                  <div className="lp-step-media">
+                    <Image src={s.image} alt="" width={640} height={400} className="lp-step-photo" />
+                  </div>
+                  <div className="lp-step-meta">
+                    <span className="lp-step-num">{s.step}</span>
+                    <span className="lp-step-icon" aria-hidden>
+                      <Icon className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                  <h3 className="lp-step-title">{s.title}</h3>
+                  <p className="lp-step-body">{s.body}</p>
+                </article>
+              );
+            })}
           </div>
           <div className="lp-section-cta" role="group" aria-label="Section actions">
-            <Link href="/dashboard?tab=receive" className="lp-btn lp-btn--primary lp-btn--lg">
+            <Link href="/dashboard" className="lp-btn lp-btn--primary lp-btn--lg">
               Open console
               <ChevronRight className="w-4 h-4 shrink-0" />
             </Link>
@@ -379,100 +489,94 @@ export default function LandingPage() {
                 ? { target: '_blank', rel: 'noopener noreferrer' }
                 : {})}
             >
-              Documentation
+              Read the docs
             </a>
           </div>
         </div>
       </section>
 
-      {/* $SILENT */}
+      {/* ── $SILENT ──────────────────────────────────────────────────────── */}
       <section id="silent" className="lp-section">
         <div className="lp-container">
           <div className="lp-section-head">
             <p className="lp-kicker">Protocol asset</p>
-            <h2 className="lp-h2">$SILENT</h2>
+            <h2 className="lp-h2">$SILENT — hard-capped. Zero VC.</h2>
             <p className="lp-section-lead">
-              Hard-capped supply of <strong>{SILENT_TOTAL_SUPPLY_SHORT}</strong>. No venture
-              allocation. Community 60% · Foundation / protocol 35% (locked) · Team 15%.
+              Maximum supply of <strong>{SILENT_TOTAL_SUPPLY_SHORT}</strong>. Community 60% ·
+              Foundation 35% · Team 15% · Venture capital <strong>0%</strong>.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            <div className="rh-card p-5">
-              <div className="text-xs text-[var(--text-muted)] mb-1">Name / ticker</div>
-              <div className="text-lg font-bold">Silent · SILENT</div>
-              <p className="text-[11px] text-[var(--text-faint)] mt-2">No KYC · zero VC allocation</p>
+          <div className="lp-silent-cards">
+            <div className="lp-silent-card">
+              <div className="lp-silent-label">Name / ticker</div>
+              <div className="lp-silent-value">Silent · SILENT</div>
+              <p className="lp-silent-hint">No KYC · zero VC allocation</p>
             </div>
-            <div className="rh-card p-5">
-              <div className="text-xs text-[var(--text-muted)] mb-1">Hard-capped supply</div>
-              <div className="text-lg font-mono font-bold text-[var(--accent)]">
+            <div className="lp-silent-card">
+              <div className="lp-silent-label">Hard-capped supply</div>
+              <div className="lp-silent-value lp-silent-value--accent">
                 {SILENT_TOTAL_SUPPLY_SHORT}
               </div>
-              <p className="text-[11px] text-[var(--text-faint)] mt-2">
-                1,000,000,000 maximum · mint above cap disabled
-              </p>
+              <p className="lp-silent-hint">1,000,000,000 max · mint above cap disabled</p>
             </div>
-            <div className="rh-card p-5">
-              <div className="text-xs text-[var(--text-muted)] mb-1">Contract</div>
-              <div className="text-sm font-mono break-all">{truncAddr(SILENT_ADDRESS, 8, 6)}</div>
-              <p className="text-[11px] text-[var(--text-faint)] mt-2">
-                Configure via environment after network deployment
-              </p>
+            <div className="lp-silent-card">
+              <div className="lp-silent-label">Contract</div>
+              <div className="lp-silent-value lp-silent-value--mono">
+                {truncAddr(SILENT_ADDRESS, 8, 6)}
+              </div>
+              <p className="lp-silent-hint">Set via environment after deployment</p>
             </div>
           </div>
 
-          <div className="max-w-4xl mx-auto mt-6 grid grid-cols-1 md:grid-cols-[minmax(0,220px)_1fr] gap-8 items-center">
-            <div className="flex justify-center md:justify-start w-full">
+          <div className="lp-silent-alloc">
+            <div className="lp-silent-pie">
               <AllocationPie size={200} />
             </div>
-            <div className="space-y-2.5 min-w-0">
+            <div className="lp-silent-slices">
               {SILENT_ALLOCATION.map((a) => (
                 <div
                   key={a.id}
-                  className="flex items-center gap-3 p-3 rounded-xl border text-sm"
+                  className="lp-alloc-row"
                   style={{ backgroundColor: a.soft, borderColor: a.border }}
                 >
                   <span
-                    className="w-3 h-3 rounded-full shrink-0 ring-2 ring-white shadow-sm"
+                    className="lp-alloc-dot"
                     style={{ backgroundColor: a.color }}
                   />
-                  <span className="flex-1 font-medium text-[var(--text-secondary)]">{a.label}</span>
-                  <span className="font-mono font-bold tabular-nums" style={{ color: a.color }}>
+                  <span className="lp-alloc-label">{a.label}</span>
+                  <span className="lp-alloc-pct" style={{ color: a.color }}>
                     {a.percent}%
                   </span>
                 </div>
               ))}
-              <div className="text-xs font-semibold text-emerald-800 pl-1">
-                Venture allocation: 0%
-              </div>
+              <div className="lp-alloc-vc">Venture allocation: 0%</div>
             </div>
           </div>
 
-          <div className="max-w-4xl mx-auto mt-6 rh-card p-5 text-sm text-[var(--text-muted)] leading-relaxed space-y-2">
+          <div className="lp-silent-note">
             <p>
-              <strong className="text-[var(--text)]">Hard cap:</strong> Maximum supply is 1B SILENT.
-              The contract does not permit minting above the cap.
+              <strong>Hard cap:</strong> Maximum supply is 1B SILENT. The contract does not permit
+              minting above the cap.
             </p>
             <p>
-              <strong className="text-[var(--text)]">Fees (current):</strong> {feePct} protocol fee.{' '}
-              <strong className="text-[var(--text)]">Fees (planned):</strong> {plannedPct} on
-              sponsored claims, allocated to protocol operations and open-market SILENT buybacks.
+              <strong>Fees (current):</strong> {feePct} protocol fee.{' '}
+              <strong>Fees (planned):</strong> {plannedPct} on sponsored claims—for protocol
+              operations and open-market SILENT buybacks.
             </p>
-            <p className="text-xs text-[var(--text-faint)]">{FEE_COPY.policy}</p>
+            <p className="lp-silent-policy">{FEE_COPY.policy}</p>
             <p>
-              <strong className="text-[var(--text)]">Scope note:</strong> Exchange listings, market
-              pricing, yield products, and live vesting contracts are outside current product claims.
+              <strong>Scope:</strong> Exchange listings, market pricing, and live vesting contracts
+              are outside current product claims.
             </p>
-            <Link
-              href={SILENT_PAGE_URL}
-              className="inline-flex items-center gap-1.5 text-[var(--accent)] font-semibold text-sm pt-1 hover:underline"
-            >
-              View $SILENT overview <ExternalLink className="w-3.5 h-3.5" />
+            <Link href={SILENT_PAGE_URL} className="lp-silent-link">
+              Full $SILENT overview <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
       </section>
 
+      {/* ── Security ─────────────────────────────────────────────────────── */}
       <section id="security" className="lp-section lp-section--dark">
         <div className="lp-security-bg" aria-hidden>
           <Image src="/brand/security-bg.jpg" alt="" fill sizes="100vw" className="lp-security-photo" />
@@ -481,27 +585,27 @@ export default function LandingPage() {
         <div className="lp-container lp-security-content">
           <div className="lp-section-head lp-section-head--light">
             <p className="lp-kicker lp-kicker--light">Security & trust</p>
-            <h2 className="lp-h2 lp-h2--light">Built for scrutiny</h2>
+            <h2 className="lp-h2 lp-h2--light">Privacy claims you can audit</h2>
             <p className="lp-section-lead lp-section-lead--light">
-              Privacy claims are only as strong as the model behind them. SilentTransfer documents
-              capabilities and limitations with equal rigor.
+              We ship capabilities and limits with equal rigor. No “untraceable” marketing.
+              No identity theater.
             </p>
           </div>
           <div className="lp-security-grid">
             <div className="lp-security-card">
-              <Building2 className="w-5 h-5" />
+              <Network className="w-5 h-5" />
               <h3>Testnet live · mainnet staged</h3>
               <p>
                 Real private send and claim run on Robinhood Chain Testnet. Mainnet production
-                money movement remains staged and should not be assumed audited.
+                money movement is staged and should not be assumed audited.
               </p>
             </div>
             <div className="lp-security-card">
               <Shield className="w-5 h-5" />
               <h3>Documented threat model</h3>
               <p>
-                Docs cover partial privacy, public chain metadata, timing linkability, and trusted
-                API limits—not fake “untraceable” claims.
+                Partial privacy, public metadata, timing linkability, and trusted API limits—
+                written down so operators know the real envelope.
               </p>
             </div>
             <div className="lp-security-card">
@@ -509,13 +613,14 @@ export default function LandingPage() {
               <h3>No KYC requirement</h3>
               <p>
                 The product path does not collect identity or route through a compliance oracle.
-                Users remain responsible for local law.
+                Users remain responsible for applicable law.
               </p>
             </div>
           </div>
         </div>
       </section>
 
+      {/* ── Stats ────────────────────────────────────────────────────────── */}
       <section className="lp-stats">
         <div className="lp-container lp-stats-grid">
           {STATS.map((s) => (
@@ -527,6 +632,25 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+      <section id="faq" className="lp-section lp-section--muted">
+        <div className="lp-container lp-faq-layout">
+          <div className="lp-section-head lp-section-head--faq">
+            <p className="lp-kicker">FAQ</p>
+            <h2 className="lp-h2">Straight answers</h2>
+            <p className="lp-section-lead">
+              The questions people ask before they click Launch app—answered without spin.
+            </p>
+          </div>
+          <div className="lp-faq-list">
+            {FAQS.map((f) => (
+              <FaqItem key={f.q} q={f.q} a={f.a} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Final CTA ────────────────────────────────────────────────────── */}
       <section className="lp-cta">
         <div className="lp-container lp-cta-shell">
           <div className="lp-cta-art" aria-hidden>
@@ -540,10 +664,10 @@ export default function LandingPage() {
           </div>
           <div className="lp-cta-inner">
             <div>
-              <h2 className="lp-h2">Operate private transfers from the console</h2>
+              <h2 className="lp-h2">Start with a private transfer</h2>
               <p className="lp-section-lead lp-section-lead--left">
-                Connect a real wallet, send privately on testnet, discover payments, and claim.
-                Limitations and privacy scope are documented honestly.
+                Connect a wallet, send on testnet, discover payments, and claim.
+                Limitations are documented. The path is real.
               </p>
             </div>
             <div className="lp-cta-actions">
@@ -565,12 +689,13 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Footer ───────────────────────────────────────────────────────── */}
       <footer className="lp-footer">
         <div className="lp-container lp-footer-inner">
           <div className="lp-footer-brand">
-            <BrandLogo size={40} subtitle="Privacy" href="/" />
+            <BrandLogo size={36} subtitle="" href="/" />
             <p className="lp-footer-tag">
-              Private transfer infrastructure. Protocol asset: SILENT.
+              Private transfer infrastructure for public blockchains. Protocol asset: SILENT.
             </p>
           </div>
           <div className="lp-footer-cols">
@@ -591,16 +716,21 @@ export default function LandingPage() {
               >
                 Docs
               </a>
-              <a href="#platform">Platform</a>
+              <a href="#product">Product</a>
               <a href="#security">Security</a>
+              <a href="#faq">FAQ</a>
+            </div>
+            <div>
+              <div className="lp-footer-h">Company</div>
+              <a href="#why">Why SilentTransfer</a>
               <Link href="/dashboard?tab=settings">Settings</Link>
             </div>
           </div>
         </div>
         <div className="lp-container lp-footer-bottom">
           <p>
-            Testnet private send is real on-chain; privacy is partial (not full anonymity). Protocol
-            asset: SILENT (hard-capped). Scope and limitations are in Docs.
+            Testnet private send is real on-chain. Privacy is partial—not full anonymity.
+            Scope and limitations live in Docs.
           </p>
           <p>© {new Date().getFullYear()} SilentTransfer</p>
         </div>
