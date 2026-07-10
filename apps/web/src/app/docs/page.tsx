@@ -123,11 +123,15 @@ const NOT_DONE = [
 ];
 
 const FUTURE = [
+  'Batch private transfer — one wallet sends to many recipients in a single flow (CSV / multi-address list, per-recipient amounts, one review + multi-announce).',
+  'Fully private transfer path — viewing-key-only discovery, client-held spend material, no server-held claim keys, and reduced amount/timing linkability (beyond today’s partial privacy).',
+  'Multi-hop / delayed claim options — optional claim windows and destination rotation to weaken simple chain analysis.',
   'Move claim material off the server — client or viewing-key derived spend only.',
   'Default path: full ERC-5564 ECDH stealth + ERC-6538 registry lookup in the UI.',
   'On-chain messenger announce as the primary discovery channel (not only API metadata).',
   'Optional self-withdraw (user pays gas, 0% protocol fee) without server sweep.',
   'ERC-4337 paymaster for true gasless claim when ready.',
+  'Payroll & treasury batch mode — schedule recurring private payouts to many wallets (operators / DAOs).',
   'External audit before mainnet treasury or public TVL claims.',
   'On-chain vesting when allocation locks ship.',
 ];

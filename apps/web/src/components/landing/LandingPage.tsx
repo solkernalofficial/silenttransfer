@@ -35,6 +35,7 @@ import {
 const NAV = [
   { label: 'Product', href: '#product' },
   { label: 'How it works', href: '#how' },
+  { label: 'Roadmap', href: '#roadmap' },
   { label: 'Security', href: '#security' },
   { label: '$SILENT', href: SILENT_PAGE_URL },
 ];
@@ -124,18 +125,37 @@ const STATS = [
   { value: '0%', label: 'Venture allocation' },
 ];
 
+const ROADMAP = [
+  {
+    title: 'Batch private transfer (1 → many)',
+    body: 'One wallet pays many recipients in one flow—CSV or address list, per-recipient amounts, bulk one-time destinations. Built for payroll, multi-vendor payouts, and private airdrops.',
+  },
+  {
+    title: 'Fully private transfer',
+    body: 'Viewing-key-only discovery, client-held claim material, and stronger unlinkability than today’s partial one-time-address path—no server-held spend keys.',
+  },
+  {
+    title: 'Gasless claim & self-withdraw',
+    body: 'ERC-4337 paymaster when ready, plus optional self-withdraw where the user pays network gas and keeps product fee at 0%.',
+  },
+  {
+    title: 'Standards-complete stealth',
+    body: 'Full ERC-5564 ECDH + ERC-6538 registry as the default UI path, with on-chain messenger as primary discovery.',
+  },
+];
+
 const FAQS = [
   {
     q: 'Is this full anonymity?',
-    a: 'No. SilentTransfer improves unlinkability with one-time destinations and recipient claim. On public chains, metadata and timing can still leak. We document limits instead of overselling privacy.',
+    a: 'No. SilentTransfer improves unlinkability with one-time destinations and recipient claim. On public chains, metadata and timing can still leak. Fully private transfer is on the product roadmap.',
   },
   {
     q: 'Is private send live?',
     a: 'Yes on Robinhood Chain Testnet: funded private sends can move real ETH to a one-time address and claim on-chain. Mainnet production remains staged.',
   },
   {
-    q: 'Do I need KYC?',
-    a: 'No. The product path does not collect identity or route through a compliance oracle. You remain responsible for local law.',
+    q: 'Will you support batch payouts?',
+    a: 'Yes—batch private transfer (one wallet → many recipients) is on the roadmap for payroll-style and multi-destination private sends.',
   },
   {
     q: 'What is $SILENT?',
@@ -143,7 +163,7 @@ const FAQS = [
   },
   {
     q: 'Who is this for?',
-    a: 'Teams and individuals who need private receive and transfer on public rails without identity gates—operators, builders, and privacy-conscious payers.',
+    a: 'Teams and individuals who need private receive and transfer on public rails—operators, builders, and privacy-conscious payers.',
   },
 ];
 
@@ -495,6 +515,41 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Roadmap ─────────────────────────────────────────────────────── */}
+      <section id="roadmap" className="lp-section lp-section--muted">
+        <div className="lp-container">
+          <div className="lp-section-head">
+            <p className="lp-kicker">Roadmap</p>
+            <h2 className="lp-h2">What we&apos;re building next</h2>
+            <p className="lp-section-lead">
+              Live today: one-to-one private send, scan, and claim on testnet.
+              Next: batch payouts, fuller privacy, and standards-complete stealth—documented as
+              intentions, not ship dates.
+            </p>
+          </div>
+          <div className="lp-roadmap-grid">
+            {ROADMAP.map((item, i) => (
+              <article key={item.title} className="lp-roadmap-card">
+                <div className="lp-roadmap-num">{String(i + 1).padStart(2, '0')}</div>
+                <h3 className="lp-roadmap-title">{item.title}</h3>
+                <p className="lp-roadmap-body">{item.body}</p>
+              </article>
+            ))}
+          </div>
+          <div className="lp-section-cta">
+            <a
+              href={DOCS_URL.startsWith('http') ? `${DOCS_URL}#future` : '/docs#future'}
+              className="lp-btn lp-btn--secondary lp-btn--lg"
+              {...(DOCS_URL.startsWith('http')
+                ? { target: '_blank', rel: 'noopener noreferrer' }
+                : {})}
+            >
+              Full roadmap in docs
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── $SILENT ──────────────────────────────────────────────────────── */}
       <section id="silent" className="lp-section">
         <div className="lp-container">
@@ -717,6 +772,7 @@ export default function LandingPage() {
                 Docs
               </a>
               <a href="#product">Product</a>
+              <a href="#roadmap">Roadmap</a>
               <a href="#security">Security</a>
               <a href="#faq">FAQ</a>
             </div>

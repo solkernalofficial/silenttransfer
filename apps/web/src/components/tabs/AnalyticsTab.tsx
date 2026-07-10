@@ -128,7 +128,9 @@ export default function AnalyticsTab() {
                 ['Private receive', 'Meta-key registration API', 'Available'],
                 ['Private transfer', 'Announcement / transfer log', 'Available'],
                 ['Payment discovery', 'Recipient wallet scan', 'Available'],
-                ['Sponsored settlement', 'Relayer path', 'Simulated in evaluation'],
+                ['Sponsored settlement', 'Relayer path', 'Live claim sweep (testnet)'],
+                ['Batch 1→many private send', 'Multi-recipient payroll / list', 'Roadmap'],
+                ['Fully private transfer', 'Viewing-key path, no server claim keys', 'Roadmap'],
                 ['Identity / KYC', 'Not required', 'Out of product scope'],
                 ['Mainnet settlement', 'Staged production path', 'Not enabled here'],
               ].map(([feature, rabin, vanilla], i) => (

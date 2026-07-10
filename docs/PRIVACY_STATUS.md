@@ -93,13 +93,16 @@ Chain explorers still show public txs. The API is a **trusted operator** for cla
 
 Ordered roughly by impact / realism for this stack:
 
-1. **Client-held spend path** — stop storing `claim_private_key` on the server; recipient derives or receives claim material out-of-band / via viewing key.
-2. **Real ERC-5564 + ERC-6538 path** — register meta-address; ECDH stealth; scan with viewing key (align live path with [SECURITY_MODEL.md](./SECURITY_MODEL.md)).
-3. **Public responses already strip secrets** — keep hardening: no claim keys in list/scan APIs; short-lived material only.
-4. **UX privacy hygiene** — optional claim delay tips, don’t claim straight to CEX, VPN note for RPC IP.
-5. **Harder unlinkability (later)** — amount obfuscation, decoys, or ZK/pool designs only if product + legal scope expand.
+1. **Batch private transfer (1 → many)** — one sender wallet pays many recipients in one console flow (address list / CSV, per-line amounts, bulk one-time destinations + announces). Target: payroll, airdrops, multi-vendor payouts without a public fan-out graph from a single reused deposit address.
+2. **Fully private transfer path** — viewing-key-only discovery, client-held spend material (no server-held `claim_private_key`), and stronger unlinkability than today’s partial one-time-address path.
+3. **Client-held spend path** — stop storing `claim_private_key` on the server; recipient derives or receives claim material out-of-band / via viewing key.
+4. **Real ERC-5564 + ERC-6538 path** — register meta-address; ECDH stealth; scan with viewing key (align live path with [SECURITY_MODEL.md](./SECURITY_MODEL.md)).
+5. **Amount / timing hygiene** — optional delayed claim, multi-hop withdraw, and (later) amount obfuscation or decoys if product + legal scope allow.
+6. **Public responses already strip secrets** — keep hardening: no claim keys in list/scan APIs; short-lived material only.
+7. **UX privacy hygiene** — claim delay tips, don’t claim straight to CEX, VPN note for RPC IP.
+8. **Harder unlinkability (later)** — ZK/pool designs only if product + legal scope expand.
 
-Until (1)–(2) ship, marketing and support should describe the **current live path** as in this document, not the ideal stealth paper model alone.
+Until (2)–(4) ship, marketing and support should describe the **current live path** as in this document, not the ideal stealth paper model alone.
 
 ---
 
