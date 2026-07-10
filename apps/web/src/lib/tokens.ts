@@ -66,25 +66,66 @@ export function truncAddr(a: string, left = 6, right = 4) {
   return `${a.slice(0, left)}…${a.slice(-right)}`;
 }
 
-/** Human amount → wei string (18 decimals). */
+const WEI_PER_ETH = BigInt('1000000000000000000');
+
+/** Human amount → wei string (18 decimals). Uses BigInt for whole numbers. */
 export function toWeiString(amount: string): string {
   const cleaned = amount.trim();
   if (!cleaned) return '0';
   if (!cleaned.includes('.')) {
     try {
       const n = BigInt(cleaned);
-      const wei = n * BigInt('1000000000000000000');
-      return wei.toString();
+      return (n * WEI_PER_ETH).toString();
     } catch {
       return cleaned;
     }
   }
-  const n = Number(cleaned);
-  if (!Number.isFinite(n) || n < 0) return '0';
-  return String(Math.floor(n * 1e18));
+  const [wholePart, fracPartRaw = ''] = cleaned.split('.');
+  const frac = (fracPartRaw + '000000000000000000').slice(0, 18);
+  try {
+    const whole = BigInt(wholePart || '0');
+    const fracWei = BigInt(frac || '0');
+    return (whole * WEI_PER_ETH + fracWei).toString();
+  } catch {
+    const n = Number(cleaned);
+    if (!Number.isFinite(n) || n < 0) return '0';
+    return String(Math.floor(n * 1e18));
+  }
+}
+
+/**
+ * Wei (or raw token units, 18 decimals) → human string without JS Number precision loss.
+ * Prefer this for claim/scan prefill paths.
+ */
+export function weiToHuman(raw: string, maxFrac = 6): string {
+  const s = (raw || '').trim();
+  if (!s) return '0';
+  try {
+    let wei = BigInt(s);
+    const neg = wei < BigInt(0);
+    if (neg) wei = -wei;
+    const whole = wei / WEI_PER_ETH;
+    let frac = (wei % WEI_PER_ETH).toString().padStart(18, '0');
+    frac = frac.replace(/0+$/, '');
+    if (frac.length > maxFrac) frac = frac.slice(0, maxFrac).replace(/0+$/, '');
+    const body = frac ? `${whole.toString()}.${frac}` : whole.toString();
+    return neg ? `-${body}` : body;
+  } catch {
+    return s;
+  }
 }
 
 export function formatTokenAmount(raw: string): string {
+  if (/^-?\d+$/.test((raw || '').trim())) {
+    const h = weiToHuman(raw, 6);
+    try {
+      const [w, f] = h.split('.');
+      const wholeFmt = BigInt(w).toLocaleString();
+      return f ? `${wholeFmt}.${f}` : wholeFmt;
+    } catch {
+      return h;
+    }
+  }
   const n = Number(raw);
   if (!Number.isFinite(n)) return raw;
   if (n >= 1e15) return (n / 1e18).toLocaleString(undefined, { maximumFractionDigits: 6 });

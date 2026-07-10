@@ -56,7 +56,13 @@ async def execute_settlement(
       success, tx_hash, gas_used, fee_amount, mode, message
     """
     mode = settings.settlement_mode
-    amount_int = int(amount) if str(amount).isdigit() else 0
+    # Prefer full balance sweep when amount is missing/unparseable (claim UX).
+    try:
+        amount_int = int(str(amount).strip(), 10)
+        if amount_int < 0:
+            amount_int = 0
+    except (TypeError, ValueError):
+        amount_int = 0
     bps = max(0, min(int(settings.protocol_fee_bps), 1000))
     fee_int = (amount_int * bps) // 10000 if amount_int > 0 else 0
 
@@ -400,8 +406,9 @@ async def _send_relayer_settlement_tx(
         raise RuntimeError(f"RPC not reachable: {settings.rpc_url}")
 
     chain_id = int(settings.chain_id)
-    nonce = w3.eth.get_transaction_count(account.address)
-    gas_price = w3.eth.gas_price
+    nonce = int(w3.eth.get_transaction_count(account.address))
+    fees = _fee_fields(w3)
+    fees.pop("_effective_gas_price", None)
 
     paymaster = (settings.paymaster_contract_address or "").strip()
     if paymaster and Web3.is_address(paymaster):
@@ -423,11 +430,14 @@ async def _send_relayer_settlement_tx(
         contract = w3.eth.contract(
             address=Web3.to_checksum_address(paymaster), abi=abi
         )
-        amount_int = int(amount) if str(amount).isdigit() else 0
+        try:
+            amount_int = int(str(amount).strip(), 10)
+        except (TypeError, ValueError):
+            amount_int = 0
         token = fee_token if Web3.is_address(fee_token) else settings.silent_token_address
         if not token:
             token = ZERO
-        tx = contract.functions.executeGaslessWithdraw(
+        built = contract.functions.executeGaslessWithdraw(
             Web3.to_checksum_address(target_owner),
             Web3.to_checksum_address(stealth_address),
             Web3.to_checksum_address(token),
@@ -437,25 +447,45 @@ async def _send_relayer_settlement_tx(
             {
                 "from": account.address,
                 "nonce": nonce,
-                "gas": 250000,
-                "gasPrice": gas_price,
                 "chainId": chain_id,
             }
         )
+        gas_limit = _estimate_gas_limit(
+            w3,
+            {
+                "from": account.address,
+                "to": built["to"],
+                "data": built.get("data") or built.get("input") or "0x",
+                "value": 0,
+            },
+            floor=250_000,
+        )
+        tx = {**built, "gas": gas_limit, **fees}
     else:
         memo = (
             f"SilentTransfer claim stealth={stealth_address[:10]} "
             f"owner={target_owner[:10]} amount={amount}"
         ).encode()
+        data = "0x" + memo.hex()
+        gas_limit = _estimate_gas_limit(
+            w3,
+            {
+                "from": account.address,
+                "to": account.address,
+                "value": 0,
+                "data": data,
+            },
+            floor=50_000,
+        )
         tx = {
             "from": account.address,
             "to": account.address,
             "value": 0,
             "nonce": nonce,
-            "gas": 30000,
-            "gasPrice": gas_price,
+            "gas": gas_limit,
             "chainId": chain_id,
-            "data": "0x" + memo.hex(),
+            "data": data,
+            **fees,
         }
 
     signed = account.sign_transaction(tx)

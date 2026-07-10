@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api, API_BASE, ensureDemoAuth } from '@/lib/api';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import { useToast } from '@/components/Toast';
-import { DEMO_WALLETS, truncAddr, formatTokenAmount } from '@/lib/tokens';
+import { DEMO_WALLETS, truncAddr, formatTokenAmount, weiToHuman } from '@/lib/tokens';
 import { setPendingWithdraw } from '@/lib/pendingWithdraw';
 import {
   ScanSearch,
@@ -37,18 +37,7 @@ interface ScanResult {
   message?: string | null;
 }
 
-/** Convert wei-like amount string back to human units for the relayer form. */
-function humanAmount(raw: string): string {
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return raw;
-  if (n >= 1e15) {
-    const v = n / 1e18;
-    // Prefer clean integers when possible
-    if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
-    return String(Number(v.toFixed(6)));
-  }
-  return String(n);
-}
+
 
 export default function ScannerTab() {
   const router = useRouter();
@@ -121,7 +110,7 @@ export default function ScannerTab() {
     setPendingWithdraw({
       stealth_address: a.stealth_address,
       target_owner: owner,
-      amount: humanAmount(a.amount),
+      amount: weiToHuman(a.amount),
       token_symbol: symbol,
       from_address: a.caller,
     });

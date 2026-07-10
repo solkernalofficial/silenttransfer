@@ -20,6 +20,7 @@ import {
   truncAddr,
   toWeiString,
   formatTokenAmount,
+  weiToHuman,
   tokenLabel,
 } from '@/lib/tokens';
 import { FEE_COPY, formatFeePreview, protocolFeePercentLabel } from '@/lib/fees';
@@ -47,17 +48,6 @@ interface ScanAnnouncement {
   amount: string;
   announce_metadata?: { token_symbol?: string };
   to_address?: string | null;
-}
-
-function humanAmount(raw: string): string {
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return raw;
-  if (n >= 1e15) {
-    const v = n / 1e18;
-    if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
-    return String(Number(v.toFixed(6)));
-  }
-  return String(n);
 }
 
 export default function RelayerTab() {
@@ -224,7 +214,7 @@ export default function RelayerTab() {
 
       const a = anns[0];
       const symbol = a.announce_metadata?.token_symbol || DEFAULT_TOKEN;
-      const human = humanAmount(a.amount);
+      const human = weiToHuman(a.amount);
       setStealthAddr(a.stealth_address);
       setAmount(human);
       if (TOKEN_LIST.includes(symbol)) setToken(symbol);
