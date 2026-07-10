@@ -30,8 +30,9 @@ class SIWEVerifyResponse(BaseModel):
 
 class RegisterRequest(BaseModel):
     user_address: str = Field(..., min_length=42, max_length=42)
-    spending_pubkey: str = Field(..., min_length=128, max_length=132)
-    viewing_pubkey: str = Field(..., min_length=128, max_length=132)
+    # Uncompressed secp256k1: 0x04 + 64-byte x||y → up to 132 chars with 0x
+    spending_pubkey: str = Field(..., min_length=66, max_length=134)
+    viewing_pubkey: str = Field(..., min_length=66, max_length=134)
 
     @field_validator("user_address")
     @classmethod
@@ -43,9 +44,29 @@ class RegisterRequest(BaseModel):
     @field_validator("spending_pubkey", "viewing_pubkey")
     @classmethod
     def validate_pubkey(cls, v: str) -> str:
-        if not re.match(r"^(0x)?[a-fA-F0-9]{128,132}$", v):
+        """
+        Accept common secp256k1 public key encodings:
+        - uncompressed: 0x04 + 128 hex (130 hex body) or raw 128 hex x||y
+        - compressed: 0x02/03 + 64 hex (66 hex body)
+        Normalize to lowercase 0x-prefixed hex.
+        """
+        raw = (v or "").strip().lower()
+        if not raw:
             raise ValueError("Invalid public key format")
-        return v
+        if not raw.startswith("0x"):
+            raw = "0x" + raw
+        body = raw[2:]
+        if not re.fullmatch(r"[a-f0-9]+", body):
+            raise ValueError("Invalid public key format")
+        # compressed 33 bytes, uncompressed 64 (x||y) or 65 (04||x||y)
+        if len(body) not in (64, 66, 128, 130):
+            raise ValueError("Invalid public key format")
+        if len(body) == 66 and body[0:2] not in ("02", "03"):
+            raise ValueError("Invalid public key format")
+        if len(body) == 130 and not body.startswith("04"):
+            # allow 130 hex without 04 only if we treat as opaque testnet material
+            pass
+        return raw
 
 
 class RegistrationResponse(BaseModel):

@@ -29,9 +29,19 @@ interface Registration {
   registered_at?: string;
 }
 
+/**
+ * Uncompressed-style pubkey hex for testnet registration helpers.
+ * Must be 0x + 128–130 hex digits only (API validates [a-f0-9]).
+ * NOTE: suffix must be hex — 's' is NOT hex and was rejecting spend keys.
+ */
 function padDemoPubkey(seed: string): string {
-  const hex = seed.replace(/^0x/i, '').toLowerCase().padEnd(128, 'a').slice(0, 128);
-  return `0x04${hex}`;
+  const hexOnly = seed
+    .replace(/^0x/i, '')
+    .toLowerCase()
+    .replace(/[^a-f0-9]/g, 'a');
+  // 64-byte x||y body (128 hex); prefix 04 → 130 hex after 0x (viem-compatible length)
+  const body = (hexOnly + 'a'.repeat(128)).slice(0, 128);
+  return `0x04${body}`;
 }
 
 export default function ReceiveTab() {
@@ -94,8 +104,10 @@ export default function ReceiveTab() {
   });
 
   const ensureKeys = (w: string) => {
-    const spend = spendingKey || padDemoPubkey(w.slice(2) + 's');
-    const view = viewingKey || padDemoPubkey(w.slice(2) + 'v');
+    // Distinct hex domains for spend vs view (use only hex suffixes: a-f, 0-9)
+    const base = w.replace(/^0x/i, '').toLowerCase();
+    const spend = spendingKey || padDemoPubkey(`${base}aa`);
+    const view = viewingKey || padDemoPubkey(`${base}bb`);
     setSpendingKey(spend);
     setViewingKey(view);
     return { spend, view };
@@ -129,11 +141,15 @@ export default function ReceiveTab() {
     e.preventDefault();
     if (!validateWallet()) return;
     const errs: Record<string, string> = {};
-    if (!spendingKey || !/^(0x)?[a-fA-F0-9]{128,132}$/.test(spendingKey)) {
-      errs.spendingKey = 'Invalid spend key format';
+    const pkOk = (k: string) => {
+      const body = k.trim().replace(/^0x/i, '').toLowerCase();
+      return /^[a-f0-9]+$/.test(body) && [64, 66, 128, 130].includes(body.length);
+    };
+    if (!spendingKey || !pkOk(spendingKey)) {
+      errs.spendingKey = 'Invalid spend public key (hex, compressed or uncompressed)';
     }
-    if (!viewingKey || !/^(0x)?[a-fA-F0-9]{128,132}$/.test(viewingKey)) {
-      errs.viewingKey = 'Invalid view key format';
+    if (!viewingKey || !pkOk(viewingKey)) {
+      errs.viewingKey = 'Invalid view public key (hex, compressed or uncompressed)';
     }
     setErrors(errs);
     if (Object.keys(errs).length) return;
