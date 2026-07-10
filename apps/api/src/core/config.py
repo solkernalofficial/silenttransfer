@@ -85,7 +85,8 @@ class Settings(BaseSettings):
             return "demo"
         if self.simulate_settlement:
             return "testnet_simulated"
-        if self.relayer_private_key and self.rpc_url:
+        # Live when RPC is configured: funded claims use claim keys (relayer optional).
+        if self.rpc_url:
             return "live"
         return "testnet_simulated"
 
