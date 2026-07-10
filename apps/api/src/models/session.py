@@ -54,6 +54,18 @@ def _normalize_database_url(url: str) -> tuple[str, dict]:
             import ssl
 
             ctx = ssl.create_default_context()
+            # Railway TCP proxy (*.proxy.rlwy.net) and some managed PG
+            # edges present a proxy cert that fails strict verify.
+            if any(
+                x in host
+                for x in (
+                    "rlwy.net",
+                    "railway.app",
+                    "render.com",
+                )
+            ):
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
             connect_args["ssl"] = ctx
         new_query = urlencode({k: v[0] for k, v in qs.items()})
         raw = urlunparse(parsed._replace(query=new_query))

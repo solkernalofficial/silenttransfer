@@ -18,6 +18,9 @@ contracts/deployments/*.silent.env
 .private/
 private/
 secrets/
+.private/
+.railway/
+**/.railway/
 
 # ── Dependencies ───────────────────────────────────────────────────────────
 node_modules/
