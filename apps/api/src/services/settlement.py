@@ -60,34 +60,43 @@ async def execute_settlement(
     bps = max(0, min(int(settings.protocol_fee_bps), 1000))
     fee_int = (amount_int * bps) // 10000 if amount_int > 0 else 0
 
-    if mode == "live":
-        # Prefer real sweep when claim key is present (funded private send)
-        if claim_private_key:
-            try:
-                tx_hash, gas_used = await _sweep_stealth_to_owner(
-                    claim_private_key=claim_private_key,
-                    stealth_address=stealth_address,
-                    target_owner=target_owner,
-                    token_address=token_address or fee_token,
-                    amount_wei=amount_int,
-                    fee_wei=fee_int,
-                )
-                return {
-                    "success": True,
-                    "tx_hash": tx_hash,
-                    "gas_used": gas_used,
-                    "fee_amount": str(fee_int),
-                    "mode": "live",
-                    "message": (
-                        "On-chain claim: ETH swept from one-time address to recipient "
-                        f"(chain {settings.chain_id})."
-                    ),
-                    "claimed_with_key": True,
-                }
-            except Exception as e:
-                log.exception("stealth sweep failed")
-                raise RuntimeError(f"Claim sweep failed: {e}") from e
+    # Funded private-send claims only need RPC + claim key (no relayer EOA).
+    can_live_claim = (
+        mode == "live"
+        or (
+            not settings.simulate_settlement
+            and bool(settings.rpc_url)
+            and bool(claim_private_key)
+        )
+    )
 
+    if can_live_claim and claim_private_key:
+        try:
+            tx_hash, gas_used = await _sweep_stealth_to_owner(
+                claim_private_key=claim_private_key,
+                stealth_address=stealth_address,
+                target_owner=target_owner,
+                token_address=token_address or fee_token,
+                amount_wei=amount_int,
+                fee_wei=fee_int,
+            )
+            return {
+                "success": True,
+                "tx_hash": tx_hash,
+                "gas_used": gas_used,
+                "fee_amount": str(fee_int),
+                "mode": "live",
+                "message": (
+                    "On-chain claim: funds swept from one-time address to recipient "
+                    f"(chain {settings.chain_id})."
+                ),
+                "claimed_with_key": True,
+            }
+        except Exception as e:
+            log.exception("stealth sweep failed")
+            raise RuntimeError(f"Claim sweep failed: {e}") from e
+
+    if mode == "live":
         if not _relayer_ready():
             raise RuntimeError(
                 "Live settlement requires RELAYER_PRIVATE_KEY and RPC_URL "
@@ -132,6 +141,63 @@ async def execute_settlement(
     }
 
 
+def _fee_fields(w3: Any) -> dict[str, int]:
+    """
+    Build gas fee fields for the chain.
+
+    Robinhood Chain Testnet uses a higher-than-Ethereum floor for simple transfers
+    (~24k gas used). Prefer EIP-1559 when baseFee is present; always keep a
+    non-zero floor so nodes do not reject underpriced / zero-fee txs.
+    """
+    try:
+        latest = w3.eth.get_block("latest")
+        base = int(latest.get("baseFeePerGas") or 0)
+    except Exception:
+        base = 0
+
+    try:
+        gas_price = int(w3.eth.gas_price)
+    except Exception:
+        gas_price = 0
+
+    # Floor: 1 gwei (matches observed RH testnet simple transfers)
+    floor = 1_000_000_000
+    gas_price = max(gas_price, floor)
+
+    if base > 0:
+        # tip can be 0 on this chain; maxFee = 2x base keeps headroom across blocks
+        max_priority = 0
+        max_fee = max(base * 2, gas_price, floor)
+        return {
+            "maxFeePerGas": int(max_fee),
+            "maxPriorityFeePerGas": int(max_priority),
+            # effective cost for balance reservation
+            "_effective_gas_price": int(max_fee),
+        }
+
+    return {
+        "gasPrice": int(gas_price),
+        "_effective_gas_price": int(gas_price),
+    }
+
+
+def _estimate_gas_limit(
+    w3: Any,
+    tx_for_estimate: dict[str, Any],
+    *,
+    floor: int,
+    buffer_pct: int = 25,
+) -> int:
+    """Estimate gas and apply floor + buffer. Never return below floor."""
+    try:
+        est = int(w3.eth.estimate_gas(tx_for_estimate))
+    except Exception as e:
+        log.warning("estimate_gas failed (%s); using floor=%s", e, floor)
+        est = floor
+    buffered = (est * (100 + max(0, buffer_pct))) // 100
+    return max(floor, buffered, est)
+
+
 async def _sweep_stealth_to_owner(
     *,
     claim_private_key: str,
@@ -142,8 +208,11 @@ async def _sweep_stealth_to_owner(
     fee_wei: int,
 ) -> tuple[str, int]:
     """
-    Sign from the one-time stealth key and send native ETH to the recipient.
+    Sign from the one-time stealth key and send native ETH (or ERC-20) to the recipient.
     Leaves enough balance for gas; optional fee withheld in residual.
+
+    Note: Robinhood Chain Testnet simple transfers use >21k gas (~24k observed).
+    Hardcoding 21000 causes: {'code': -32000, 'message': 'intrinsic gas too low'}.
     """
     from eth_account import Account
     from web3 import Web3
@@ -166,12 +235,16 @@ async def _sweep_stealth_to_owner(
     is_native = (not token) or token == ZERO or token == "eth"
 
     chain_id = int(settings.chain_id)
-    nonce = w3.eth.get_transaction_count(account.address)
-    gas_price = int(w3.eth.gas_price)
+    nonce = int(w3.eth.get_transaction_count(account.address))
+    fees = _fee_fields(w3)
+    effective_price = int(fees.pop("_effective_gas_price"))
+
+    # RH testnet simple value transfers have been observed ~24k gas used / ~31k limit.
+    NATIVE_GAS_FLOOR = 35_000
+    ERC20_GAS_FLOOR = 120_000
 
     if not is_native:
         # ERC-20 claim: transfer tokens; stealth must hold a little ETH for gas.
-        # Prefer transferring the announced amount (or full balance if smaller).
         erc20_abi = [
             {
                 "constant": False,
@@ -200,29 +273,78 @@ async def _sweep_stealth_to_owner(
             send_amt = send_amt - fee_wei
         if send_amt <= 0:
             raise RuntimeError("No token balance on stealth address to claim")
-        tx = contract.functions.transfer(
+
+        eth_bal = int(w3.eth.get_balance(account.address))
+        built = contract.functions.transfer(
             Web3.to_checksum_address(target_owner), send_amt
         ).build_transaction(
             {
                 "from": account.address,
                 "nonce": nonce,
-                "gas": 120000,
-                "gasPrice": gas_price,
                 "chainId": chain_id,
             }
         )
+        gas_limit = _estimate_gas_limit(
+            w3,
+            {
+                "from": account.address,
+                "to": built["to"],
+                "data": built.get("data") or built.get("input") or "0x",
+                "value": 0,
+            },
+            floor=ERC20_GAS_FLOOR,
+        )
+        gas_cost = effective_price * gas_limit
+        if eth_bal < gas_cost:
+            raise RuntimeError(
+                f"Stealth address needs native gas for token claim "
+                f"(have={eth_bal}, need≈{gas_cost})"
+            )
+        tx = {
+            **built,
+            "gas": gas_limit,
+            **fees,
+        }
     else:
         balance = int(w3.eth.get_balance(account.address))
-        gas_limit = 21000
-        gas_cost = gas_price * gas_limit
-        # Optional protocol fee: leave fee_wei + dust on stealth or burn as residual
+        to_cs = Web3.to_checksum_address(target_owner)
+
+        # First pass: reserve using floor so we can estimate with a realistic value.
+        gas_limit = NATIVE_GAS_FLOOR
+        gas_cost = effective_price * gas_limit
         max_send = balance - gas_cost
         if max_send <= 0:
             raise RuntimeError(
-                f"Stealth balance too low to cover gas (balance={balance}, gas_cost={gas_cost})"
+                f"Stealth balance too low to cover gas "
+                f"(balance={balance}, gas_cost≈{gas_cost})"
             )
         if amount_wei > 0:
-            # Send min(announced, max_send) minus fee if any
+            target_send = min(amount_wei, max_send)
+        else:
+            target_send = max_send
+        if fee_wei > 0 and target_send > fee_wei:
+            target_send = target_send - fee_wei
+        if target_send <= 0:
+            raise RuntimeError("Nothing left to send after gas/fee")
+
+        # Refine gas from chain estimate (RH testnet needs >21k).
+        gas_limit = _estimate_gas_limit(
+            w3,
+            {
+                "from": account.address,
+                "to": to_cs,
+                "value": int(target_send),
+            },
+            floor=NATIVE_GAS_FLOOR,
+        )
+        gas_cost = effective_price * gas_limit
+        max_send = balance - gas_cost
+        if max_send <= 0:
+            raise RuntimeError(
+                f"Stealth balance too low to cover gas "
+                f"(balance={balance}, gas_cost≈{gas_cost})"
+            )
+        if amount_wei > 0:
             target_send = min(amount_wei, max_send)
         else:
             target_send = max_send
@@ -233,12 +355,12 @@ async def _sweep_stealth_to_owner(
 
         tx = {
             "from": account.address,
-            "to": Web3.to_checksum_address(target_owner),
+            "to": to_cs,
             "value": int(target_send),
             "nonce": nonce,
-            "gas": gas_limit,
-            "gasPrice": gas_price,
+            "gas": int(gas_limit),
             "chainId": chain_id,
+            **fees,
         }
 
     signed = account.sign_transaction(tx)
