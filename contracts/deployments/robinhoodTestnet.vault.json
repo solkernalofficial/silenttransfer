@@ -1,0 +1,11 @@
+{
+  "network": "robinhoodTestnet",
+  "chainId": "46630",
+  "SilentVault": "0x3268fd84bCefB58ae84D6a7B17b15b76f87CBE99",
+  "feeBps": 50,
+  "feeRecipient": "0x9d41FF3cC91b341113a89e96AF1D75c0aC06B26B",
+  "operator": "0x9d41FF3cC91b341113a89e96AF1D75c0aC06B26B",
+  "autoPayout": "privateSend (one-tx A→vault→B)",
+  "deployer": "0x9d41FF3cC91b341113a89e96AF1D75c0aC06B26B",
+  "deployedAt": "2026-07-11T11:09:10.273Z"
+}

@@ -328,6 +328,8 @@ class VaultConfirmDepositRequest(BaseModel):
     batch_id: str = Field(..., min_length=66, max_length=66)
     deposit_tx_hash: str = Field(..., min_length=66, max_length=66)
     depositor: str = Field(..., min_length=42, max_length=42)
+    # True when on-chain privateSend already paid recipients (no operator step)
+    auto_paid: bool = False
 
     @field_validator("depositor")
     @classmethod

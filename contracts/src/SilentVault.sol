@@ -97,6 +97,56 @@ contract SilentVault is Ownable, ReentrancyGuard {
     }
 
     /**
+     * @notice One-tx private send: A pays net+fee; vault immediately pays B/C/D.
+     * @dev Recipients receive from this contract (not A). No claim step for B.
+     *      Public chain still shows A→Vault and Vault→B in the same transaction.
+     */
+    function privateSend(
+        bytes32 batchId,
+        address[] calldata recipients,
+        uint256[] calldata amounts
+    ) external payable nonReentrant {
+        uint256 n = recipients.length;
+        if (batchId == bytes32(0)) revert ZeroValue();
+        if (n == 0 || n != amounts.length) revert LengthMismatch();
+
+        uint256 net = 0;
+        for (uint256 i = 0; i < n; i++) {
+            if (recipients[i] == address(0)) revert ZeroAddress();
+            if (amounts[i] == 0) revert ZeroValue();
+            net += amounts[i];
+        }
+        if (net == 0) revert ZeroValue();
+
+        uint256 fee = (net * uint256(feeBps)) / 10_000;
+        uint256 required = net + fee;
+        if (msg.value < required) revert InsufficientReserve();
+
+        totalFeesCollected += fee;
+        if (fee > 0) {
+            (bool feeOk, ) = feeRecipient.call{value: fee}("");
+            if (!feeOk) revert TransferFailed();
+        }
+
+        emit Deposited(batchId, msg.sender, required, fee, net);
+
+        for (uint256 i = 0; i < n; i++) {
+            bytes32 payoutId = keccak256(abi.encodePacked(batchId, recipients[i], amounts[i], i));
+            if (payoutDone[payoutId]) revert AlreadyPaid();
+            payoutDone[payoutId] = true;
+            (bool ok, ) = recipients[i].call{value: amounts[i]}("");
+            if (!ok) revert TransferFailed();
+            emit Paid(batchId, payoutId, recipients[i], amounts[i]);
+        }
+
+        uint256 dust = msg.value - required;
+        if (dust > 0) {
+            (bool refundOk, ) = msg.sender.call{value: dust}("");
+            if (!refundOk) revert TransferFailed();
+        }
+    }
+
+    /**
      * @notice A deposits ETH for a private payout batch. Gross = net + fee.
      * @param batchId Off-chain / client-generated id linking recipients (stored in API).
      * @param netAmount Total that will be paid out to recipients (sum of payouts).

@@ -4,12 +4,11 @@ import { useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useBalance, useWriteContract, useSwitchChain } from 'wagmi';
 import { isAddress, formatEther, parseEther } from 'viem';
-import { getAuthMode, getStoredToken, getStoredWallet, api } from '@/lib/api';
+import { getAuthMode, getStoredToken, getStoredWallet } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import { truncAddr } from '@/lib/tokens';
 import { explorerTxUrl } from '@/lib/explorer';
-import { appChain } from '@/lib/wagmi';
 import { switchOrAddAppChain } from '@/lib/addChain';
 import NetworkSwitchBanner from '@/components/NetworkSwitchBanner';
 import FaucetLinks from '@/components/FaucetLinks';
@@ -26,14 +25,12 @@ import {
   AlertCircle,
   CheckCircle,
   Users,
-  Shield,
-  Vault,
-  Wallet,
+  User,
   ExternalLink,
-  EyeOff,
+  Wallet,
 } from 'lucide-react';
 
-const DEFAULT_FEE_BPS = 50; // 0.5%
+const DEFAULT_FEE_BPS = 50;
 
 export default function VaultSendTab() {
   const { showToast } = useToast();
@@ -50,17 +47,14 @@ export default function VaultSendTab() {
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync, isPending: isWriting } = useWriteContract();
 
-  const [mode, setMode] = useState<'single' | 'many'>('single');
+  const [mode, setMode] = useState<'one' | 'many'>('one');
   const [toOne, setToOne] = useState('');
   const [amountOne, setAmountOne] = useState('');
-  const [rawMany, setRawMany] = useState(
-    '# address,amount\n# 0xBob…,0.01\n# 0xCarol…,0.02\n'
-  );
+  const [rawMany, setRawMany] = useState('');
   const [statusMsg, setStatusMsg] = useState('');
   const [result, setResult] = useState<Awaited<
     ReturnType<typeof executeVaultPrivateTransfer>
   > | null>(null);
-  const [feeBps] = useState(DEFAULT_FEE_BPS);
 
   const fromWallet = sessionWallet || '';
   const isRealWallet = source === 'wallet' && Boolean(fromWallet);
@@ -74,14 +68,14 @@ export default function VaultSendTab() {
   });
 
   const lines = useMemo(() => {
-    if (mode === 'single') {
-      if (!toOne || !amountOne) return [];
+    if (mode === 'one') {
+      if (!toOne.trim() || !amountOne.trim()) return [];
       return [{ address: toOne.trim(), amount: amountOne.trim() }];
     }
     return parseRecipientLines(rawMany).lines;
   }, [mode, toOne, amountOne, rawMany]);
 
-  const est = useMemo(() => estimateGross(lines, feeBps), [lines, feeBps]);
+  const est = useMemo(() => estimateGross(lines, DEFAULT_FEE_BPS), [lines]);
   const parseErrs = mode === 'many' ? parseRecipientLines(rawMany).errors : [];
 
   const ensureAuth = async (addr: string) => {
@@ -98,26 +92,21 @@ export default function VaultSendTab() {
     mutationFn: async () => {
       if (!fromWallet || !isAddress(fromWallet)) throw new Error('Connect a wallet first');
       if (source !== 'wallet') {
-        throw new Error('Connect a real wallet to deposit into the vault on-chain');
+        throw new Error('Connect MetaMask / a real wallet to send on-chain');
       }
-      if (!lines.length) throw new Error('Add at least one recipient');
-      if (mode === 'single') {
-        if (!isAddress(toOne)) throw new Error('Invalid recipient address');
+      if (!lines.length) throw new Error(mode === 'one' ? 'Enter address and amount' : 'Add recipients');
+      if (mode === 'one') {
+        if (!isAddress(toOne)) throw new Error('Invalid address');
         if (!Number(amountOne) || Number(amountOne) <= 0) throw new Error('Invalid amount');
       }
       if (parseErrs.length) throw new Error(parseErrs[0]);
 
       if (ethBalance && est.gross > 0) {
-        try {
-          const need = parseEther(String(est.gross));
-          // leave tiny gas headroom for deposit tx
-          if (need > ethBalance.value) {
-            throw new Error(
-              `Need ~${est.gross.toFixed(6)} ETH (amount + ${feeBps / 100}% fee). Balance too low.`
-            );
-          }
-        } catch (e) {
-          if (e instanceof Error && e.message.startsWith('Need')) throw e;
+        const need = parseEther(String(est.gross));
+        if (need > ethBalance.value) {
+          throw new Error(
+            `Need ~${est.gross.toFixed(6)} ETH (amount + fee). Balance too low.`
+          );
         }
       }
 
@@ -138,15 +127,12 @@ export default function VaultSendTab() {
     onSuccess: (data) => {
       setStatusMsg('');
       setResult(data);
-      showToast(
-        'success',
-        `Vault transfer done → ${data.recipients?.length || lines.length} recipient(s)`
-      );
+      showToast('success', 'Private transfer sent');
       refetchEth();
     },
     onError: (e: Error) => {
       setStatusMsg('');
-      const msg = e.message || 'Vault transfer failed';
+      const msg = e.message || 'Transfer failed';
       if (/user rejected|denied|reject/i.test(msg)) {
         showToast('error', 'Wallet rejected the transaction');
       } else {
@@ -156,160 +142,139 @@ export default function VaultSendTab() {
   });
 
   const busy = sendMutation.isPending || isWriting;
-  const vaultAddr = getVaultAddress();
   const txLink = result?.deposit_tx_hash
     ? explorerTxUrl(result.deposit_tx_hash)
     : null;
 
   return (
-    <div className="max-w-xl space-y-6">
-      <div className="rh-card p-6">
-        <div className="flex items-start justify-between gap-3 mb-1">
-          <h2 className="text-lg font-semibold text-[var(--text)] flex items-center gap-2">
-            <Vault className="w-5 h-5 text-[var(--accent)]" />
-            Private vault transfer
-          </h2>
-          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-violet-50 text-violet-800 border border-violet-200">
-            A → Vault → B
-          </span>
-        </div>
-        <p className="text-sm text-[var(--text-muted)] mb-4 leading-relaxed">
-          You enter any 0x address(es) + amount. You pay <strong>amount + fee</strong> once.
-          Recipients get paid <strong>from the Silent Vault</strong> — they do not see your wallet
-          on the receive side.
-        </p>
+    <div className="space-y-5">
+      {/* Mode switch — only two actions */}
+      <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-[var(--bg-muted)] border border-[var(--border)]">
+        <button
+          type="button"
+          onClick={() => setMode('one')}
+          className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+            mode === 'one'
+              ? 'bg-white text-emerald-900 shadow-sm border border-emerald-100'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          <User className="w-4 h-4" />
+          To one person
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('many')}
+          className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+            mode === 'many'
+              ? 'bg-white text-emerald-900 shadow-sm border border-emerald-100'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          To many
+        </button>
+      </div>
 
-        <div className="mb-4 p-3 rounded-xl border border-violet-200 bg-violet-50/60 text-[11px] text-violet-950 space-y-1.5">
-          <p className="font-semibold flex items-center gap-1.5">
-            <EyeOff className="w-3.5 h-3.5" /> What “private” means here
-          </p>
-          <p>
-            <strong>B sees:</strong> ETH from Silent Vault (not from A).
-          </p>
-          <p>
-            <strong>You pay:</strong> net to recipients + protocol fee ({feeBps / 100}%) + network
-            gas.
-          </p>
-          <p className="text-violet-900/70">
-            Honest limit: on a public chain, your deposit A→Vault is still visible to analysts. Full
-            ZK hiding of amount/deposit needs a shielded pool later.
+      <div className="rh-card p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-[var(--text)]">
+            {mode === 'one' ? 'Private transfer' : 'Private batch transfer'}
+          </h2>
+          <p className="text-sm text-[var(--text-muted)] mt-1 leading-relaxed">
+            {mode === 'one'
+              ? 'Enter their wallet and amount. They get ETH in their wallet automatically — no claim on the website.'
+              : 'Pay many wallets in one transaction. Everyone receives in their wallet automatically.'}
           </p>
         </div>
 
         {!isRealWallet && (
-          <div className="mb-4 p-3 rounded-lg rh-alert-info text-xs">
-            Connect a real wallet to deposit.
-            <button
-              type="button"
-              onClick={() => connectWallet().catch(() => {})}
-              className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)]"
-            >
-              <Wallet className="w-3.5 h-3.5" /> Connect wallet
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => connectWallet().catch(() => {})}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--bg-hover)]"
+          >
+            <Wallet className="w-4 h-4" /> Connect wallet to send
+          </button>
         )}
-        {wrongChain && <NetworkSwitchBanner variant="full" className="mb-4" />}
+
+        {wrongChain && <NetworkSwitchBanner variant="full" />}
+
         {isRealWallet && ethBalance && ethBalance.value === BigInt(0) && (
-          <div className="mb-4">
-            <FaucetLinks variant="card" title="Need test ETH for deposit" />
-          </div>
+          <FaucetLinks variant="card" title="Get test ETH first" />
         )}
 
-        <div className="flex gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setMode('single')}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold border ${
-              mode === 'single'
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                : 'border-[var(--border)] text-[var(--text-muted)]'
-            }`}
-          >
-            One recipient
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('many')}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1 ${
-              mode === 'many'
-                ? 'bg-violet-50 border-violet-300 text-violet-900'
-                : 'border-[var(--border)] text-[var(--text-muted)]'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" /> Many (B, C, D…)
-          </button>
-        </div>
-
-        {mode === 'single' ? (
-          <div className="space-y-3 mb-4">
+        {mode === 'one' ? (
+          <div className="space-y-4">
             <div>
-              <label className="rh-label">To — any 0x address</label>
+              <label className="rh-label">Their address</label>
               <input
-                className="rh-input font-mono"
+                className="rh-input font-mono text-sm"
                 value={toOne}
                 onChange={(e) => setToOne(e.target.value.trim())}
                 placeholder="0x…"
                 disabled={busy}
+                autoComplete="off"
               />
             </div>
             <div>
               <label className="rh-label">Amount (ETH)</label>
               <input
-                className="rh-input font-mono"
+                className="rh-input font-mono text-sm"
                 value={amountOne}
                 onChange={(e) => setAmountOne(e.target.value)}
                 placeholder="0.01"
+                inputMode="decimal"
                 disabled={busy}
               />
             </div>
           </div>
         ) : (
-          <div className="mb-4">
-            <label className="rh-label">Recipients (address,amount per line)</label>
+          <div>
+            <label className="rh-label">Recipients</label>
             <textarea
-              className="rh-input font-mono text-xs min-h-[140px]"
+              className="rh-input font-mono text-xs min-h-[140px] leading-relaxed"
               value={rawMany}
               onChange={(e) => setRawMany(e.target.value)}
+              placeholder={'0xabc…,0.01\n0xdef…,0.02\n0xghi…,0.005'}
               disabled={busy}
+              spellCheck={false}
             />
-            {parseErrs.length > 0 && (
+            <p className="text-[11px] text-[var(--text-faint)] mt-1.5">
+              One line each: address, amount
+            </p>
+            {parseErrs[0] && (
               <p className="text-red-600 text-xs mt-1">{parseErrs[0]}</p>
             )}
           </div>
         )}
 
-        <div className="mb-4 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] text-xs space-y-1 font-mono">
-          <div className="flex justify-between">
-            <span className="text-[var(--text-muted)]">Recipients</span>
-            <span>{lines.length}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[var(--text-muted)]">They receive (net)</span>
-            <span>{est.net.toFixed(6)} ETH</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-[var(--text-muted)]">Protocol fee ({feeBps / 100}%)</span>
-            <span>{est.fee.toFixed(6)} ETH</span>
-          </div>
-          <div className="flex justify-between font-semibold text-[var(--text)] border-t border-[var(--border)] pt-1">
-            <span>You pay (gross)</span>
-            <span>{est.gross.toFixed(6)} ETH + gas</span>
-          </div>
-          {ethBalance && (
-            <div className="text-[10px] text-[var(--text-faint)]">
-              Balance {Number(formatEther(ethBalance.value)).toFixed(6)} ETH
+        {/* Simple total */}
+        {lines.length > 0 && (
+          <div className="rounded-xl bg-[var(--bg-muted)] border border-[var(--border)] px-4 py-3 text-sm space-y-1">
+            {mode === 'many' && (
+              <div className="flex justify-between text-[var(--text-muted)]">
+                <span>People</span>
+                <span className="font-medium text-[var(--text)]">{lines.length}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-[var(--text-muted)]">
+              <span>They get</span>
+              <span className="font-mono text-[var(--text)]">{est.net.toFixed(6)} ETH</span>
             </div>
-          )}
-          {!vaultAddr && (
-            <div className="text-[10px] text-amber-800 pt-1">
-              Vault contract address not set — batch still works in simulated payout mode until
-              SilentVault is deployed.
+            <div className="flex justify-between text-[var(--text-muted)]">
+              <span>Fee (0.5%)</span>
+              <span className="font-mono text-[var(--text)]">{est.fee.toFixed(6)} ETH</span>
             </div>
-          )}
-        </div>
+            <div className="flex justify-between font-semibold pt-1 border-t border-[var(--border)]">
+              <span>You pay</span>
+              <span className="font-mono">~{est.gross.toFixed(6)} ETH + gas</span>
+            </div>
+          </div>
+        )}
 
         {statusMsg && (
-          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-3">
+          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             {statusMsg}
           </div>
@@ -319,39 +284,43 @@ export default function VaultSendTab() {
           type="button"
           disabled={busy || wrongChain || !lines.length}
           onClick={() => sendMutation.mutate()}
-          className="rh-btn-primary"
+          className="rh-btn-primary w-full py-3.5 text-sm"
         >
-          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {busy ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
           {busy
-            ? 'Processing…'
-            : `Pay ${est.gross > 0 ? est.gross.toFixed(4) : '—'} ETH & send privately`}
+            ? 'Sending…'
+            : mode === 'one'
+              ? 'Send privately'
+              : `Send to ${lines.length || 0} privately`}
         </button>
 
         {sendMutation.isError && (
-          <div className="mt-4 p-3 rounded-lg rh-alert-error flex gap-2 text-xs">
+          <div className="flex gap-2 text-xs text-red-700 bg-red-50 border border-red-100 rounded-xl p-3">
             <AlertCircle className="w-4 h-4 shrink-0" />
             {(sendMutation.error as Error)?.message}
           </div>
         )}
 
         {result && (
-          <div className="mt-5 p-4 rounded-xl rh-alert-success space-y-2 text-xs">
-            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
-              <CheckCircle className="w-4 h-4" /> Vault transfer {result.status}
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+              <CheckCircle className="w-4 h-4" /> Sent
             </div>
-            <p className="text-emerald-900/90">{result.message}</p>
-            <div className="font-mono break-all">
-              Batch {truncAddr(result.batch_id, 10, 8)}
-            </div>
-            {result.recipients?.map((r) => (
+            <p className="text-xs text-emerald-900/80">
+              Money is already in their wallets. They do <strong>not</strong> need to open the site
+              to claim. (Receive tab is only a history view.)
+            </p>
+            {result.recipients?.slice(0, 8).map((r) => (
               <div
                 key={r.payout_id}
-                className="p-2 rounded-lg bg-white/50 border border-emerald-100 flex justify-between gap-2"
+                className="flex justify-between text-xs font-mono text-emerald-900/90"
               >
                 <span>{truncAddr(r.address)}</span>
-                <span>
-                  {humanEthFromWei(r.amount_wei)} ETH · {r.status}
-                </span>
+                <span>{humanEthFromWei(r.amount_wei)} ETH</span>
               </div>
             ))}
             {txLink && (
@@ -359,30 +328,26 @@ export default function VaultSendTab() {
                 href={txLink}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 font-semibold text-emerald-800 underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 underline"
               >
-                Deposit tx <ExternalLink className="w-3 h-3" />
+                View transaction <ExternalLink className="w-3 h-3" />
               </a>
             )}
-            <p className="flex items-start gap-1.5 text-emerald-800/80 pt-1">
-              <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              Recipients: open console → <strong>Vault inbox</strong> / Scanner — source shows
-              Silent Vault, not your address.
-            </p>
+            {!getVaultAddress() && (
+              <p className="text-[10px] text-amber-800">
+                Vault contract optional — payout recorded for demo if vault not deployed.
+              </p>
+            )}
           </div>
         )}
       </div>
 
-      <div className="rh-card p-5 text-sm text-[var(--text-muted)] space-y-2">
-        <h3 className="font-semibold text-[var(--text)]">How the vault works</h3>
-        <ol className="list-decimal pl-4 space-y-1.5 leading-relaxed">
-          <li>You approve one deposit: amount for everyone + protocol fee.</li>
-          <li>Funds sit in SilentVault (pooled).</li>
-          <li>Protocol pays each recipient from the vault (separate payout leg).</li>
-          <li>B/C/D receive ETH from the vault address — not from you.</li>
-        </ol>
-        <p className="text-[11px] text-[var(--text-faint)]">Network: {appChain.name}</p>
-      </div>
+      <p className="text-center text-[11px] text-[var(--text-faint)] px-4 leading-relaxed">
+        Private send uses a vault payout so recipients don&apos;t see your address.
+        {isRealWallet && ethBalance
+          ? ` · Balance ${Number(formatEther(ethBalance.value)).toFixed(4)} ETH`
+          : ''}
+      </p>
     </div>
   );
 }

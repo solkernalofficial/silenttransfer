@@ -108,10 +108,10 @@ async def create_vault_batch(
         recipients=recips,
         status="pending",
         message=(
-            "Approve deposit of gross (net + fee) to SilentVault. "
-            "Recipients are paid from the vault and will not see your wallet on receive."
+            "Confirm one wallet tx: amount + fee. Recipients receive ETH in their wallets "
+            "automatically — no claim step."
             if vault_addr
-            else "Vault contract not configured — deposit will be recorded; payout may simulate."
+            else "Vault contract not configured on this API."
         ),
     )
 
@@ -122,7 +122,7 @@ async def confirm_vault_deposit(
     wallet: CurrentWallet,
     db: AsyncSession = Depends(get_db),
 ):
-    """After A’s on-chain deposit tx confirms, mark batch deposited and trigger payouts."""
+    """Record on-chain privateSend (auto-paid) or trigger operator payout after deposit."""
     if req.depositor != wallet:
         raise HTTPException(status_code=403, detail="Depositor must match session")
 
@@ -138,15 +138,41 @@ async def confirm_vault_deposit(
             "status": batch.status,
             "batch_id": batch.batch_id,
             "recipients": batch.recipients,
-            "message": "Already processing or completed",
+            "message": "Already completed — recipients paid to their wallets",
         }
 
     batch.deposit_tx_hash = req.deposit_tx_hash
-    batch.status = "deposited"
     batch.updated_at = datetime.utcnow()
+
+    # One-tx privateSend already paid B/C/D on-chain — just mark complete
+    if req.auto_paid:
+        updated = []
+        for r in list(batch.recipients or []):
+            row = dict(r)
+            row["status"] = "completed"
+            row["tx_hash"] = req.deposit_tx_hash
+            row["mode"] = "auto_private_send"
+            updated.append(row)
+        batch.recipients = updated
+        flag_modified(batch, "recipients")
+        batch.status = "completed"
+        await db.flush()
+        return {
+            "success": True,
+            "status": "completed",
+            "batch_id": batch.batch_id,
+            "deposit_tx_hash": batch.deposit_tx_hash,
+            "recipients": updated,
+            "message": (
+                "Recipients received ETH in their wallets automatically. "
+                "No website claim required."
+            ),
+        }
+
+    batch.status = "deposited"
     await db.flush()
 
-    # Auto-pay recipients from vault (separate operator txs when live)
+    # Legacy two-step: operator pays after deposit
     try:
         batch.status = "paying"
         updated = await execute_vault_payouts(
@@ -166,8 +192,7 @@ async def confirm_vault_deposit(
             "deposit_tx_hash": batch.deposit_tx_hash,
             "recipients": updated,
             "message": (
-                "Vault payouts completed. Recipients were paid from the vault — "
-                "they do not see your wallet address on the receive leg."
+                "Recipients paid from vault to their wallets — no claim step."
             ),
         }
     except Exception as e:

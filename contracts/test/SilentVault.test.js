@@ -66,6 +66,39 @@ describe("SilentVault", function () {
     expect(await vault.batchReserved(id)).to.equal(0);
   });
 
+  it("privateSend pays B immediately in one tx (no claim)", async function () {
+    const amt = ethers.parseEther("0.05");
+    const fee = (amt * BigInt(feeBps)) / 10000n;
+    const id = batchId("instant-1");
+    const bobBefore = await ethers.provider.getBalance(bob.address);
+
+    await expect(
+      vault.connect(alice).privateSend(id, [bob.address], [amt], { value: amt + fee })
+    )
+      .to.emit(vault, "Deposited")
+      .and.to.emit(vault, "Paid");
+
+    const bobAfter = await ethers.provider.getBalance(bob.address);
+    expect(bobAfter - bobBefore).to.equal(amt);
+  });
+
+  it("privateSend batch pays B and C in one tx", async function () {
+    const a1 = ethers.parseEther("0.02");
+    const a2 = ethers.parseEther("0.03");
+    const net = a1 + a2;
+    const fee = (net * BigInt(feeBps)) / 10000n;
+    const id = batchId("instant-batch");
+    const b0 = await ethers.provider.getBalance(bob.address);
+    const c0 = await ethers.provider.getBalance(carol.address);
+
+    await vault
+      .connect(alice)
+      .privateSend(id, [bob.address, carol.address], [a1, a2], { value: net + fee });
+
+    expect((await ethers.provider.getBalance(bob.address)) - b0).to.equal(a1);
+    expect((await ethers.provider.getBalance(carol.address)) - c0).to.equal(a2);
+  });
+
   it("rejects double payout", async function () {
     const net = ethers.parseEther("0.1");
     const fee = (net * BigInt(feeBps)) / 10000n;

@@ -1,14 +1,26 @@
 /**
- * SilentVault client — A deposits once; B/C/D receive from vault (not from A).
+ * SilentVault client — one-tx privateSend:
+ * A pays amount+fee → vault immediately pays B/C/D (no claim step).
  */
 
-import { isAddress, type Hex } from 'viem';
+import { isAddress, type Hex, type Address } from 'viem';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { api } from '@/lib/api';
 import { wagmiConfig } from '@/lib/wagmi';
 import { toWeiString } from '@/lib/tokens';
 
 export const VAULT_ABI = [
+  {
+    type: 'function',
+    name: 'privateSend',
+    stateMutability: 'payable',
+    inputs: [
+      { name: 'batchId', type: 'bytes32' },
+      { name: 'recipients', type: 'address[]' },
+      { name: 'amounts', type: 'uint256[]' },
+    ],
+    outputs: [],
+  },
   {
     type: 'function',
     name: 'deposit',
@@ -30,7 +42,7 @@ export const VAULT_ABI = [
 
 export interface VaultLine {
   address: string;
-  amount: string; // human ETH
+  amount: string;
 }
 
 export interface VaultBatchPlan {
@@ -46,6 +58,7 @@ export interface VaultBatchPlan {
     amount_wei: string;
     payout_id: string;
     status: string;
+    tx_hash?: string | null;
   }>;
   status: string;
   message: string;
@@ -112,8 +125,8 @@ export interface VaultSendDeps {
     chainId: number;
     address: `0x${string}`;
     abi: typeof VAULT_ABI;
-    functionName: 'deposit';
-    args: [Hex, bigint];
+    functionName: 'privateSend';
+    args: [Hex, Address[], bigint[]];
     value: bigint;
   }) => Promise<`0x${string}`>;
   onStatus?: (msg: string) => void;
@@ -123,7 +136,7 @@ export async function executeVaultPrivateTransfer(deps: VaultSendDeps) {
   const { fromWallet, chainId, lines, writeContractAsync, onStatus } = deps;
   if (!lines.length) throw new Error('Add at least one recipient');
 
-  onStatus?.('Creating private vault batch…');
+  onStatus?.('Preparing private transfer…');
   const plan = await createVaultBatch(lines, fromWallet);
 
   const vault =
@@ -131,70 +144,42 @@ export async function executeVaultPrivateTransfer(deps: VaultSendDeps) {
       ? (plan.vault_address as `0x${string}`)
       : getVaultAddress()) || undefined;
 
-  // Off-chain / simulated vault when contract not deployed yet
   if (!vault) {
-    onStatus?.('Vault contract not on-chain yet — recording batch (simulated payout)…');
-    const fakeTx = ('0x' +
-      Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(
-        ''
-      )) as `0x${string}`;
-    const conf = await api<{
-      success: boolean;
-      status: string;
-      recipients: VaultBatchPlan['recipients'];
-      message?: string;
-    }>(
-      '/api/vault/batches/confirm',
-      'POST',
-      {
-        batch_id: plan.batch_id,
-        deposit_tx_hash: fakeTx,
-        depositor: fromWallet.toLowerCase(),
-      },
-      { auth: true, wallet: fromWallet }
+    throw new Error(
+      'Vault not configured. Deploy SilentVault and set NEXT_PUBLIC_VAULT_ADDRESS.'
     );
-    if (!conf?.success) throw new Error('Vault confirm failed');
-    return {
-      ...plan,
-      path: 'simulated' as const,
-      deposit_tx_hash: fakeTx,
-      status: conf.status,
-      recipients: conf.recipients || plan.recipients,
-      message:
-        conf.message ||
-        'Batch recorded. Deploy SilentVault for full on-chain A→Vault→B privacy.',
-    };
   }
 
-  onStatus?.('Confirm deposit in wallet (amount + protocol fee)…');
   const net = BigInt(plan.net_wei);
   const gross = BigInt(plan.gross_wei);
   const batchId = plan.batch_id as Hex;
+  const recipients = plan.recipients.map((r) => r.address as Address);
+  const amounts = plan.recipients.map((r) => BigInt(r.amount_wei));
 
+  onStatus?.('Confirm in wallet — recipients get paid automatically…');
   const hash = await writeContractAsync({
     chainId,
     address: vault,
     abi: VAULT_ABI,
-    functionName: 'deposit',
-    args: [batchId, net],
+    functionName: 'privateSend',
+    args: [batchId, recipients, amounts],
     value: gross,
   });
 
-  onStatus?.('Waiting for deposit confirmation…');
+  onStatus?.('Waiting for confirmation…');
   const receipt = await waitForTransactionReceipt(wagmiConfig, {
     hash,
     chainId,
     confirmations: 1,
   });
-  if (receipt.status !== 'success') throw new Error('Vault deposit failed');
+  if (receipt.status !== 'success') throw new Error('Private send transaction failed');
 
-  onStatus?.('Paying recipients from vault (they will not see your wallet)…');
+  onStatus?.('Recording transfer…');
   const conf = await api<{
     success: boolean;
     status: string;
     recipients: VaultBatchPlan['recipients'];
     message?: string;
-    deposit_tx_hash?: string;
   }>(
     '/api/vault/batches/confirm',
     'POST',
@@ -202,18 +187,25 @@ export async function executeVaultPrivateTransfer(deps: VaultSendDeps) {
       batch_id: plan.batch_id,
       deposit_tx_hash: hash,
       depositor: fromWallet.toLowerCase(),
+      auto_paid: true,
     },
     { auth: true, wallet: fromWallet }
   );
-  if (!conf?.success) throw new Error('Vault confirm failed after deposit');
+  if (!conf?.success) throw new Error('Transfer sent on-chain but API record failed');
 
   return {
     ...plan,
     path: 'live' as const,
     deposit_tx_hash: hash,
-    status: conf.status,
-    recipients: conf.recipients || plan.recipients,
-    message: conf.message,
+    status: conf.status || 'completed',
+    recipients: conf.recipients || plan.recipients.map((r) => ({
+      ...r,
+      status: 'completed',
+      tx_hash: hash,
+    })),
+    message:
+      conf.message ||
+      'Done. Recipients received ETH in their wallets automatically — no claim needed.',
   };
 }
 
@@ -227,7 +219,6 @@ export function humanEthFromWei(wei: string): string {
   }
 }
 
-/** Estimate gross from human amounts + bps */
 export function estimateGross(lines: VaultLine[], feeBps: number) {
   let net = 0;
   for (const l of lines) net += Number(l.amount) || 0;
