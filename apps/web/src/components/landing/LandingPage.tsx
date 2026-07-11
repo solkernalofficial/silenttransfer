@@ -127,22 +127,50 @@ const STATS = [
   { value: '0%', label: 'Venture allocation' },
 ];
 
-const ROADMAP = [
+const ROADMAP: {
+  title: string;
+  body: string;
+  status: 'Live' | 'Next' | 'Later';
+}[] = [
   {
-    title: 'Private vault (deposit → send)',
-    body: 'Live: wallet-bound vault balance, single and batch payout, auto-receive for recipients. Primary product path on testnet.',
+    status: 'Live',
+    title: 'Private vault',
+    body: 'Deposit into a wallet-bound vault. Single or batch send anytime. Recipients auto-receive—no claim site. Wallet is the key.',
   },
   {
+    status: 'Live',
+    title: 'Harder-to-trace payouts',
+    body: 'Funds leave the vault contract, not a plain A→B send from your hot wallet. Split amounts and timing under your control.',
+  },
+  {
+    status: 'Live',
+    title: 'Console, docs & $SILENT',
+    body: 'Minimal operations console, honest privacy docs, and SILENT (1B hard cap, community-majority, 0% VC) on testnet.',
+  },
+  {
+    status: 'Next',
     title: 'Stronger unlinkability',
-    body: 'Delayed and fixed-size payout patterns, batch mixing surfaces, and hygiene guidance so amount/timing correlation is harder.',
+    body: 'Delayed and fixed-size payout patterns, larger shared anonymity sets, and hygiene guidance against amount/timing correlation.',
   },
   {
-    title: 'Shield pool (ZK path)',
-    body: 'Fixed-denomination notes and Merkle nullifiers on testnet; production Groth16 path-hiding remains staged—not claimed complete.',
+    status: 'Next',
+    title: 'Shield pool maturity',
+    body: 'Testnet shield notes exist today. Production Groth16 path-hiding ships only when ceremony and product scope allow—not claimed complete.',
   },
   {
-    title: 'Standards stealth (ERC-5564)',
-    body: 'Optional advanced path: recipient-bound stealth addresses and viewing-key scan for operators who need it.',
+    status: 'Next',
+    title: 'Payroll & treasury scheduling',
+    body: 'Recurring private batch payouts for operators and DAOs—same auto-receive model for every recipient line.',
+  },
+  {
+    status: 'Later',
+    title: 'Mainnet + external audit',
+    body: 'Production money path only after audit and hardened ops. Mainnet TVL is not claimed today.',
+  },
+  {
+    status: 'Later',
+    title: 'Multi-chain expansion',
+    body: 'Additional networks after the primary vault path is stable and documented on the first production chain.',
   },
 ];
 
@@ -528,17 +556,31 @@ export default function LandingPage() {
         <div className="lp-container">
           <div className="lp-section-head">
             <p className="lp-kicker">Roadmap</p>
-            <h2 className="lp-h2">What we&apos;re building next</h2>
+            <h2 className="lp-h2">Live today. Building next. Honest later.</h2>
             <p className="lp-section-lead">
-              Live today: private vault deposit and send on testnet. Next: stronger unlinkability,
-              shield-pool maturity, and optional standards stealth—documented as intentions, not
-              ship dates.
+              Private vault is live on testnet. Everything below is labeled Live, Next, or Later—
+              intentions with clear status, not fake ship dates or overstated completion.
             </p>
+          </div>
+          <div className="lp-roadmap-legend" aria-label="Roadmap status legend">
+            <span className="lp-roadmap-badge lp-roadmap-badge--live">Live</span>
+            <span className="lp-roadmap-badge lp-roadmap-badge--next">Next</span>
+            <span className="lp-roadmap-badge lp-roadmap-badge--later">Later</span>
           </div>
           <div className="lp-roadmap-grid">
             {ROADMAP.map((item, i) => (
-              <article key={item.title} className="lp-roadmap-card">
-                <div className="lp-roadmap-num">{String(i + 1).padStart(2, '0')}</div>
+              <article
+                key={item.title}
+                className={`lp-roadmap-card lp-roadmap-card--${item.status.toLowerCase()}`}
+              >
+                <div className="lp-roadmap-card-top">
+                  <div className="lp-roadmap-num">{String(i + 1).padStart(2, '0')}</div>
+                  <span
+                    className={`lp-roadmap-badge lp-roadmap-badge--${item.status.toLowerCase()}`}
+                  >
+                    {item.status}
+                  </span>
+                </div>
                 <h3 className="lp-roadmap-title">{item.title}</h3>
                 <p className="lp-roadmap-body">{item.body}</p>
               </article>
@@ -553,6 +595,15 @@ export default function LandingPage() {
                 : {})}
             >
               Full roadmap in docs
+            </a>
+            <a
+              href="https://github.com/SilentTransfer/silenttransfer/blob/main/docs/ROADMAP.md"
+              className="lp-btn lp-btn--ghost lp-btn--lg"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub roadmap
+              <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
         </div>

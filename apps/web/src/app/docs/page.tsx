@@ -113,13 +113,14 @@ const NOT_DONE = [
 ];
 
 const FUTURE = [
-  'Delayed / fixed-size vault payouts to weaken amount and timing correlation.',
-  'Stronger shared anonymity sets for vault withdrawals.',
-  'Production Groth16 path-hiding for the shield pool when ready.',
-  'Optional ERC-5564 stealth tooling for operators who need viewing-key discovery.',
-  'Payroll & treasury scheduling — recurring private batch payouts.',
-  'External audit before mainnet treasury or public TVL claims.',
-  'On-chain vesting when allocation locks ship.',
+  'Next — Delayed / fixed-size vault payouts to weaken amount and timing correlation.',
+  'Next — Stronger shared anonymity sets for vault withdrawals.',
+  'Next — Shield pool maturity (production Groth16 when ceremony + scope allow).',
+  'Next — Payroll & treasury scheduling for recurring private batch payouts.',
+  'Later — External audit before mainnet treasury or public TVL claims.',
+  'Later — Mainnet production path with hardened ops (not claimed today).',
+  'Later — On-chain vesting when allocation locks ship.',
+  'Later — Multi-chain expansion after primary path is stable.',
 ];
 
 function Section({
@@ -737,6 +738,17 @@ export default function DocsPage() {
           </Section>
 
           <Section id="future" icon={Rocket} title="11. Future roadmap">
+            <p>
+              Canonical roadmap lives in the repo at{' '}
+              <code className="text-[11px] bg-[var(--bg-muted)] px-1 rounded">docs/ROADMAP.md</code>{' '}
+              and on the marketing site{' '}
+              <a href="/#roadmap" className="text-[var(--accent)] hover:underline">
+                #roadmap
+              </a>
+              . Labels: <strong className="text-[var(--text)]">Live</strong> (testnet today),{' '}
+              <strong className="text-[var(--text)]">Next</strong>,{' '}
+              <strong className="text-[var(--text)]">Later</strong>.
+            </p>
             <ul className="space-y-2">
               {FUTURE.map((item) => (
                 <li key={item} className="flex gap-2 text-sm">
@@ -746,7 +758,8 @@ export default function DocsPage() {
               ))}
             </ul>
             <p className="text-xs text-[var(--text-faint)]">
-              Roadmap items are intentions, not delivery dates or guaranteed launches.
+              Roadmap items are intentions, not delivery dates or guaranteed launches. Absolute
+              untraceability and production Groth16 are not claimed.
             </p>
           </Section>
 

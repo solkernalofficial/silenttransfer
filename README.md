@@ -2,19 +2,30 @@
 
 **Private transfer infrastructure for public blockchains.**
 
-SilentTransfer provides a console and API for **private vault payouts** that are harder to trace than a plain public send: deposit into a wallet-bound vault, then pay any address—single or batch, any time. Recipients receive ETH in their wallet automatically (no claim site). The protocol asset is **SILENT** (hard-capped at 1,000,000,000).
+Deposit into a wallet-bound **private vault**, then pay any address—single or batch, any time. Recipients receive ETH in their normal wallet automatically (**no claim site**, no app for the receiver). Built so payouts are **harder to trace** than a plain public A→B send.
 
 | | |
 |--|--|
-| Product | [SilentTransfer](https://silenttransfer.com) |
+| Product | [silenttransfer.com](https://silenttransfer.com) |
+| Docs | [silenttransfer.com/docs](https://silenttransfer.com/docs) |
 | Organization | [github.com/SilentTransfer](https://github.com/SilentTransfer) |
 | X | [x.com/silenttransfer](https://x.com/silenttransfer) |
-| Protocol asset | SILENT (1B hard cap, 0% VC allocation) |
-| Primary network (current) | Robinhood Chain Testnet (`46630`) |
-| Live console | [silenttransfer.com](https://silenttransfer.com) · [Docs](https://silenttransfer.com/docs) |
+| Protocol asset | **SILENT** (1B hard cap · 0% VC) |
+| Network (current) | Robinhood Chain Testnet (`46630`) |
 | License | See `LICENSE` |
 
-> **Honesty:** On testnet, vault deposit and send move **real** ETH on-chain. The product is built for **untraceable-oriented** private payouts (break the public A→B path; receivers need no app). Privacy is **not absolute**—amounts, timing, and vault interactions on a public chain can still be analyzed. See `docs/PRIVACY_STATUS.md`.
+> **Honesty:** Vault deposit and send move **real** ETH on testnet. Privacy is **untraceable-oriented**, not absolute—amounts, timing, and vault interactions on a public chain can still be analyzed. See [`docs/PRIVACY_STATUS.md`](./docs/PRIVACY_STATUS.md).
+
+---
+
+## Why SilentTransfer
+
+| Problem | Our approach |
+|---------|----------------|
+| Plain A→B is forever public | Payouts leave a **private vault**, not a one-shot send from your hot wallet |
+| Claim portals kill adoption | Recipients **never open the site**—funds land automatically |
+| Notes and backups fail | **Connected wallet is the key** for vault balance |
+| Fake “full anonymity” marketing | Docs state **what is private today and what is not** |
 
 ---
 
@@ -23,12 +34,44 @@ SilentTransfer provides a console and API for **private vault payouts** that are
 ```text
 A connects wallet
   → deposits ETH into SilentUserVault (wallet-bound balance)
-  → later withdraws any amount, single or batch, to B / C / …
-  → recipients receive in their normal wallets (no website, no claim)
+  → later: single or batch withdraw to B / C / …
+  → recipients receive in normal wallets (no website, no claim)
   → A's connected wallet is the key (no local note backup)
 ```
 
-Advanced / optional paths (stealth ERC-5564, shield pool) exist in the repo and console under advanced tabs—documented separately, not oversold as default UX.
+**Optional / advanced (not primary UX):** ERC-5564 stealth path, shield pool (ZK-style notes). See console advanced tabs and docs.
+
+---
+
+## Roadmap
+
+Full detail: [`docs/ROADMAP.md`](./docs/ROADMAP.md) · also on the [website](https://silenttransfer.com/#roadmap).
+
+### Live (testnet)
+
+- Private vault — deposit, wallet-bound balance  
+- Single and **batch** send from vault  
+- **Auto-receive** for recipients (no claim)  
+- Wallet as key · minimal console · honest docs  
+- $SILENT (1B hard cap, community-majority)  
+- Shield pool & stealth modules available as advanced tooling  
+
+### Next
+
+- Stronger unlinkability (delayed / fixed-size payouts)  
+- Larger shared anonymity sets for withdrawals  
+- Shield pool maturity (production ZK when ready)  
+- Payroll / treasury scheduling for recurring batches  
+
+### Later
+
+- Mainnet production path + **external audit** (not claimed today)  
+- On-chain vesting locks  
+- Multi-chain expansion after primary path is stable  
+
+### Not claimed
+
+Absolute untraceability · production Groth16 complete · audited mainnet TVL · exchange listings · identity product
 
 ---
 
@@ -39,7 +82,7 @@ apps/
   api/          # FastAPI backend
   web/          # Next.js console + marketing site
 contracts/      # Solidity (Hardhat): SilentUserVault, SilentToken, shield, stealth
-docs/           # Technical documentation
+docs/           # Privacy status, roadmap, architecture, security
 docker-compose.yml
 ```
 
@@ -72,8 +115,8 @@ uvicorn src.main:app --host 127.0.0.1 --port 8001
 cd apps/web
 npm install
 copy .env.example .env.local   # or cp .env.example .env.local
-# Point NEXT_PUBLIC_API_URL at the API (default http://localhost:8001)
-# Set NEXT_PUBLIC_USER_VAULT_ADDRESS for private vault
+# NEXT_PUBLIC_API_URL → API (default http://localhost:8001)
+# NEXT_PUBLIC_USER_VAULT_ADDRESS → SilentUserVault on testnet
 npm run dev
 ```
 
@@ -97,10 +140,10 @@ npx hardhat run scripts/deploy-user-vault.js --network robinhoodTestnet
 | `ENVIRONMENT` | Purpose |
 |---------------|---------|
 | `demo` | Local synthetic workflow |
-| `testnet` | Public testnet contracts + RPC (current default target) |
+| `testnet` | Public testnet contracts + RPC (**current default**) |
 | `mainnet` | Production (operator login disabled) |
 
-Settlement simulation flags and staged paymasters are intentional and documented—not a claim of full mainnet settlement.
+Staged paymasters and simulation flags are intentional—not a claim of full mainnet settlement.
 
 ---
 
@@ -108,8 +151,7 @@ Settlement simulation flags and staged paymasters are intentional and documented
 
 - **Never commit** `.env`, `contracts/.env`, private keys, or database files.
 - Public contract addresses are safe to publish (they are on-chain).
-- See [SECURITY.md](./SECURITY.md) for reporting and practices.
-- Before any public push, run the secret preflight script (see below).
+- See [SECURITY.md](./SECURITY.md) and [`docs/SECURITY_MODEL.md`](./docs/SECURITY_MODEL.md).
 
 ### Preflight (secrets check)
 
@@ -129,16 +171,18 @@ Do not push if the script reports failures.
 
 ## Documentation
 
-- In-app docs: `/docs` (intended production host: `docs.silenttransfer.com`)
-- Protocol asset: `/silent`
-- Privacy status (copy-safe claims): `docs/PRIVACY_STATUS.md`
-- Additional markdown: `docs/`
+| Doc | Purpose |
+|-----|---------|
+| [docs/ROADMAP.md](./docs/ROADMAP.md) | Live / next / later roadmap |
+| [docs/PRIVACY_STATUS.md](./docs/PRIVACY_STATUS.md) | Copy-safe privacy claims |
+| [docs/PRIVACY_DISCLAIMER.md](./docs/PRIVACY_DISCLAIMER.md) | Legal / user responsibility |
+| [docs/SECURITY_MODEL.md](./docs/SECURITY_MODEL.md) | Threat model notes |
+| In-app `/docs` | Operator-facing product docs |
+| `/silent` | $SILENT overview |
 
 ---
 
 ## Tokenomics (summary)
-
-Community-majority fair launch design:
 
 | Allocation | Share |
 |------------|-------|
@@ -147,19 +191,19 @@ Community-majority fair launch design:
 | Team (separate pool) | **0%** |
 | Venture capital | **0%** |
 
-Hard cap: **1B SILENT** (contract-enforced). Product fees are environment-dependent; vault deposit may charge an on-chain protocol fee. Planned sponsored-flow fee **0.5%** for protocol operations and open-market buybacks.
+Hard cap: **1B SILENT** (contract-enforced). Vault deposit may charge an on-chain protocol fee. Planned sponsored-flow fee **0.5%** for protocol operations and open-market buybacks.
 
 ---
 
 ## What this repository is not
 
-- Not affiliated with Robinhood Markets, Inc. (network RPCs may target Robinhood Chain testnet as an infrastructure choice).
-- Not a guarantee of absolute untraceability, production mainnet settlement, audits, or exchange listings.
+- Not affiliated with Robinhood Markets, Inc. (testnet RPC is an infrastructure choice).
+- Not a guarantee of absolute untraceability, production mainnet settlement, audits, or listings.
 - Not a place for private keys or production credentials.
-- Not an identity or onboarding product—focus is private transfer mechanics.
+- Not an identity product—focus is **private transfer mechanics**.
 
 ---
 
 ## License
 
-See `LICENSE` (or add an open-source license before publishing if you intend others to reuse the code).
+See `LICENSE`.

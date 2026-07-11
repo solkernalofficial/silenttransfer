@@ -99,13 +99,15 @@ Splitting amounts over time and paying from the vault (not A’s everyday wallet
 
 ## Roadmap sketch (fuller privacy)
 
+Canonical product roadmap: **[ROADMAP.md](./ROADMAP.md)** (Live / Next / Later). Website: silenttransfer.com/#roadmap.
+
 1. **Private vault (deposit → single/batch send)** — ✅ **Live** (primary console tab).
 2. **Auto-receive (no claim for B)** — ✅ **Live** for vault path.
 3. **Wallet-as-key (no note backup)** — ✅ **Live** for `SilentUserVault`.
-4. **Stronger unlinkability** — 🚧 delayed / fixed-size payout patterns.
-5. **Shield pool ZK maturity** — 🚧 testnet pool exists; production ceremony not claimed.
+4. **Stronger unlinkability** — 🚧 Next: delayed / fixed-size payout patterns.
+5. **Shield pool ZK maturity** — 🚧 Next: testnet pool exists; production ceremony not claimed.
 6. **ERC-5564 / ERC-6538 advanced path** — optional tooling in repo.
-7. **External audit before mainnet TVL claims** — ❌ not claimed.
+7. **External audit before mainnet TVL claims** — ❌ Later: not claimed.
 
 Until production ZK / strong anonymity sets ship, do **not** market as fully shielded cash or absolute untraceability.
 
