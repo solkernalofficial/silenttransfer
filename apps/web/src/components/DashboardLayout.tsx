@@ -22,6 +22,8 @@ import {
   Loader2,
   Shield,
   Users,
+  Vault,
+  Inbox,
 } from 'lucide-react';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import { truncAddr } from '@/lib/tokens';
@@ -30,6 +32,8 @@ import NetworkSwitchBanner from '@/components/NetworkSwitchBanner';
 
 type Tab =
   | 'dashboard'
+  | 'vault'
+  | 'inbox'
   | 'send'
   | 'batch'
   | 'receive'
@@ -48,8 +52,10 @@ interface DashboardLayoutProps {
 
 const navItems: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'send', label: 'Send', icon: Send },
-  { id: 'batch', label: 'Batch send', icon: Users },
+  { id: 'vault', label: 'Private send', icon: Vault },
+  { id: 'inbox', label: 'Vault inbox', icon: Inbox },
+  { id: 'send', label: 'Stealth send', icon: Send },
+  { id: 'batch', label: 'Batch (legacy)', icon: Users },
   { id: 'receive', label: 'Receive', icon: Download },
   { id: 'scanner', label: 'Scanner', icon: ScanSearch },
   { id: 'relayer', label: 'Relayer', icon: Repeat2 },

@@ -11,11 +11,15 @@ Related: [PRIVACY_DISCLAIMER.md](./PRIVACY_DISCLAIMER.md), [SECURITY_MODEL.md](.
 
 ## One-line truth
 
-SilentTransfer today is **recipient-private stealth transfer (ERC-5564)** on a **public** chain:  
-cryptographic A→B private destination, **not** full ZK anonymity (sender + amount still public).
+SilentTransfer offers two product paths on a **public** chain:
 
-**Do say:** ERC-5564 stealth A→B · viewing-key claim · no claim code · no KYC product  
-**Don’t say:** fully shielded amounts · untraceable cash · sender privacy · “nobody can ever find out”
+1. **Vault private transfer (primary UX):** A deposits into SilentVault (amount + fee); B/C/D are paid **from the vault**. Recipients **do not see A’s wallet** on the receive leg. Batch 1→many supported.
+2. **ERC-5564 stealth send (optional):** recipient-bound one-time addresses when Receive is enabled.
+
+**Not** full ZK anonymity: deposits A→Vault remain visible on-chain; amounts can still be correlated without a shielded pool.
+
+**Do say:** vault payout hides sender from recipient · batch B/C/D · protocol fee on deposit  
+**Don’t say:** fully shielded ZK cash · untraceable forever · deposit is invisible
 
 ---
 

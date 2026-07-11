@@ -47,8 +47,11 @@ class Settings(BaseSettings):
     messenger_contract_address: str = ""
     paymaster_contract_address: str = ""
     silent_token_address: str = ""
+    vault_contract_address: str = ""
 
     protocol_fee_bps: int = 0
+    # Vault private transfer fee (default 0.5% = 50 bps when vault is used)
+    vault_fee_bps: int = 50
 
     bundler_url: str = ""
     paymaster_url: str = ""

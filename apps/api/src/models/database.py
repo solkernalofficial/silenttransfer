@@ -99,3 +99,21 @@ class AuditLog(Base):
     details = Column(JSON, default={})
     ip_address = Column(String(45), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class VaultBatch(Base):
+    """A deposits into SilentVault; B/C/D receive from vault (not from A)."""
+
+    __tablename__ = "st_vault_batches"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    batch_id = Column(String(66), unique=True, nullable=False, index=True)  # 0x bytes32
+    depositor = Column(String(42), nullable=False, index=True)
+    net_wei = Column(String(78), nullable=False)
+    fee_wei = Column(String(78), default="0")
+    gross_wei = Column(String(78), nullable=False)
+    deposit_tx_hash = Column(String(66), nullable=True)
+    status = Column(String(20), default="pending")  # pending|deposited|paying|completed|failed
+    recipients = Column(JSON, default=[])  # [{address, amount_wei, payout_id, status, tx_hash}]
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

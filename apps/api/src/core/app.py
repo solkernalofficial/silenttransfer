@@ -79,6 +79,7 @@ def create_app() -> FastAPI:
         relay,
         contracts,
         config_public,
+        vault,
     )
 
     app.include_router(health.router)
@@ -90,5 +91,6 @@ def create_app() -> FastAPI:
     app.include_router(relay.router)
     app.include_router(contracts.router)
     app.include_router(config_public.router)
+    app.include_router(vault.router)
 
     return app

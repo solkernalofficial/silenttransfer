@@ -7,6 +7,8 @@ import WalletGate from '@/components/WalletGate';
 import { ToastProvider } from '@/components/Toast';
 import DashboardTab from '@/components/tabs/DashboardTab';
 import SendTab from '@/components/tabs/SendTab';
+import VaultSendTab from '@/components/tabs/VaultSendTab';
+import VaultInboxTab from '@/components/tabs/VaultInboxTab';
 import BatchSendTab from '@/components/tabs/BatchSendTab';
 import ReceiveTab from '@/components/tabs/ReceiveTab';
 import ScannerTab from '@/components/tabs/ScannerTab';
@@ -18,6 +20,8 @@ import SettingsTab from '@/components/tabs/SettingsTab';
 
 type Tab =
   | 'dashboard'
+  | 'vault'
+  | 'inbox'
   | 'send'
   | 'batch'
   | 'receive'
@@ -30,6 +34,8 @@ type Tab =
 
 const validTabs: Set<string> = new Set([
   'dashboard',
+  'vault',
+  'inbox',
   'send',
   'batch',
   'receive',
@@ -45,7 +51,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tab = searchParams.get('tab');
-  const activeTab: Tab = tab && validTabs.has(tab) ? (tab as Tab) : 'dashboard';
+  const activeTab: Tab = tab && validTabs.has(tab) ? (tab as Tab) : 'vault';
 
   const onTabChange = useCallback(
     (t: Tab) => {
@@ -58,6 +64,10 @@ function DashboardContent() {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardTab />;
+      case 'vault':
+        return <VaultSendTab />;
+      case 'inbox':
+        return <VaultInboxTab />;
       case 'send':
         return <SendTab />;
       case 'batch':

@@ -269,17 +269,102 @@ class PublicConfigResponse(BaseModel):
     registry_contract_address: str = ""
     messenger_contract_address: str = ""
     paymaster_contract_address: str = ""
+    vault_contract_address: str = ""
     protocol_fee_bps: int = 0
+    vault_fee_bps: int = 50
     planned_protocol_fee_bps: int = 50
     protocol_fee_note: str = (
-        "Fees 0% now. Planned gasless fee 0.5% for protocol ops + SILENT market buyback. "
-        "Private send: 0% product fee."
+        "Vault private transfer: protocol fee on deposit (default 0.5%). "
+        "Recipients are paid from the vault — not from the sender wallet."
     )
     product: str = "SilentTransfer"
     token_symbol: str = "SILENT"
     max_supply: str = "1000000000"
     settlement_mode: str = "testnet_simulated"
     operator_login: bool = True
+
+
+# ── Vault (private multi-recipient pool) ─────────────────────────────────────────
+
+class VaultRecipientIn(BaseModel):
+    address: str = Field(..., min_length=42, max_length=42)
+    amount_wei: str = Field(..., min_length=1)
+
+    @field_validator("address")
+    @classmethod
+    def validate_addr(cls, v: str) -> str:
+        if not re.match(r"^0x[a-fA-F0-9]{40}$", v):
+            raise ValueError("Invalid address")
+        return v.lower()
+
+
+class VaultCreateRequest(BaseModel):
+    """A plans a private batch: one deposit funds many recipients."""
+
+    recipients: list[VaultRecipientIn] = Field(..., min_length=1, max_length=100)
+
+    @field_validator("recipients")
+    @classmethod
+    def validate_recipients(cls, v: list[VaultRecipientIn]) -> list[VaultRecipientIn]:
+        if not v:
+            raise ValueError("At least one recipient")
+        return v
+
+
+class VaultCreateResponse(BaseModel):
+    batch_id: str
+    depositor: str
+    net_wei: str
+    fee_wei: str
+    gross_wei: str
+    fee_bps: int
+    vault_address: str
+    recipients: list[dict]
+    status: str
+    message: str
+
+
+class VaultConfirmDepositRequest(BaseModel):
+    batch_id: str = Field(..., min_length=66, max_length=66)
+    deposit_tx_hash: str = Field(..., min_length=66, max_length=66)
+    depositor: str = Field(..., min_length=42, max_length=42)
+
+    @field_validator("depositor")
+    @classmethod
+    def validate_dep(cls, v: str) -> str:
+        if not re.match(r"^0x[a-fA-F0-9]{40}$", v):
+            raise ValueError("Invalid address")
+        return v.lower()
+
+    @field_validator("deposit_tx_hash", "batch_id")
+    @classmethod
+    def validate_hex(cls, v: str) -> str:
+        if not re.match(r"^0x[a-fA-F0-9]+$", v):
+            raise ValueError("Invalid hex")
+        return v.lower()
+
+
+class VaultBatchPublic(BaseModel):
+    batch_id: str
+    status: str
+    net_wei: str
+    fee_wei: str
+    gross_wei: str
+    recipient_count: int
+    # Intentionally omit depositor for recipient-facing views when hide_sender=True
+    deposit_tx_hash: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class VaultIncomingItem(BaseModel):
+    """What B sees — no sender address."""
+
+    batch_id: str
+    amount_wei: str
+    status: str
+    payout_tx_hash: Optional[str] = None
+    source: str = "Silent Vault"
+    message: str = "Private vault payout — sender wallet is not shown"
 
 
 # ── User ─────────────────────────────────────────────────────────────────────────

@@ -22,11 +22,14 @@ async def public_config():
         registry_contract_address=settings.registry_contract_address or "",
         messenger_contract_address=settings.messenger_contract_address or "",
         paymaster_contract_address=settings.paymaster_contract_address or "",
+        vault_contract_address=settings.vault_contract_address or "",
         protocol_fee_bps=max(0, min(int(settings.protocol_fee_bps), 1000)),
+        vault_fee_bps=max(0, min(int(settings.vault_fee_bps), 1000)),
         planned_protocol_fee_bps=50,
         protocol_fee_note=(
-            "Fees 0% now. Planned gasless fee 0.5% (50 bps) for protocol running costs "
-            "and buying SILENT from the market (buyback). Private send stays 0% product fee."
+            "Vault private transfer: A deposits net+fee; B/C/D are paid from the vault "
+            f"({max(0, min(int(settings.vault_fee_bps), 1000))} bps fee). "
+            "Recipients do not see the sender wallet on the receive leg."
         ),
         product="SilentTransfer",
         token_symbol="SILENT",
