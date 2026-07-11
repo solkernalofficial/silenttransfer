@@ -28,8 +28,24 @@ import {
   clearPendingWithdraw,
   getPendingWithdraw,
 } from '@/lib/pendingWithdraw';
+import {
+  getClaimKeyForStealth,
+  parseClaimCode,
+  saveClaimPackage,
+  removeClaimPackage,
+} from '@/lib/claimVault';
 import { explorerTxUrl } from '@/lib/explorer';
-import { Repeat, Loader2, AlertCircle, CheckCircle, History, Sparkles, ExternalLink } from 'lucide-react';
+import {
+  Repeat,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  History,
+  Sparkles,
+  ExternalLink,
+  Shield,
+  Clock,
+} from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 
 interface RelayRecord {
@@ -63,6 +79,7 @@ export default function RelayerTab() {
   const [target, setTarget] = useState('');
   const [token, setToken] = useState(DEFAULT_TOKEN);
   const [amount, setAmount] = useState('');
+  const [claimCode, setClaimCode] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [bobBusy, setBobBusy] = useState(false);
   const [prefillNote, setPrefillNote] = useState('');
@@ -85,12 +102,48 @@ export default function RelayerTab() {
     if (pending.token_symbol && TOKEN_LIST.includes(pending.token_symbol)) {
       setToken(pending.token_symbol);
     }
+    const vaultKey =
+      pending.claim_private_key || getClaimKeyForStealth(pending.stealth_address);
+    if (vaultKey) {
+      // Raw key is enough for Relayer (stealth ECDH or claim vault)
+      setClaimCode(vaultKey);
+    }
     setPrefillNote(
-      `Filled from Scanner: ${truncAddr(pending.stealth_address)} · ${pending.amount} ${pending.token_symbol || 'tokens'}`
+      `Filled from Scanner: ${truncAddr(pending.stealth_address)} · ${pending.amount} ${pending.token_symbol || 'tokens'}${
+        vaultKey
+          ? pending.claim_mode === 'stealth'
+            ? ' · ECDH spend key derived'
+            : ' · claim key from local vault'
+          : pending.claim_mode === 'stealth'
+            ? ' · need Receive vault on this browser'
+            : pending.claim_mode === 'client'
+              ? ' · paste claim code from sender'
+              : ''
+      }`
     );
     clearPendingWithdraw();
     connect(pending.target_owner).catch(() => {});
   }, [connect]);
+
+  const resolveClaimKey = (): string | undefined => {
+    const fromVault = stealthAddr ? getClaimKeyForStealth(stealthAddr) : null;
+    if (fromVault) return fromVault;
+    const code = (claimCode || '').trim();
+    if (!code) return undefined;
+    if (/^0x[a-fA-F0-9]{64}$/i.test(code)) return code.toLowerCase();
+    const parsed = parseClaimCode(code);
+    if (parsed) {
+      if (
+        stealthAddr &&
+        parsed.stealth_address.toLowerCase() !== stealthAddr.toLowerCase()
+      ) {
+        throw new Error('Claim code stealth address does not match the field above');
+      }
+      if (!stealthAddr) setStealthAddr(parsed.stealth_address);
+      return parsed.claim_private_key;
+    }
+    return undefined;
+  };
 
   const ensureClaimAuth = async (addr: string) => {
     const mode = getAuthMode();
@@ -123,21 +176,43 @@ export default function RelayerTab() {
     mutationFn: async () => {
       await connect(target);
       await ensureClaimAuth(target);
+      let claimKey: string | undefined;
+      try {
+        claimKey = resolveClaimKey();
+      } catch (e) {
+        throw e instanceof Error ? e : new Error('Invalid claim code');
+      }
+      // Persist pasted claim code into vault for this browser
+      if (claimKey && stealthAddr) {
+        saveClaimPackage({
+          version: 1,
+          stealth_address: stealthAddr.toLowerCase(),
+          claim_private_key: claimKey as `0x${string}`,
+          to_address: target.toLowerCase(),
+          amount,
+          token_symbol: token,
+          created_at: new Date().toISOString(),
+          claim_mode: 'client',
+        });
+      }
+      const body: Record<string, string> = {
+        stealth_address: stealthAddr.toLowerCase(),
+        target_owner: target.toLowerCase(),
+        fee_token: TOKENS[token] || TOKENS.ETH,
+        amount: toWeiString(amount),
+      };
+      if (claimKey) body.claim_private_key = claimKey;
       return api<{ tx_hash: string; success: boolean; mode: string; message?: string }>(
         '/api/relay/withdraw',
         'POST',
-        {
-          stealth_address: stealthAddr.toLowerCase(),
-          target_owner: target.toLowerCase(),
-          fee_token: TOKENS[token] || TOKENS.ETH,
-          amount: toWeiString(amount),
-        },
+        body,
         { auth: true, wallet: target }
       );
     },
     onSuccess: (data) => {
       if (data?.success) {
         setLastClaimTx(data.tx_hash || null);
+        if (stealthAddr) removeClaimPackage(stealthAddr);
         showToast(
           'success',
           data.mode === 'live'
@@ -146,6 +221,7 @@ export default function RelayerTab() {
         );
         setStealthAddr('');
         setAmount('');
+        setClaimCode('');
         setPrefillNote('');
         refetch();
       } else {
@@ -301,8 +377,8 @@ export default function RelayerTab() {
           </div>
         </div>
         <p className="text-xs text-[var(--text-muted)] mb-4 leading-relaxed">
-          Connect the recipient wallet, load the payment from Scanner, and claim. Funded private
-          sends sweep real ETH from the one-time address into your wallet on-chain.
+          Connect the recipient wallet, load the payment from Scanner, and claim. Client-held
+          sends need the claim code from the sender. Funded payments sweep real ETH on-chain.
         </p>
 
         {prefillNote && (
@@ -310,6 +386,20 @@ export default function RelayerTab() {
             {prefillNote}
           </div>
         )}
+
+        <div className="mb-4 p-3 rounded-xl border border-amber-200 bg-amber-50/80 text-[11px] text-amber-950 space-y-1.5 leading-relaxed">
+          <p className="font-semibold flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5" /> Privacy hygiene
+          </p>
+          <p className="flex items-start gap-1.5">
+            <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            Optional delay before claim reduces timing correlation with the funding tx.
+          </p>
+          <p>
+            Prefer claiming to a fresh wallet — not straight into a CEX deposit. RPC/scan IPs
+            can leak; use a privacy-aware network when possible.
+          </p>
+        </div>
 
         <div className="mb-4 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] text-[11px] text-[var(--text-muted)] space-y-1 leading-relaxed">
           <p className="font-semibold text-[var(--text-secondary)]">Fee model</p>
@@ -338,6 +428,21 @@ export default function RelayerTab() {
             {errors.stealthAddr && (
               <p className="text-red-600 text-xs mt-1">{errors.stealthAddr}</p>
             )}
+          </div>
+
+          <div>
+            <label className="rh-label">Claim code (client-held)</label>
+            <textarea
+              value={claimCode}
+              onChange={(e) => setClaimCode(e.target.value)}
+              placeholder="claim:v1:0x…:0x…  or paste claim JSON / 0x private key"
+              rows={2}
+              spellCheck={false}
+              className="rh-input font-mono text-xs resize-y min-h-[56px]"
+            />
+            <p className="text-[11px] text-[var(--text-faint)] mt-1">
+              Required for new private sends. Auto-filled if this browser holds the vault entry.
+            </p>
           </div>
 
           <div>

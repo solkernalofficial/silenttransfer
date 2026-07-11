@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useWriteContract, useSwitchChain } from 'wagmi';
+import { waitForTransactionReceipt } from 'wagmi/actions';
 import { api, ensureDemoAuth } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import { DEMO_WALLETS, truncAddr } from '@/lib/tokens';
+import { ensureStealthVault, exportStealthVaultJson, getStealthVault } from '@/lib/stealth/vault';
+import { getRegistryAddress, REGISTRY_ABI } from '@/lib/stealth/abis';
+import { selfTestStealthRoundTrip } from '@/lib/stealth/crypto';
+import { appChain, wagmiConfig } from '@/lib/wagmi';
+import { switchOrAddAppChain } from '@/lib/addChain';
 import {
   Download,
   Loader2,
@@ -13,11 +20,11 @@ import {
   Shield,
   Eye,
   Banknote,
-  ChevronDown,
-  ChevronUp,
   CheckCircle2,
   HelpCircle,
   Sparkles,
+  KeyRound,
+  Copy,
 } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 
@@ -29,31 +36,23 @@ interface Registration {
   registered_at?: string;
 }
 
-/**
- * Uncompressed-style pubkey hex for testnet registration helpers.
- * Must be 0x + 128–130 hex digits only (API validates [a-f0-9]).
- * NOTE: suffix must be hex — 's' is NOT hex and was rejecting spend keys.
- */
-function padDemoPubkey(seed: string): string {
-  const hexOnly = seed
-    .replace(/^0x/i, '')
-    .toLowerCase()
-    .replace(/[^a-f0-9]/g, 'a');
-  // 64-byte x||y body (128 hex); prefix 04 → 130 hex after 0x (viem-compatible length)
-  const body = (hexOnly + 'a'.repeat(128)).slice(0, 128);
-  return `0x04${body}`;
-}
-
 export default function ReceiveTab() {
   const { showToast } = useToast();
-  const { wallet: sessionWallet, connect } = useSessionWallet();
+  const { wallet: sessionWallet, connect, source, expectedChainId } = useSessionWallet();
+  const { switchChainAsync } = useSwitchChain();
+  const { writeContractAsync } = useWriteContract();
   const [wallet, setWallet] = useState('');
-  const [spendingKey, setSpendingKey] = useState('');
-  const [viewingKey, setViewingKey] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [showExplain, setShowExplain] = useState(false);
   const [bobBusy, setBobBusy] = useState(false);
+  const [onChainBusy, setOnChainBusy] = useState(false);
+  const [cryptoOk] = useState(() => {
+    try {
+      return selfTestStealthRoundTrip();
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     if (sessionWallet && !wallet) setWallet(sessionWallet);
@@ -67,32 +66,30 @@ export default function ReceiveTab() {
   const bobReady = Boolean(
     registrations?.some((r) => r.user_address?.toLowerCase() === DEMO_WALLETS.bob)
   );
+  const vault = wallet ? getStealthVault(wallet) : null;
 
   const registerMutation = useMutation({
-    mutationFn: async (payload: {
-      wallet: string;
-      spending_pubkey: string;
-      viewing_pubkey: string;
-    }) => {
-      await connect(payload.wallet);
-      await ensureDemoAuth(payload.wallet);
+    mutationFn: async (addr: string) => {
+      await connect(addr);
+      await ensureDemoAuth(addr);
+      const entry = ensureStealthVault(addr);
       return api<{ success: boolean; message: string }>(
         '/api/register',
         'POST',
         {
-          user_address: payload.wallet.toLowerCase(),
-          spending_pubkey: payload.spending_pubkey,
-          viewing_pubkey: payload.viewing_pubkey,
+          user_address: addr.toLowerCase(),
+          spending_pubkey: entry.spendingPublicKey,
+          viewing_pubkey: entry.viewingPublicKey,
         },
-        { auth: true, wallet: payload.wallet }
+        { auth: true, wallet: addr }
       );
     },
     onSuccess: (data) => {
       if (data?.success) {
-        showToast('success', 'Private receive enabled for this wallet');
-        setSpendingKey('');
-        setViewingKey('');
-        setShowAdvanced(false);
+        showToast(
+          'success',
+          'Private receive enabled — real ERC-5564 meta-keys saved in this browser only'
+        );
         refetch();
       } else {
         showToast('error', 'Could not turn on private receive');
@@ -102,16 +99,6 @@ export default function ReceiveTab() {
       showToast('error', e.message || 'Something went wrong. Try again.');
     },
   });
-
-  const ensureKeys = (w: string) => {
-    // Distinct hex domains for spend vs view (use only hex suffixes: a-f, 0-9)
-    const base = w.replace(/^0x/i, '').toLowerCase();
-    const spend = spendingKey || padDemoPubkey(`${base}aa`);
-    const view = viewingKey || padDemoPubkey(`${base}bb`);
-    setSpendingKey(spend);
-    setViewingKey(view);
-    return { spend, view };
-  };
 
   const validateWallet = () => {
     if (!wallet) {
@@ -126,41 +113,46 @@ export default function ReceiveTab() {
     return true;
   };
 
-  const handleSimpleEnable = (e: React.FormEvent) => {
+  const handleEnable = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateWallet()) return;
-    const { spend, view } = ensureKeys(wallet);
-    registerMutation.mutate({
-      wallet,
-      spending_pubkey: spend,
-      viewing_pubkey: view,
-    });
+    registerMutation.mutate(wallet);
   };
 
-  const handleAdvancedSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const registerOnChain = async () => {
     if (!validateWallet()) return;
-    const errs: Record<string, string> = {};
-    const pkOk = (k: string) => {
-      const body = k.trim().replace(/^0x/i, '').toLowerCase();
-      return /^[a-f0-9]+$/.test(body) && [64, 66, 128, 130].includes(body.length);
-    };
-    if (!spendingKey || !pkOk(spendingKey)) {
-      errs.spendingKey = 'Invalid spend public key (hex, compressed or uncompressed)';
+    const entry = ensureStealthVault(wallet);
+    const registry = getRegistryAddress();
+    if (!registry) {
+      showToast('error', 'Registry address not configured');
+      return;
     }
-    if (!viewingKey || !pkOk(viewingKey)) {
-      errs.viewingKey = 'Invalid view public key (hex, compressed or uncompressed)';
+    if (source !== 'wallet') {
+      showToast('error', 'Connect a real wallet to register on-chain');
+      return;
     }
-    setErrors(errs);
-    if (Object.keys(errs).length) return;
-    registerMutation.mutate({
-      wallet,
-      spending_pubkey: spendingKey,
-      viewing_pubkey: viewingKey,
-    });
+    setOnChainBusy(true);
+    try {
+      await switchOrAddAppChain({
+        currentChainId: undefined,
+        switchChain: (args) => switchChainAsync(args),
+      });
+      const hash = await writeContractAsync({
+        chainId: expectedChainId,
+        address: registry,
+        abi: REGISTRY_ABI,
+        functionName: 'registerKeys',
+        args: [entry.spendingPublicKey, entry.viewingPublicKey],
+      });
+      await waitForTransactionReceipt(wagmiConfig, { hash, chainId: expectedChainId });
+      showToast('success', 'On-chain ERC-6538 registry updated');
+    } catch (e) {
+      showToast('error', e instanceof Error ? e.message : 'On-chain register failed');
+    } finally {
+      setOnChainBusy(false);
+    }
   };
 
-  /** One-click: connect as Bob + turn on private receive. */
   const setupBob = async () => {
     setBobBusy(true);
     setErrors({});
@@ -169,24 +161,19 @@ export default function ReceiveTab() {
       setWallet(bob);
       await connect(bob);
       await ensureDemoAuth(bob);
-      const { spend, view } = ensureKeys(bob);
-      const data = await api<{ success: boolean; message: string }>(
+      const entry = ensureStealthVault(bob);
+      const data = await api<{ success: boolean }>(
         '/api/register',
         'POST',
         {
           user_address: bob,
-          spending_pubkey: spend,
-          viewing_pubkey: view,
+          spending_pubkey: entry.spendingPublicKey,
+          viewing_pubkey: entry.viewingPublicKey,
         },
         { auth: true, wallet: bob }
       );
       if (data?.success) {
-        showToast(
-          'success',
-          bobReady
-            ? 'Recipient profile ready — private receive already enabled'
-            : 'Recipient profile configured for private receive'
-        );
+        showToast('success', 'Bob registered with real stealth meta-keys (this browser vault)');
         await refetch();
       } else {
         showToast('error', 'Unable to configure recipient profile');
@@ -214,62 +201,47 @@ export default function ReceiveTab() {
             ) : (
               <Sparkles className="w-3.5 h-3.5" />
             )}
-            {bobReady ? 'Use recipient profile' : 'Configure recipient (Bob)'}
+            {bobReady ? 'Refresh Bob keys' : 'Configure Bob (demo)'}
           </button>
         </div>
         <p className="text-sm text-[var(--text-muted)] mb-3 leading-relaxed">
-          Enable private receive so counterparties can send to a one-time destination without
-          reusing your public address as the payment label.
+          Generate a real <strong>ERC-5564 meta-address</strong> (spending + viewing keys). Senders
+          derive a one-time address only you can claim — no claim code from Alice.
         </p>
 
-        {bobReady && (
-          <div className="mb-4 flex items-start gap-2 p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs text-sky-900">
-            <CheckCircle2 className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-            <div>
-              <strong>Recipient profile ready</strong> ({truncAddr(DEMO_WALLETS.bob)}). Next:
-              complete a private transfer, then open <strong>Scanner</strong> to discover and settle.
-            </div>
-          </div>
-        )}
+        <div
+          className={`mb-4 p-3 rounded-xl border text-xs ${
+            cryptoOk
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}
+        >
+          Stealth crypto self-test: {cryptoOk ? 'OK (ECDH round-trip)' : 'FAILED'}
+        </div>
 
         <div className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4 space-y-3">
           <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
-            Components
+            How private A→B works
           </p>
           <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-lg bg-white border border-[var(--border)] flex items-center justify-center shrink-0">
-              <Wallet className="w-4 h-4 text-[var(--accent)]" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-[var(--text)]">Wallet address</div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                Your controlling address. Required for registration and discovery.
-              </p>
-            </div>
+            <KeyRound className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              Your <strong>private</strong> spending/viewing keys stay in this browser. Only public
+              keys go to the API (and optional on-chain registry).
+            </p>
           </div>
           <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-lg bg-white border border-[var(--border)] flex items-center justify-center shrink-0">
-              <Banknote className="w-4 h-4 text-[var(--accent)]" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-[var(--text)]">Spending public key</div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                Registration field for discovery. When empty, a <strong>testnet helper</strong>{' '}
-                hex key is derived for API registration — not a full ERC-5564 spend keypair yet.
-              </p>
-            </div>
+            <Banknote className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              Sender funds a stealth address derived from your meta-keys — not a random C with a
+              shared claim code.
+            </p>
           </div>
           <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-lg bg-white border border-[var(--border)] flex items-center justify-center shrink-0">
-              <Eye className="w-4 h-4 text-[var(--accent)]" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-[var(--text)]">Viewing public key</div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                Same helper path for registration. Live private send funds a one-time EOA; full
-                viewing-key-only discovery is on the roadmap.
-              </p>
-            </div>
+            <Eye className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              You scan with your viewing key and derive the spend key locally, then claim.
+            </p>
           </div>
         </div>
 
@@ -279,34 +251,17 @@ export default function ReceiveTab() {
           className="mb-4 flex items-center gap-1.5 text-xs font-medium text-[var(--accent)] hover:underline"
         >
           <HelpCircle className="w-3.5 h-3.5" />
-          {showExplain ? 'Hide reference workflow' : 'View reference workflow'}
+          {showExplain ? 'Hide limits' : 'Honest privacy limits'}
         </button>
-
         {showExplain && (
-          <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs text-emerald-900 leading-relaxed space-y-2">
-            <p>
-              <strong>Reference workflow:</strong> recipient enables private receive; sender
-              completes a private transfer; recipient discovers the payment in Scanner and settles
-              via Relayer.
-            </p>
-            <ol className="list-decimal pl-4 space-y-1.5">
-              <li>
-                Select <em>Configure recipient (Bob)</em> to register the reference profile.
-              </li>
-              <li>
-                On Send, use <em>Reference: Alice → Bob</em> and submit the transfer.
-              </li>
-              <li>
-                On Scanner, run discovery for the recipient wallet.
-              </li>
-              <li>
-                On Relayer, complete sponsored settlement.
-              </li>
-            </ol>
+          <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950 leading-relaxed">
+            Recipient privacy is cryptographic (ERC-5564). On a public chain, <strong>sender</strong>{' '}
+            and <strong>amount</strong> on the funding transaction remain visible. This is not a ZK
+            shielded pool.
           </div>
         )}
 
-        <form onSubmit={handleSimpleEnable} className="space-y-4">
+        <form onSubmit={handleEnable} className="space-y-4">
           <div>
             <label className="rh-label">Your wallet address</label>
             <input
@@ -321,9 +276,6 @@ export default function ReceiveTab() {
               autoComplete="off"
             />
             {errors.wallet && <p className="text-red-600 text-xs mt-1">{errors.wallet}</p>}
-            <p className="text-[11px] text-[var(--text-faint)] mt-1.5">
-              Wallet address is required. Optional: configure the Bob reference profile in one step.
-            </p>
           </div>
 
           <button
@@ -336,83 +288,63 @@ export default function ReceiveTab() {
             ) : (
               <Shield className="w-4 h-4" />
             )}
-            {registerMutation.isPending ? 'Enabling…' : 'Enable private receive'}
+            {registerMutation.isPending ? 'Enabling…' : 'Enable private receive (ERC-5564)'}
+          </button>
+
+          <button
+            type="button"
+            onClick={registerOnChain}
+            disabled={onChainBusy || !getRegistryAddress()}
+            className="w-full flex items-center justify-center gap-2 border border-[var(--border)] rounded-lg py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] disabled:opacity-50"
+          >
+            {onChainBusy ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Wallet className="w-4 h-4" />
+            )}
+            Also register on-chain (ERC-6538)
           </button>
         </form>
 
-        <div className="mt-6 border-t border-[var(--border)] pt-4">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced((v) => !v)}
-            className="w-full flex items-center justify-between text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text)]"
-          >
-            <span>Advanced (for developers — optional)</span>
-            {showAdvanced ? (
-              <ChevronUp className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </button>
-
-          {showAdvanced && (
-            <form onSubmit={handleAdvancedSubmit} className="mt-4 space-y-4">
-              <p className="text-[11px] text-[var(--text-faint)] leading-relaxed">
-                Normal users should skip this. These are technical public keys for the registry.
-              </p>
-              <div>
-                <label className="rh-label">Spending public key</label>
-                <input
-                  type="text"
-                  value={spendingKey}
-                  onChange={(e) => setSpendingKey(e.target.value)}
-                  placeholder="Auto-filled if empty"
-                  className={`rh-input font-mono text-[11px] ${errors.spendingKey ? 'rh-input-error' : ''}`}
-                />
-                {errors.spendingKey && (
-                  <p className="text-red-600 text-xs mt-1">{errors.spendingKey}</p>
-                )}
-              </div>
-              <div>
-                <label className="rh-label">Viewing public key</label>
-                <input
-                  type="text"
-                  value={viewingKey}
-                  onChange={(e) => setViewingKey(e.target.value)}
-                  placeholder="Auto-filled if empty"
-                  className={`rh-input font-mono text-[11px] ${errors.viewingKey ? 'rh-input-error' : ''}`}
-                />
-                {errors.viewingKey && (
-                  <p className="text-red-600 text-xs mt-1">{errors.viewingKey}</p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!validateWallet()) return;
-                  ensureKeys(wallet);
-                  showToast('success', 'Reference keys generated — you may save now');
-                }}
-                className="text-xs text-[var(--accent)] font-semibold hover:underline"
-              >
-                Generate reference keys
-              </button>
-              <button
-                type="submit"
-                disabled={registerMutation.isPending}
-                className="w-full flex items-center justify-center gap-2 border border-[var(--border)] rounded-lg py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
-              >
-                <Download className="w-4 h-4" />
-                Save advanced keys
-              </button>
-            </form>
-          )}
-        </div>
+        {vault && (
+          <div className="mt-5 p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 text-xs space-y-2">
+            <div className="flex items-center gap-2 font-semibold text-emerald-900">
+              <CheckCircle2 className="w-4 h-4" /> Meta-keys in this browser
+            </div>
+            <div className="font-mono break-all text-emerald-900/80">
+              View pub: {truncAddr(vault.viewingPublicKey, 10, 8)}
+            </div>
+            <div className="font-mono break-all text-emerald-900/80">
+              Spend pub: {truncAddr(vault.spendingPublicKey, 10, 8)}
+            </div>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 font-semibold text-emerald-800"
+              onClick={async () => {
+                const j = exportStealthVaultJson(wallet);
+                if (!j) return;
+                try {
+                  await navigator.clipboard.writeText(j);
+                  showToast('success', 'Vault backup copied — store offline securely');
+                } catch {
+                  showToast('error', 'Copy failed');
+                }
+              }}
+            >
+              <Copy className="w-3 h-3" /> Backup vault JSON
+            </button>
+            <p className="text-[11px] text-emerald-800/70">
+              Back up before clearing browser data — without private keys you cannot claim stealth
+              payments.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="rh-card p-5">
         <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-[var(--accent)]" />
-          Wallets ready for private receive
+          Registered meta-addresses
         </h3>
         {isLoading ? (
           <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm py-8 justify-center">
@@ -422,68 +354,32 @@ export default function ReceiveTab() {
           <EmptyState
             compact
             title="No one set up yet"
-            description="Enter a wallet address and enable private receive, or configure the reference recipient profile."
+            description="Enable private receive to publish your stealth meta-address for A→B private sends."
             imageSrc="/brand/feature-enterprise.jpg"
           />
         ) : (
           <div className="space-y-2">
-            {registrations.map((r, i) => {
-              const isBob = r.user_address?.toLowerCase() === DEMO_WALLETS.bob;
-              const isAlice = r.user_address?.toLowerCase() === DEMO_WALLETS.alice;
-              return (
-                <div
-                  key={r.id || i}
-                  className={`p-3.5 rounded-xl border flex items-center gap-3 ${
-                    isBob
-                      ? 'bg-sky-50/80 border-sky-200'
-                      : 'bg-[var(--bg-muted)] border-[var(--border)]'
-                  }`}
-                >
-                  <div
-                    className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${
-                      isBob
-                        ? 'bg-sky-100 border-sky-200'
-                        : 'bg-emerald-50 border-emerald-100'
-                    }`}
-                  >
-                    <Shield
-                      className={`w-4 h-4 ${isBob ? 'text-sky-700' : 'text-emerald-700'}`}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div
-                      className={`text-sm font-mono font-medium truncate ${
-                        isBob ? 'text-sky-800' : 'text-emerald-800'
-                      }`}
-                    >
-                      {truncAddr(r.user_address)}
-                      {isBob && (
-                        <span className="ml-2 text-[10px] font-sans font-bold uppercase tracking-wide text-sky-600">
-                          Bob
-                        </span>
-                      )}
-                      {isAlice && (
-                        <span className="ml-2 text-[10px] font-sans font-bold uppercase tracking-wide text-emerald-600">
-                          Alice
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
-                      Private receive enabled · no KYC
-                    </div>
-                  </div>
-                  <span
-                    className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0 border ${
-                      isBob
-                        ? 'text-sky-700 bg-sky-50 border-sky-200'
-                        : 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                    }`}
-                  >
-                    Ready
-                  </span>
+            {registrations.map((r, i) => (
+              <div
+                key={r.id || i}
+                className="p-3.5 rounded-xl border flex items-center gap-3 bg-[var(--bg-muted)] border-[var(--border)]"
+              >
+                <div className="w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 bg-emerald-50 border-emerald-100">
+                  <Shield className="w-4 h-4 text-emerald-700" />
                 </div>
-              );
-            })}
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-mono font-medium truncate text-emerald-800">
+                    {truncAddr(r.user_address)}
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                    ERC-5564 meta-address · no KYC · {appChain.name}
+                  </div>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0 border text-emerald-700 bg-emerald-50 border-emerald-200">
+                  Ready
+                </span>
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -130,34 +130,34 @@ const STATS = [
 const ROADMAP = [
   {
     title: 'Batch private transfer (1 → many)',
-    body: 'One wallet pays many recipients in one flow—CSV or address list, per-recipient amounts, bulk one-time destinations. Built for payroll, multi-vendor payouts, and private airdrops.',
+    body: 'Live in console: one wallet pays many recipients (CSV / address list), per-line amounts, bulk one-time destinations and client-held claim codes. Built for payroll-style and multi-vendor private payouts.',
   },
   {
-    title: 'Fully private transfer',
-    body: 'Viewing-key-only discovery, client-held claim material, and stronger unlinkability than today’s partial one-time-address path—no server-held spend keys.',
+    title: 'Private A→B stealth (ERC-5564)',
+    body: 'Live: default Send derives a recipient-bound stealth address via ECDH—only B’s viewing/spending keys can scan and claim. No claim code from the sender.',
   },
   {
     title: 'Gasless claim & self-withdraw',
     body: 'ERC-4337 paymaster when ready, plus optional self-withdraw where the user pays network gas and keeps product fee at 0%.',
   },
   {
-    title: 'Standards-complete stealth',
-    body: 'Full ERC-5564 ECDH + ERC-6538 registry as the default UI path, with on-chain messenger as primary discovery.',
+    title: 'Amount / sender shielding',
+    body: 'ZK or pool-based amount and sender privacy when product + legal scope allow—beyond today’s public-chain funding visibility.',
   },
 ];
 
 const FAQS = [
   {
     q: 'Is this full anonymity?',
-    a: 'No. SilentTransfer improves unlinkability with one-time destinations and recipient claim. On public chains, metadata and timing can still leak. Fully private transfer is on the product roadmap.',
+    a: 'No. Default Send is ERC-5564 recipient-private A→B stealth. On public chains, sender and amount on the funding tx remain visible. Not a ZK shielded pool.',
   },
   {
     q: 'Is private send live?',
-    a: 'Yes on Robinhood Chain Testnet: funded private sends can move real ETH to a one-time address and claim on-chain. Mainnet production remains staged.',
+    a: 'Yes on Robinhood Chain Testnet: A funds a stealth address derived for B; B claims with viewing-key scan. Mainnet production remains staged.',
   },
   {
     q: 'Will you support batch payouts?',
-    a: 'Yes—batch private transfer (one wallet → many recipients) is on the roadmap for payroll-style and multi-destination private sends.',
+    a: 'Yes—batch private transfer (one wallet → many recipients) is live in the console for payroll-style and multi-destination private sends.',
   },
   {
     q: 'What is $SILENT?',

@@ -70,3 +70,27 @@ async def get_registrations(db: AsyncSession = Depends(get_db)):
         )
         for r in rows
     ]
+
+
+@router.get("/registrations/{address}", response_model=RegistrationResponse)
+async def get_registration(address: str, db: AsyncSession = Depends(get_db)):
+    """Public meta-address lookup for private send (spending + viewing pubkeys only)."""
+    addr = (address or "").strip().lower()
+    if not addr.startswith("0x") or len(addr) != 42:
+        raise HTTPException(status_code=400, detail="Invalid address")
+    result = await db.execute(
+        select(Registration).where(Registration.user_address == addr)
+    )
+    row = result.scalar_one_or_none()
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail="Recipient has not enabled private receive (no stealth meta-address)",
+        )
+    return RegistrationResponse(
+        id=row.id,
+        user_address=row.user_address,
+        spending_pubkey=row.spending_pubkey,
+        viewing_pubkey=row.viewing_pubkey,
+        registered_at=row.registered_at,
+    )

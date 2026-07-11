@@ -36,6 +36,7 @@ async def relay_withdraw(
     claim_key: str | None = None
     token_address: str | None = None
     ann_row = None
+    claim_mode = "server"
 
     ann_q = await db.execute(
         select(Announcement).where(Announcement.stealth_address == stealth)
@@ -48,15 +49,51 @@ async def relay_withdraw(
             else {}
         )
         intended = (meta.get("to_address") or meta.get("recipient") or "").lower()
-        if intended and intended != owner:
+        claim_mode_early = (meta.get("claim_mode") or "server").lower()
+        # Stealth (ERC-5564): may omit to_address — authorization is the derived claim key.
+        if intended and intended != owner and claim_mode_early != "stealth":
             raise HTTPException(
                 status_code=403,
                 detail="Only the intended recipient can claim this private payment",
             )
+        if intended and intended != owner and claim_mode_early == "stealth":
+            # Soft check: still require matching claim key below; warn via 403 only if no key
+            pass
         if meta.get("claim_status") == "claimed":
             raise HTTPException(status_code=409, detail="Payment already claimed")
-        claim_key = meta.get("claim_private_key") or meta.get("_claim_private_key")
+        claim_mode = (meta.get("claim_mode") or "server").lower()
+        # Prefer client-supplied key (client-held path); fall back to server-held legacy
+        claim_key = req.claim_private_key or meta.get("claim_private_key") or meta.get(
+            "_claim_private_key"
+        )
         token_address = (ann_row.token_address or req.fee_token or "").lower()
+    else:
+        claim_key = req.claim_private_key
+
+    if claim_mode in ("client", "stealth") and not claim_key:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "This payment requires a client-derived claim key. "
+                "For ERC-5564 stealth: scan with your viewing key (Receive vault), then claim. "
+                "For legacy client path: paste the claim code from the sender."
+            ),
+        )
+
+    if claim_key:
+        try:
+            from eth_account import Account
+
+            derived = Account.from_key(claim_key).address.lower()
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid claim_private_key: {e}"
+            ) from e
+        if derived != stealth:
+            raise HTTPException(
+                status_code=400,
+                detail="claim_private_key does not match stealth_address",
+            )
 
     try:
         settlement = await execute_settlement(

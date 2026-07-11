@@ -126,8 +126,10 @@ export default function AnalyticsTab() {
                 ['Private transfer', 'Announcement / transfer log', 'Available'],
                 ['Payment discovery', 'Recipient wallet scan', 'Available'],
                 ['Sponsored settlement', 'Relayer path', 'Live claim sweep (testnet)'],
-                ['Batch 1→many private send', 'Multi-recipient payroll / list', 'Roadmap'],
-                ['Fully private transfer', 'Viewing-key path, no server claim keys', 'Roadmap'],
+                ['Batch 1→many private send', 'Multi-recipient payroll / list', 'Live'],
+                ['Private A→B ERC-5564', 'ECDH stealth + viewing-key claim', 'Live'],
+                ['Client-held / no server spend key', 'Stealth derive or claim code', 'Live'],
+                ['ZK amount / sender shield', 'Fully shielded pool', 'Roadmap'],
                 ['Identity / KYC', 'Not required', 'Out of product scope'],
                 ['Mainnet settlement', 'Staged production path', 'Not enabled here'],
               ].map(([feature, rabin, vanilla], i) => (

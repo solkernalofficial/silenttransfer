@@ -12,7 +12,7 @@ SilentTransfer is designed around a **privacy-first, defense-in-depth** security
 
 ## Private Key Handling
 
-- **NO private keys are stored in the database.** The API stores only Ethereum public addresses and registered stealth meta-addresses (spending public key + viewing public key).
+- **Default private send does not store claim spend keys.** Announce verifies the one-time key then discards it (`claim_mode=client`). Legacy `claim_mode=server` may hold a key until claim. Public addresses and meta-addresses (spending/viewing pubkeys) are stored as designed.
 - The relayer private key used for gas sponsorship lives exclusively in the `API_RELAYER_PRIVATE_KEY` environment variable and is never persisted to disk outside `.env`.
 - Users always maintain full custody of their own private keys. The system never requests or stores user private keys.
 - Spending and viewing key pairs are generated client-side in the browser. Only the public components are submitted to the API during registration.

@@ -4,31 +4,24 @@ import { useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import {
   useBalance,
-  useReadContract,
   useSendTransaction,
   useWriteContract,
   useSwitchChain,
 } from 'wagmi';
-import { waitForTransactionReceipt } from 'wagmi/actions';
-import { parseEther, parseUnits, isAddress, formatEther, formatUnits } from 'viem';
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
-import { api, getAuthMode, getStoredToken, getStoredWallet } from '@/lib/api';
+import { parseEther, isAddress, formatEther } from 'viem';
+import { getAuthMode, getStoredToken, getStoredWallet } from '@/lib/api';
 import { useToast } from '@/components/Toast';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
-import {
-  TOKENS,
-  DEFAULT_TOKEN,
-  truncAddr,
-  toWeiString,
-  NATIVE_ETH_ADDRESS,
-  TOKEN_META,
-} from '@/lib/tokens';
-import { FEE_COPY } from '@/lib/fees';
+import { truncAddr } from '@/lib/tokens';
 import { explorerTxUrl } from '@/lib/explorer';
-import { appChain, wagmiConfig } from '@/lib/wagmi';
+import { appChain } from '@/lib/wagmi';
 import { switchOrAddAppChain } from '@/lib/addChain';
 import NetworkSwitchBanner from '@/components/NetworkSwitchBanner';
 import FaucetLinks from '@/components/FaucetLinks';
+import {
+  executeStealthSend,
+  type StealthSendResult,
+} from '@/lib/stealth/sendStealth';
 import {
   Send,
   Loader2,
@@ -39,47 +32,9 @@ import {
   User,
   Wallet,
   ExternalLink,
+  Shield,
+  Lock,
 } from 'lucide-react';
-
-const ERC20_ABI = [
-  {
-    type: 'function',
-    name: 'transfer',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'to', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-  },
-  {
-    type: 'function',
-    name: 'balanceOf',
-    stateMutability: 'view',
-    inputs: [{ name: 'account', type: 'address' }],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-  {
-    type: 'function',
-    name: 'decimals',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint8' }],
-  },
-] as const;
-
-interface AnnounceResponse {
-  success?: boolean;
-  stealth_address?: string;
-  from_address?: string;
-  to_address?: string;
-  amount?: string;
-  message?: string;
-  mode?: string;
-  funded_on_chain?: boolean;
-  funding_tx_hash?: string;
-  tx_hash?: string;
-}
 
 type SendPhase =
   | 'idle'
@@ -103,76 +58,35 @@ export default function SendTab() {
     expectedChainId,
   } = useSessionWallet();
   const { switchChainAsync } = useSwitchChain();
-  // expectedChainId / chainName from session for wrong-chain messaging
 
   const [toWallet, setToWallet] = useState('');
-  const [token, setToken] = useState(DEFAULT_TOKEN);
   const [amount, setAmount] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [phase, setPhase] = useState<SendPhase>('idle');
-  const [result, setResult] = useState<AnnounceResponse | null>(null);
+  const [result, setResult] = useState<StealthSendResult | null>(null);
   const [fundingTx, setFundingTx] = useState<`0x${string}` | undefined>();
   const [statusMsg, setStatusMsg] = useState('');
 
   const fromWallet = sessionWallet || '';
-  const isEth = token === 'ETH';
   const isRealWallet = source === 'wallet' && Boolean(fromWallet);
   const walletAddr =
     fromWallet && isAddress(fromWallet) ? (fromWallet as `0x${string}`) : undefined;
-  const tokenAddr =
-    !isEth && TOKENS[token] && isAddress(TOKENS[token])
-      ? (TOKENS[token] as `0x${string}`)
-      : undefined;
-  const tokenDecimals = TOKEN_META[token]?.decimals ?? 18;
 
-  // wagmi v3 useBalance is native ETH only — ERC-20 via balanceOf
   const { data: ethBalance, refetch: refetchEth } = useBalance({
     address: walletAddr,
     chainId: expectedChainId,
     query: { enabled: Boolean(walletAddr) },
   });
 
-  const {
-    data: erc20Raw,
-    refetch: refetchToken,
-  } = useReadContract({
-    address: tokenAddr,
-    abi: ERC20_ABI,
-    functionName: 'balanceOf',
-    args: walletAddr ? [walletAddr] : undefined,
-    chainId: expectedChainId,
-    query: { enabled: Boolean(walletAddr && tokenAddr) },
-  });
-
-  const balance = useMemo(() => {
-    if (isEth) {
-      if (!ethBalance) return null;
-      return {
-        value: ethBalance.value,
-        decimals: ethBalance.decimals,
-        symbol: ethBalance.symbol || 'ETH',
-        formatted: formatEther(ethBalance.value),
-      };
-    }
-    if (erc20Raw === undefined) return null;
-    const value = erc20Raw as bigint;
-    return {
-      value,
-      decimals: tokenDecimals,
-      symbol: token,
-      formatted: formatUnits(value, tokenDecimals),
-    };
-  }, [isEth, ethBalance, erc20Raw, token, tokenDecimals]);
-
   const balanceLabel = useMemo(() => {
-    if (!balance) return '—';
-    const n = Number(balance.formatted);
-    if (!Number.isFinite(n)) return `${balance.formatted} ${balance.symbol}`;
-    return `${n.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${balance.symbol}`;
-  }, [balance]);
+    if (!ethBalance) return '—';
+    const n = Number(formatEther(ethBalance.value));
+    if (!Number.isFinite(n)) return `${formatEther(ethBalance.value)} ETH`;
+    return `${n.toLocaleString(undefined, { maximumFractionDigits: 6 })} ETH`;
+  }, [ethBalance]);
 
   const { sendTransactionAsync, isPending: isSendingNative } = useSendTransaction();
-  const { writeContractAsync, isPending: isSendingToken } = useWriteContract();
+  const { writeContractAsync, isPending: isWriting } = useWriteContract();
 
   const ensureAuth = async (addr: string) => {
     const mode = getAuthMode();
@@ -191,12 +105,10 @@ export default function SendTab() {
       }
       if (source !== 'wallet') {
         throw new Error(
-          'Connect a real wallet (MetaMask / WalletConnect) to send real ETH. Operator/demo profiles cannot fund on-chain.'
+          'Connect a real wallet (MetaMask / WalletConnect) for on-chain private send.'
         );
       }
-      if (!isAddress(toWallet)) {
-        throw new Error('Enter a valid recipient address');
-      }
+      if (!isAddress(toWallet)) throw new Error('Enter a valid recipient address');
       if (fromWallet.toLowerCase() === toWallet.toLowerCase()) {
         throw new Error('Sender and recipient must be different');
       }
@@ -206,7 +118,7 @@ export default function SendTab() {
       }
 
       setPhase('preparing');
-      setStatusMsg('Preparing one-time private address…');
+      setStatusMsg('Preparing ERC-5564 stealth transfer…');
       setResult(null);
 
       try {
@@ -223,81 +135,27 @@ export default function SendTab() {
       }
 
       await ensureAuth(fromWallet);
-
-      const claimPrivateKey = generatePrivateKey();
-      const stealthAccount = privateKeyToAccount(claimPrivateKey);
-      const stealthAddress = stealthAccount.address;
-
       setPhase('awaiting_wallet');
-      setStatusMsg('Confirm the transfer in your wallet…');
 
-      let hash: `0x${string}`;
-      if (isEth) {
-        hash = await sendTransactionAsync({
-          chainId: expectedChainId,
-          to: stealthAddress,
-          value: parseEther(amount),
-        });
-      } else {
-        const tokenAddr = TOKENS[token] as `0x${string}`;
-        if (!tokenAddr || tokenAddr.toLowerCase() === NATIVE_ETH_ADDRESS.toLowerCase()) {
-          throw new Error('Unknown token contract');
-        }
-        const decimals = balance?.decimals ?? tokenDecimals;
-        hash = await writeContractAsync({
-          chainId: expectedChainId,
-          address: tokenAddr,
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [stealthAddress, parseUnits(amount, decimals)],
-        });
-      }
-
-      setFundingTx(hash);
-      setPhase('confirming');
-      setStatusMsg('Waiting for on-chain confirmation…');
-
-      const receipt = await waitForTransactionReceipt(wagmiConfig, {
-        hash,
+      const data = await executeStealthSend({
+        fromWallet,
+        toWallet,
+        amount,
         chainId: expectedChainId,
-        confirmations: 1,
-      });
-      if (receipt.status !== 'success') {
-        throw new Error('On-chain transfer failed / reverted');
-      }
-
-      setPhase('announcing');
-      setStatusMsg('Recording private payment for recipient…');
-
-      const eph = generatePrivateKey();
-      const body = {
-        stealth_address: stealthAddress.toLowerCase(),
-        caller: fromWallet.toLowerCase(),
-        to_address: toWallet.toLowerCase(),
-        ephemeral_pubkey: eph,
-        token_address: isEth ? NATIVE_ETH_ADDRESS : TOKENS[token],
-        amount: toWeiString(amount),
-        block_number: Number(receipt.blockNumber),
-        funding_tx_hash: hash,
-        claim_private_key: claimPrivateKey,
-        metadata: {
-          token_symbol: token,
-          private_transfer: true,
-          real_transfer: true,
-          funded_on_chain: true,
+        sendTransactionAsync,
+        writeContractAsync: writeContractAsync as never,
+        onStatus: (msg) => {
+          setStatusMsg(msg);
+          if (msg.includes('Confirm') || msg.includes('funding')) setPhase('awaiting_wallet');
+          else if (msg.includes('Waiting')) setPhase('confirming');
+          else if (msg.includes('announce') || msg.includes('Recording'))
+            setPhase('announcing');
+          else if (msg.includes('Deriving') || msg.includes('Looking'))
+            setPhase('preparing');
         },
-      };
-
-      const ann = await api<AnnounceResponse>('/api/announce', 'POST', body, {
-        auth: true,
-        wallet: fromWallet,
       });
-      if (!ann?.success) {
-        throw new Error(
-          'On-chain transfer succeeded but announce failed — save this tx hash: ' + hash
-        );
-      }
-      return { ...ann, funding_tx_hash: hash, funded_on_chain: true };
+      setFundingTx(data.funding_tx_hash as `0x${string}`);
+      return data;
     },
     onSuccess: (data) => {
       setPhase('done');
@@ -305,10 +163,9 @@ export default function SendTab() {
       setResult(data);
       showToast(
         'success',
-        `Real private send complete: ${amount} ${token} → ${truncAddr(toWallet)}`
+        `Private A→B send complete: ${amount} ETH → stealth for ${truncAddr(toWallet)}`
       );
       refetchEth();
-      refetchToken();
     },
     onError: (e: Error) => {
       setPhase('error');
@@ -334,12 +191,10 @@ export default function SendTab() {
     if (!amount) errs.amount = 'Enter an amount';
     else if (isNaN(Number(amount)) || Number(amount) <= 0)
       errs.amount = 'Amount must be greater than 0';
-    else if (balance) {
+    else if (ethBalance) {
       try {
-        const need = isEth
-          ? parseEther(amount)
-          : parseUnits(amount, balance.decimals);
-        if (need > balance.value) {
+        const need = parseEther(amount);
+        if (need > ethBalance.value) {
           errs.amount = `Insufficient balance (have ${balanceLabel})`;
         }
       } catch {
@@ -365,29 +220,19 @@ export default function SendTab() {
   };
 
   const setMax = () => {
-    if (!balance) return;
-    if (isEth) {
-      const gasReserve = parseEther('0.00005');
-      const zero = BigInt(0);
-      const v = balance.value > gasReserve ? balance.value - gasReserve : zero;
-      const s = formatEther(v);
-      setAmount(s.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '') || '0');
-    } else {
-      // trim trailing zeros for cleaner input
-      const n = Number(balance.formatted);
-      setAmount(
-        Number.isFinite(n)
-          ? String(n).replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '')
-          : balance.formatted
-      );
-    }
+    if (!ethBalance) return;
+    const gasReserve = parseEther('0.00008');
+    const zero = BigInt(0);
+    const v = ethBalance.value > gasReserve ? ethBalance.value - gasReserve : zero;
+    const s = formatEther(v);
+    setAmount(s.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '') || '0');
     setErrors((p) => ({ ...p, amount: '' }));
   };
 
   const busy =
     sendMutation.isPending ||
     isSendingNative ||
-    isSendingToken ||
+    isWriting ||
     phase === 'awaiting_wallet' ||
     phase === 'confirming' ||
     phase === 'announcing' ||
@@ -403,20 +248,19 @@ export default function SendTab() {
     <div className="max-w-lg space-y-6">
       <div className="rh-card p-6">
         <div className="flex items-start justify-between gap-3 mb-1">
-          <h2 className="text-lg font-semibold text-[var(--text)]">Private transfer</h2>
-          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
-            Real on-chain
+          <h2 className="text-lg font-semibold text-[var(--text)]">Private transfer A→B</h2>
+          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-violet-50 text-violet-800 border border-violet-200">
+            ERC-5564 stealth
           </span>
         </div>
         <p className="text-sm text-[var(--text-muted)] mb-5 leading-relaxed">
-          Pick a recipient and amount. Your wallet sends real {token} to a one-time private
-          address — then the recipient claims it into their wallet.
+          Send ETH to a <strong>recipient-bound stealth address</strong> derived from B&apos;s
+          meta-keys. Only B can scan and claim — no claim code, no server spend key.
         </p>
 
         {!isRealWallet && (
           <div className="mb-4 p-3 rounded-lg rh-alert-info text-xs text-[var(--text-muted)]">
-            Connect a <strong className="text-[var(--text)]">real wallet</strong> (MetaMask /
-            WalletConnect) to send. Operator Alice/Bob profiles cannot fund on-chain.
+            Connect a <strong className="text-[var(--text)]">real wallet</strong> to send on-chain.
             <button
               type="button"
               onClick={() => connectWallet().catch(() => {})}
@@ -429,7 +273,7 @@ export default function SendTab() {
 
         {wrongChain && <NetworkSwitchBanner variant="full" className="mb-4" />}
 
-        {isRealWallet && balance && balance.value === BigInt(0) && (
+        {isRealWallet && ethBalance && ethBalance.value === BigInt(0) && (
           <div className="mb-4">
             <FaucetLinks variant="card" title="Wallet balance is 0 — get test ETH" />
           </div>
@@ -437,11 +281,11 @@ export default function SendTab() {
 
         <div className="mb-6 flex items-center justify-center gap-2 text-xs font-medium">
           <span className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-            You
+            You (A)
           </span>
-          <span className="text-[var(--text-faint)]">—— private ——▶</span>
+          <span className="text-[var(--text-faint)]">—— stealth ECDH ——▶</span>
           <span className="px-3 py-1.5 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
-            Recipient
+            Recipient (B)
           </span>
         </div>
 
@@ -469,7 +313,7 @@ export default function SendTab() {
 
           <div>
             <label className="rh-label flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" /> To — recipient wallet
+              <User className="w-3.5 h-3.5" /> To — recipient (must enable Receive)
             </label>
             <input
               type="text"
@@ -478,65 +322,51 @@ export default function SendTab() {
                 setToWallet(e.target.value.trim());
                 setErrors((p) => ({ ...p, to: '' }));
               }}
-              placeholder="0x… wallet receiving funds"
+              placeholder="0x… registered private receive wallet"
               className={`rh-input font-mono ${errors.to ? 'rh-input-error' : ''}`}
               disabled={busy}
             />
             {errors.to && <p className="text-red-600 text-xs mt-1">{errors.to}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="rh-label">Asset</label>
-              <select
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="rh-input"
-                disabled={busy}
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="rh-label">Amount (ETH)</label>
+              <button
+                type="button"
+                onClick={setMax}
+                disabled={!ethBalance || busy}
+                className="text-[11px] font-semibold text-[var(--accent)] disabled:opacity-40"
               >
-                <option value="ETH">ETH · Ether</option>
-                <option value="SILENT">SILENT</option>
-              </select>
+                Max
+              </button>
             </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <label className="rh-label">Amount</label>
-                <button
-                  type="button"
-                  onClick={setMax}
-                  disabled={!balance || busy}
-                  className="text-[11px] font-semibold text-[var(--accent)] disabled:opacity-40"
-                >
-                  Max
-                </button>
-              </div>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setErrors((p) => ({ ...p, amount: '' }));
-                }}
-                placeholder="0.01"
-                className={`rh-input font-mono ${errors.amount ? 'rh-input-error' : ''}`}
-                disabled={busy}
-              />
-              {errors.amount && (
-                <p className="text-red-600 text-xs mt-1">{errors.amount}</p>
-              )}
-            </div>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setErrors((p) => ({ ...p, amount: '' }));
+              }}
+              placeholder="0.01"
+              className={`rh-input font-mono ${errors.amount ? 'rh-input-error' : ''}`}
+              disabled={busy}
+            />
+            {errors.amount && <p className="text-red-600 text-xs mt-1">{errors.amount}</p>}
           </div>
 
           <div className="flex items-start gap-2 p-3 rh-alert-info">
-            <EyeOff className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+            <Lock className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
             <div className="text-[11px] text-[var(--text-muted)] leading-relaxed space-y-1">
               <p>
-                <strong className="text-[var(--text)]">Real send:</strong> wallet signs a
-                transfer to a one-time address. Chain sees payment to a fresh address — not a
-                direct public transfer to the recipient.
+                <strong className="text-[var(--text)]">Private A→B (stealth):</strong> ECDH from
+                B&apos;s viewing key → unique stealth address. B alone derives the spend key.
               </p>
-              <p className="text-[var(--text-faint)]">{FEE_COPY.send}</p>
+              <p className="text-[var(--text-faint)]">
+                Public chain limit: your address + amount stay visible on the funding tx. Not a ZK
+                shield for amounts.
+              </p>
             </div>
           </div>
 
@@ -553,7 +383,7 @@ export default function SendTab() {
             ) : (
               <Send className="w-4 h-4" />
             )}
-            {busy ? 'Sending…' : `Send ${token} privately`}
+            {busy ? 'Sending…' : 'Send ETH privately (A→B stealth)'}
           </button>
         </form>
 
@@ -561,33 +391,30 @@ export default function SendTab() {
           <div className="mt-5 p-4 rounded-xl rh-alert-success space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
               <CheckCircle className="w-4 h-4" />
-              {result.funded_on_chain ? 'On-chain private send complete' : 'Transfer recorded'}
+              Private A→B stealth send complete
             </div>
             <div className="text-xs space-y-1.5 font-mono text-emerald-900/90">
               <div>
                 <span className="text-emerald-700/70">From </span>
-                {truncAddr(result.from_address || fromWallet)}
+                {truncAddr(result.from_address)}
               </div>
               <div>
-                <span className="text-emerald-700/70">To </span>
-                {truncAddr(result.to_address || toWallet)}
+                <span className="text-emerald-700/70">To (recipient) </span>
+                {truncAddr(result.to_address)}
               </div>
               <div>
                 <span className="text-emerald-700/70">Amount </span>
-                {amount} {token}
+                {result.amount} ETH
               </div>
               <div className="break-all pt-1 border-t border-emerald-200">
-                <span className="text-emerald-700/70">One-time private address </span>
+                <span className="text-emerald-700/70">Stealth address (B-only claim) </span>
                 <br />
                 {result.stealth_address}
               </div>
-              {(result.funding_tx_hash || result.tx_hash) && (
-                <div className="break-all">
-                  <span className="text-emerald-700/70">Funding tx </span>
-                  <br />
-                  {result.funding_tx_hash || result.tx_hash}
-                </div>
-              )}
+              <div className="break-all">
+                <span className="text-emerald-700/70">Scheme </span>
+                {result.scheme}
+              </div>
             </div>
             {txLink && (
               <a
@@ -596,12 +423,15 @@ export default function SendTab() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 underline"
               >
-                View on explorer <ExternalLink className="w-3 h-3" />
+                View funding tx <ExternalLink className="w-3 h-3" />
               </a>
             )}
-            <p className="text-[11px] text-emerald-800/80 pt-1">
-              Recipient: open <strong>Scanner</strong> with their wallet →{' '}
-              <strong>Relayer</strong> to claim funds into their address.
+            <p className="text-[11px] text-emerald-800/80 pt-1 flex items-start gap-1.5">
+              <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>
+                No claim code to share. Recipient opens <strong>Scanner</strong> with their Receive
+                vault and claims via <strong>Relayer</strong>.
+              </span>
             </p>
           </div>
         )}
@@ -611,31 +441,31 @@ export default function SendTab() {
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
             <div className="text-xs text-[var(--danger-text)]">
               {(sendMutation.error as Error)?.message ||
-                'Transfer failed. Check balance, network, and try again.'}
+                'Transfer failed. Recipient must enable private receive first.'}
             </div>
           </div>
         )}
       </div>
 
       <div className="rh-card p-5">
-        <h3 className="text-sm font-semibold text-[var(--text)] mb-3">How it works</h3>
+        <h3 className="text-sm font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
+          <EyeOff className="w-4 h-4" /> How private A→B works
+        </h3>
         <ol className="text-sm text-[var(--text-muted)] space-y-2 list-decimal pl-4 leading-relaxed">
           <li>
-            Connect wallet → enter <strong className="text-[var(--text-secondary)]">To</strong>{' '}
-            + amount → confirm in wallet (real chain tx).
+            B enables <strong className="text-[var(--text-secondary)]">Receive</strong> (meta-keys
+            in browser + API pubkeys).
           </li>
           <li>
-            Funds land on a <strong className="text-[var(--text-secondary)]">one-time</strong>{' '}
-            address (not the recipient&apos;s public wallet).
+            A enters B&apos;s address → app ECDH-derives a one-time stealth address for B.
           </li>
+          <li>A funds that stealth address on-chain (real ETH).</li>
           <li>
-            Recipient uses <strong className="text-[var(--text-secondary)]">Scanner</strong> +{' '}
-            <strong className="text-[var(--text-secondary)]">Relayer</strong> to claim into
-            their wallet.
+            B scans with viewing key → derives spend key → claims (no Alice claim code).
           </li>
         </ol>
         <p className="text-[11px] text-[var(--text-faint)] mt-3">
-          Network: {appChain.name} (chain {appChain.id})
+          Network: {appChain.name} (chain {appChain.id}) · Messenger optional on-chain announce
         </p>
         <div className="mt-3 pt-3 border-t border-[var(--border)]">
           <FaucetLinks variant="inline" />

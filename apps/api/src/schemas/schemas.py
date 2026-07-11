@@ -91,8 +91,14 @@ class AnnounceRequest(BaseModel):
     block_number: int = 0
     # On-chain funding tx from sender wallet → stealth address (real private send)
     funding_tx_hash: Optional[str] = Field(default=None, max_length=66)
-    # One-time spend key for the stealth address (server-held for claim sweep only)
+    # One-time spend key — only stored when claim_mode=server (legacy). Prefer client.
     claim_private_key: Optional[str] = Field(default=None, max_length=130)
+    # client = claim material stays in sender/recipient browser (no server spend key)
+    # server = legacy: API holds claim key until claim (operator can see it)
+    # stealth = ERC-5564: no claim key at all; recipient derives spend key client-side
+    claim_mode: Optional[str] = Field(default="client", max_length=16)
+    # transfer scheme label: one-time-eoa | erc5564-secp256k1-v1
+    scheme: Optional[str] = Field(default=None, max_length=64)
 
     @field_validator("stealth_address", "caller")
     @classmethod
@@ -129,6 +135,14 @@ class AnnounceRequest(BaseModel):
             raise ValueError("Invalid claim private key")
         return raw
 
+    @field_validator("claim_mode")
+    @classmethod
+    def validate_claim_mode(cls, v: Optional[str]) -> str:
+        mode = (v or "client").strip().lower()
+        if mode not in ("client", "server", "stealth"):
+            raise ValueError("claim_mode must be client, server, or stealth")
+        return mode
+
 
 class AnnouncementResponse(BaseModel):
     id: UUID
@@ -161,6 +175,8 @@ class RelayWithdrawRequest(BaseModel):
     target_owner: str = Field(..., min_length=42, max_length=42)
     fee_token: str = Field(..., min_length=42, max_length=42)
     amount: str = Field(..., min_length=1)
+    # Client-held path: recipient supplies the one-time spend key (never returned by list APIs)
+    claim_private_key: Optional[str] = Field(default=None, max_length=130)
 
     @field_validator("stealth_address", "target_owner", "fee_token")
     @classmethod
@@ -168,6 +184,16 @@ class RelayWithdrawRequest(BaseModel):
         if not re.match(r"^0x[a-fA-F0-9]{40}$", v):
             raise ValueError("Invalid Ethereum address format")
         return v.lower()
+
+    @field_validator("claim_private_key")
+    @classmethod
+    def validate_claim_key(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        raw = v if v.startswith("0x") else f"0x{v}"
+        if not re.match(r"^0x[a-fA-F0-9]{64}$", raw):
+            raise ValueError("Invalid claim private key")
+        return raw
 
 
 class RelayWithdrawResponse(BaseModel):

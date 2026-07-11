@@ -76,11 +76,19 @@ async def announce(
 
     stealth = req.stealth_address.lower()
     derived = None
-    funded = bool(req.funding_tx_hash and req.claim_private_key)
+    claim_mode = (req.claim_mode or "client").lower()
+    scheme = (req.scheme or "").strip().lower()
+    if claim_mode == "stealth" or "erc5564" in scheme:
+        claim_mode = "stealth"
+        scheme = scheme or "erc5564-secp256k1-v1"
+
+    # Funded = real on-chain payment to one-time address (claim key may be client-only)
+    funded = bool(req.funding_tx_hash)
 
     # Real funded path: stealth is a live keypair the client already paid — never rewrite it.
     # Log-only path: if recipient registered, prefer ECDH-shaped derived stealth.
-    if not funded and req.to_address:
+    # Never rewrite ERC-5564 stealth addresses (they are ECDH-derived off-chain).
+    if not funded and claim_mode != "stealth" and req.to_address:
         reg = await db.execute(
             select(Registration).where(
                 Registration.user_address == req.to_address.lower()
@@ -95,7 +103,7 @@ async def announce(
             )
             stealth = derived
 
-    if funded and req.claim_private_key:
+    if req.claim_private_key:
         try:
             from eth_account import Account
 
@@ -109,6 +117,27 @@ async def announce(
                 status_code=400,
                 detail="claim_private_key does not match stealth_address",
             )
+
+    # Stealth (ERC-5564): no claim key ever — recipient derives with viewing/spending keys.
+    # Client-held funded path: key must be proven once at announce, then discarded.
+    if funded and claim_mode == "client" and not req.claim_private_key:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "claim_mode=client requires claim_private_key at announce so the server "
+                "can verify the one-time address; the key is not stored"
+            ),
+        )
+    if claim_mode == "stealth" and req.claim_private_key:
+        raise HTTPException(
+            status_code=400,
+            detail="claim_mode=stealth must not include claim_private_key",
+        )
+    if claim_mode == "stealth" and not req.ephemeral_pubkey:
+        raise HTTPException(
+            status_code=400,
+            detail="claim_mode=stealth requires ephemeral_pubkey for recipient scan",
+        )
 
     existing = await db.execute(
         select(Announcement).where(Announcement.stealth_address == stealth)
@@ -128,17 +157,26 @@ async def announce(
     if derived:
         meta["stealth_derived"] = True
         meta["derivation"] = "silenttransfer-v1"
+    meta["claim_mode"] = claim_mode
+    if scheme:
+        meta["scheme"] = scheme
+    if claim_mode == "stealth":
+        meta["stealth_scheme"] = scheme or "erc5564-secp256k1-v1"
+        meta["private_transfer"] = True
+        # Prefer not requiring plain to_address for crypto correctness; keep if client sent for UX
     if funded:
         meta["funded_on_chain"] = True
         meta["real_transfer"] = True
-        # Server-only — stripped from all public responses
-        meta["claim_private_key"] = req.claim_private_key
         meta["claim_status"] = "funded"
+        if claim_mode == "server" and req.claim_private_key:
+            # Legacy only — stripped from all public responses
+            meta["claim_private_key"] = req.claim_private_key
+        # client/stealth: never persist spend secret
     if req.funding_tx_hash:
         meta["funding_tx_hash"] = req.funding_tx_hash
 
     ann = Announcement(
-        scheme_id=1,
+        scheme_id=1 if claim_mode == "stealth" else 1,
         stealth_address=stealth,
         caller=req.caller.lower(),
         ephemeral_pubkey=req.ephemeral_pubkey,
@@ -151,13 +189,23 @@ async def announce(
     db.add(ann)
     await db.flush()
 
+    msg = f"Private transfer announced ({settings.environment})"
+    if funded and claim_mode == "stealth":
+        msg = (
+            "ERC-5564 private transfer funded: recipient derives spend key "
+            "(no claim code, no server spend key)"
+        )
+    elif funded and claim_mode == "client":
+        msg = (
+            "Private transfer funded on-chain; claim material is client-held "
+            "(not stored on server)"
+        )
+    elif funded:
+        msg = "Private transfer funded on-chain and announced (server-assisted claim)"
+
     return {
         "success": True,
-        "message": (
-            "Private ETH transfer funded on-chain and announced"
-            if funded
-            else f"Private transfer announced ({settings.environment})"
-        ),
+        "message": msg,
         "stealth_address": ann.stealth_address,
         "from_address": req.caller.lower(),
         "to_address": req.to_address,
@@ -167,6 +215,7 @@ async def announce(
         "network_name": settings.network_name,
         "stealth_derived": bool(derived),
         "funded_on_chain": funded,
+        "claim_mode": claim_mode,
         "funding_tx_hash": req.funding_tx_hash,
         "tx_hash": ann.tx_hash,
     }

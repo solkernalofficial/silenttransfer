@@ -93,12 +93,12 @@ const NOT_DONE = [
   {
     title: 'Full ERC-5564 viewing-key-only discovery',
     detail:
-      'Ideal stealth uses ECDH so only Bob’s viewing key recognizes payments. Live path still stores intended to_address for scan usability and may hold claim material server-side for funded sweeps.',
+      'Ideal stealth uses ECDH so only Bob’s viewing key recognizes payments. Default Send is claim_mode=stealth (ERC-5564 ECDH). Optional to_address hint may still be logged for UX; no server spend key.',
   },
   {
     title: 'No trusted API for claim keys',
     detail:
-      'Funded private sends currently allow the API to assist claim by holding the one-time spend key until claim. That is not “server cannot see the payment.” Roadmap: client-held spend path.',
+      'Default path: client-held claim codes (API verifies then discards the spend key). API still sees from/to/amount for discovery — that is not full operator blindness. Full viewing-key-only discovery remains roadmap.',
   },
   {
     title: 'Mainnet production money + audit',
@@ -123,14 +123,12 @@ const NOT_DONE = [
 ];
 
 const FUTURE = [
-  'Batch private transfer — one wallet sends to many recipients in a single flow (CSV / multi-address list, per-recipient amounts, one review + multi-announce).',
-  'Fully private transfer path — viewing-key-only discovery, client-held spend material, no server-held claim keys, and reduced amount/timing linkability (beyond today’s partial privacy).',
   'Multi-hop / delayed claim options — optional claim windows and destination rotation to weaken simple chain analysis.',
-  'Move claim material off the server — client or viewing-key derived spend only.',
-  'Default path: full ERC-5564 ECDH stealth + ERC-6538 registry lookup in the UI.',
-  'On-chain messenger announce as the primary discovery channel (not only API metadata).',
+  'On-chain messenger as the primary discovery channel (not only API metadata).',
   'Optional self-withdraw (user pays gas, 0% protocol fee) without server sweep.',
   'ERC-4337 paymaster for true gasless claim when ready.',
+  'Batch send with full ECDH stealth per recipient (not only claim-code one-time EOAs).',
+  'ZK amount / sender shielding if product + legal scope expand.',
   'Payroll & treasury batch mode — schedule recurring private payouts to many wallets (operators / DAOs).',
   'External audit before mainnet treasury or public TVL claims.',
   'On-chain vesting when allocation locks ship.',
@@ -631,7 +629,7 @@ export default function DocsPage() {
             </ul>
             <p>
               <strong className="text-[var(--text)]">Live path honesty:</strong> the API stores
-              recipient association for scanning and may hold claim material for funded sweeps.
+              recipient association for scanning. Default sends keep claim spend keys client-held.
               Treat privacy as{' '}
               <strong className="text-[var(--text)]">partial (one-time destination)</strong>, weaker
               than pure viewing-key-only discovery, and weaker than mixers/ZK. Chain funding + claim

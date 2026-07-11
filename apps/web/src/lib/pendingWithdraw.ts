@@ -10,6 +10,9 @@ export interface PendingWithdraw {
   amount: string; // human token amount string, e.g. "10"
   token_symbol?: string;
   from_address?: string;
+  /** Client-held claim key when available from local vault */
+  claim_private_key?: string;
+  claim_mode?: 'client' | 'server' | 'stealth';
 }
 
 export function setPendingWithdraw(p: PendingWithdraw) {

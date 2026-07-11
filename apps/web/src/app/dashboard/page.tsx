@@ -7,6 +7,7 @@ import WalletGate from '@/components/WalletGate';
 import { ToastProvider } from '@/components/Toast';
 import DashboardTab from '@/components/tabs/DashboardTab';
 import SendTab from '@/components/tabs/SendTab';
+import BatchSendTab from '@/components/tabs/BatchSendTab';
 import ReceiveTab from '@/components/tabs/ReceiveTab';
 import ScannerTab from '@/components/tabs/ScannerTab';
 import RelayerTab from '@/components/tabs/RelayerTab';
@@ -18,6 +19,7 @@ import SettingsTab from '@/components/tabs/SettingsTab';
 type Tab =
   | 'dashboard'
   | 'send'
+  | 'batch'
   | 'receive'
   | 'scanner'
   | 'relayer'
@@ -29,6 +31,7 @@ type Tab =
 const validTabs: Set<string> = new Set([
   'dashboard',
   'send',
+  'batch',
   'receive',
   'scanner',
   'relayer',
@@ -57,6 +60,8 @@ function DashboardContent() {
         return <DashboardTab />;
       case 'send':
         return <SendTab />;
+      case 'batch':
+        return <BatchSendTab />;
       case 'receive':
         return <ReceiveTab />;
       case 'scanner':
