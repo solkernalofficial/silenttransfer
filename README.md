@@ -2,7 +2,7 @@
 
 **Private transfer infrastructure for public blockchains.**
 
-SilentTransfer provides a professional console and API for private receive, private transfer, payment discovery, and settlement—without KYC in the product path. The protocol asset is **SILENT** (hard-capped at 1,000,000,000).
+SilentTransfer provides a console and API for **private vault payouts** that are harder to trace than a plain public send: deposit into a wallet-bound vault, then pay any address—single or batch, any time. Recipients receive ETH in their wallet automatically (no claim site). The protocol asset is **SILENT** (hard-capped at 1,000,000,000).
 
 | | |
 |--|--|
@@ -14,7 +14,21 @@ SilentTransfer provides a professional console and API for private receive, priv
 | Live console | [silenttransfer.com](https://silenttransfer.com) · [Docs](https://silenttransfer.com/docs) |
 | License | See `LICENSE` |
 
-> **Honesty:** On testnet, private send can move **real** ETH to a one-time address and claim on-chain. Privacy is **partial** (not full anonymity). See `docs/PRIVACY_STATUS.md`.
+> **Honesty:** On testnet, vault deposit and send move **real** ETH on-chain. The product is built for **untraceable-oriented** private payouts (break the public A→B path; receivers need no app). Privacy is **not absolute**—amounts, timing, and vault interactions on a public chain can still be analyzed. See `docs/PRIVACY_STATUS.md`.
+
+---
+
+## Primary product flow
+
+```text
+A connects wallet
+  → deposits ETH into SilentUserVault (wallet-bound balance)
+  → later withdraws any amount, single or batch, to B / C / …
+  → recipients receive in their normal wallets (no website, no claim)
+  → A's connected wallet is the key (no local note backup)
+```
+
+Advanced / optional paths (stealth ERC-5564, shield pool) exist in the repo and console under advanced tabs—documented separately, not oversold as default UX.
 
 ---
 
@@ -24,7 +38,7 @@ SilentTransfer provides a professional console and API for private receive, priv
 apps/
   api/          # FastAPI backend
   web/          # Next.js console + marketing site
-contracts/      # Solidity (Hardhat): SilentToken, registry, messenger, paymaster
+contracts/      # Solidity (Hardhat): SilentUserVault, SilentToken, shield, stealth
 docs/           # Technical documentation
 docker-compose.yml
 ```
@@ -59,6 +73,7 @@ cd apps/web
 npm install
 copy .env.example .env.local   # or cp .env.example .env.local
 # Point NEXT_PUBLIC_API_URL at the API (default http://localhost:8001)
+# Set NEXT_PUBLIC_USER_VAULT_ADDRESS for private vault
 npm run dev
 ```
 
@@ -72,7 +87,7 @@ npm install
 copy .env.example .env
 # Set DEPLOYER_PRIVATE_KEY only in local .env — never commit it
 npx hardhat test
-npx hardhat run scripts/deploy-silent.js --network robinhoodTestnet
+npx hardhat run scripts/deploy-user-vault.js --network robinhoodTestnet
 ```
 
 ---
@@ -85,7 +100,7 @@ npx hardhat run scripts/deploy-silent.js --network robinhoodTestnet
 | `testnet` | Public testnet contracts + RPC (current default target) |
 | `mainnet` | Production (operator login disabled) |
 
-Settlement may still be **simulated** on testnet until an ERC-4337 bundler is configured (`SIMULATE_SETTLEMENT=true`). That is intentional and documented—not a claim of full mainnet settlement.
+Settlement simulation flags and staged paymasters are intentional and documented—not a claim of full mainnet settlement.
 
 ---
 
@@ -116,13 +131,14 @@ Do not push if the script reports failures.
 
 - In-app docs: `/docs` (intended production host: `docs.silenttransfer.com`)
 - Protocol asset: `/silent`
+- Privacy status (copy-safe claims): `docs/PRIVACY_STATUS.md`
 - Additional markdown: `docs/`
 
 ---
 
 ## Tokenomics (summary)
 
-Virtual-style fair launch (community-majority):
+Community-majority fair launch design:
 
 | Allocation | Share |
 |------------|-------|
@@ -131,18 +147,19 @@ Virtual-style fair launch (community-majority):
 | Team (separate pool) | **0%** |
 | Venture capital | **0%** |
 
-Hard cap: **1B SILENT** (contract-enforced). Fees currently **0%**; planned sponsored-claim fee **0.5%** for protocol operations and open-market buybacks.
+Hard cap: **1B SILENT** (contract-enforced). Product fees are environment-dependent; vault deposit may charge an on-chain protocol fee. Planned sponsored-flow fee **0.5%** for protocol operations and open-market buybacks.
 
 ---
 
 ## What this repository is not
 
 - Not affiliated with Robinhood Markets, Inc. (network RPCs may target Robinhood Chain testnet as an infrastructure choice).
-- Not a guarantee of production mainnet settlement, audits, or exchange listings.
+- Not a guarantee of absolute untraceability, production mainnet settlement, audits, or exchange listings.
 - Not a place for private keys or production credentials.
+- Not an identity or onboarding product—focus is private transfer mechanics.
 
 ---
 
 ## License
 
-Add an open-source license file (e.g. MIT) before publishing if you intend others to reuse the code.
+See `LICENSE` (or add an open-source license before publishing if you intend others to reuse the code).

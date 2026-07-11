@@ -205,8 +205,9 @@ export default function ReceiveTab() {
           </button>
         </div>
         <p className="text-sm text-[var(--text-muted)] mb-3 leading-relaxed">
-          Generate a real <strong>ERC-5564 meta-address</strong> (spending + viewing keys). Senders
-          derive a one-time address only you can claim — no claim code from Alice.
+          <strong>Optional upgrade.</strong> Anyone can already receive private sends without this —
+          just connect, scan, and claim. Enable here only if you want stronger{' '}
+          <strong>ERC-5564 stealth</strong> (only your keys can claim; no server spend key).
         </p>
 
         <div
@@ -372,7 +373,7 @@ export default function ReceiveTab() {
                     {truncAddr(r.user_address)}
                   </div>
                   <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
-                    ERC-5564 meta-address · no KYC · {appChain.name}
+                    ERC-5564 meta-address · {appChain.name}
                   </div>
                 </div>
                 <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0 border text-emerald-700 bg-emerald-50 border-emerald-200">

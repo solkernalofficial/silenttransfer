@@ -1,0 +1,12 @@
+{
+  "network": "robinhoodTestnet",
+  "chainId": "46630",
+  "SilentUserVault": "0x36c8E14e9cc850E117d2DcE26847735c61DeF644",
+  "feeBps": 50,
+  "feeRecipient": "0x9d41FF3cC91b341113a89e96AF1D75c0aC06B26B",
+  "model": "wallet-bound balance; deposit then withdraw anytime to any wallets",
+  "noLocalNotes": true,
+  "recipientClaim": false,
+  "deployer": "0x9d41FF3cC91b341113a89e96AF1D75c0aC06B26B",
+  "deployedAt": "2026-07-11T11:31:15.593Z"
+}

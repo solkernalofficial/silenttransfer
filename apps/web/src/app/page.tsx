@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import LandingPage from '@/components/landing/LandingPage';
 
 export const metadata: Metadata = {
-  title: 'SilentTransfer — Send crypto privately without KYC',
+  title: 'SilentTransfer — Private transfers harder to trace',
   description:
-    'Private transfers on public blockchains. One-time destinations, recipient claim, no identity gates. Protocol asset SILENT (1B hard cap).',
+    'Private vault payouts on public blockchains. Deposit, then send single or batch anytime. Recipients receive automatically. Protocol asset SILENT (1B hard cap).',
 };
 
 export default function HomePage() {

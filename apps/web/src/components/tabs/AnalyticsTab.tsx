@@ -122,15 +122,12 @@ export default function AnalyticsTab() {
             </thead>
             <tbody>
               {[
-                ['Private receive', 'Meta-key registration API', 'Available'],
-                ['Private transfer', 'Announcement / transfer log', 'Available'],
-                ['Payment discovery', 'Recipient wallet scan', 'Available'],
-                ['Sponsored settlement', 'Relayer path', 'Live claim sweep (testnet)'],
-                ['Batch 1→many private send', 'Multi-recipient payroll / list', 'Live'],
-                ['Private A→B ERC-5564', 'ECDH stealth + viewing-key claim', 'Live'],
-                ['Client-held / no server spend key', 'Stealth derive or claim code', 'Live'],
-                ['ZK amount / sender shield', 'Fully shielded pool', 'Roadmap'],
-                ['Identity / KYC', 'Not required', 'Out of product scope'],
+                ['Private vault', 'Deposit + wallet-bound balance', 'Live'],
+                ['Single / batch payout', 'Auto-receive for recipients', 'Live'],
+                ['Harder-to-trace A→B', 'Vault payout vs plain send', 'Live (partial)'],
+                ['Shield pool (ZK path)', 'Fixed notes / nullifiers', 'Testnet / staged'],
+                ['ERC-5564 stealth', 'Optional advanced path', 'Available'],
+                ['Absolute untraceability', 'Full anonymity set', 'Not claimed'],
                 ['Mainnet settlement', 'Staged production path', 'Not enabled here'],
               ].map(([feature, rabin, vanilla], i) => (
                 <tr
@@ -147,9 +144,9 @@ export default function AnalyticsTab() {
         </div>
 
         <div className="mt-4 text-[10px] text-[var(--text-faint)] leading-relaxed">
-          SilentTransfer provides a private transfer workflow (register, transfer, discover,
-          settle). Protocol asset: SILENT (hard-capped). No KYC. Production on-chain settlement is
-          staged and documented separately.
+          SilentTransfer provides private vault payouts (deposit, single/batch send, auto-receive).
+          Protocol asset: SILENT (hard-capped). Production mainnet settlement is staged and
+          documented separately.
         </div>
       </div>
     </div>

@@ -11,73 +11,74 @@ Related: [PRIVACY_DISCLAIMER.md](./PRIVACY_DISCLAIMER.md), [SECURITY_MODEL.md](.
 
 ## One-line truth
 
-SilentTransfer offers three privacy paths on a **public** chain:
+SilentTransfer offers **untraceable-oriented private transfers** on a **public** chain—harder to map as a plain A→B payment—not absolute anonymity.
 
-1. **ZK shielded pool:** fixed-denomination notes (commitments + nullifiers + Merkle tree). Deposit shields ETH; withdraw unshields to any address. Testnet uses Merkle-witness proofs; production upgrades to Groth16 path-hiding.
-2. **Vault private transfer:** A deposits into SilentVault (amount + fee); B/C/D paid **from the vault** (recipient does not see A on receive leg). Batch 1→many.
-3. **ERC-5564 stealth send:** recipient-bound one-time addresses when Receive is enabled.
+Primary live path:
 
-**Do say:** shielded notes · nullifiers · vault payout · batch B/C/D  
-**Don’t say:** production Groth16 ceremony complete · untraceable forever · deposit invisible to chain analysts
+1. **Private vault (primary UX):** A deposits into `SilentUserVault`. Balance is wallet-bound (connected wallet is the key). A later sends single or batch amounts to any addresses. Recipients receive ETH automatically—**no website, no claim, no note backup**.
+2. **ZK shield pool (advanced):** Fixed-denomination notes (commitments + nullifiers + Merkle tree). Testnet uses Merkle-witness proofs; production Groth16 path-hiding is **not** claimed complete.
+3. **ERC-5564 stealth (advanced):** Recipient-bound one-time addresses when Receive is enabled.
+
+**Do say:** private vault · harder to trace than plain send · break public A→B path · auto-receive · batch payout · wallet as key  
+**Don’t say:** untraceable forever · invisible to all chain analysts · production Groth16 complete · full anonymity · identity / KYC theater as the product pitch
 
 ---
 
-## How the live send path works (today) — private A→B stealth
+## How the live primary path works (today) — private vault
 
 ```text
-B registers meta-address (spend pub + view pub) — private keys stay in B's browser
-A looks up B's pubs → ECDH derives stealth address S (only B can recompute spend key)
-A funds S on-chain → announce (ephemeral pubkey R, no claim_private_key)
-B scans with viewing key → derives spend key → claims S → B
+A connects wallet W
+  → deposits ETH into SilentUserVault (balanceOf[W] increases; fee may apply)
+  → later: withdraw / withdrawMany to B, C, …
+  → B/C receive ETH in their normal wallets (auto)
+  → no claim site, no local notes — W is the key
 ```
 
-1. **B** enables **Receive**: real secp256k1 spending + viewing keypairs (client vault); only **public** keys to API / optional ERC-6538 registry.
-2. **A** enters B’s wallet on **Send**: app loads B’s meta-address, runs **ERC-5564 ECDH**, funds the derived stealth address (real ETH).
-3. Announce stores ephemeral pubkey for scan — **no server spend key, no claim code from A**.
-4. **B** opens **Scanner** on the browser that holds the Receive vault → ECDH match → **Relayer** claim with derived key.
+1. **A** opens the console, connects wallet, deposits into the vault.
+2. **A** sends any amount (or many lines) from vault balance whenever they choose.
+3. **B** never visits SilentTransfer; funds appear in B’s wallet.
+4. Public explorers still show deposit and withdraw transactions on the vault contract.
 
-Legacy paths (random one-time EOA + client claim code, batch with claim codes) still exist for multi-send / older flows.
-
-Chain explorers still show public funding txs. **Sender address and amount remain visible.**
+Splitting amounts over time and paying from the vault (not A’s everyday wallet) weakens simple A→B heuristics. **Amount + timing correlation remains a residual risk.**
 
 ---
 
 ## Now vs fuller privacy (5 points)
 
-### 1) Recipient address on the funding tx
+### 1) Recipient experience
 
 | | |
 |--|--|
-| **Now** | Funding goes to an **ERC-5564-derived stealth address** from B’s meta-keys. Casual viewers don’t see “ETH arrived on Bob’s main address” until claim. Only B’s viewing/spending keys can detect/spend. |
-| **Fuller privacy** | On-chain messenger as sole discovery; no optional `to_address` hint in API metadata at all. |
+| **Now** | Auto-receive. No claim portal. No app for B. |
+| **Fuller privacy** | Optional delayed payout windows, fixed denominations, multi-hop routing. |
 
 ### 2) Link between sender and recipient
 
 | | |
 |--|--|
-| **Now** | Weaker than plain A→B. Still linkable by: public funding + claim txs, **amount + timing**, and anyone with **API access**. |
-| **Fuller privacy** | No server-held claim key; client-only scan/spend keys; optional delays; reduce amount fingerprinting; longer-term: stronger unlinkability / mixing / ZK where product needs it. |
+| **Now** | Weaker than plain A→B: funds leave vault, not A’s hot wallet on the receive leg. Still linkable by vault deposit/withdraw graph, **amount + timing**, and shared pool analysis. |
+| **Fuller privacy** | Batch anonymity sets, fixed sizes, delays, ZK shield between deposit and withdraw. |
 
 ### 3) Who can see the full story
 
 | | |
 |--|--|
-| **Now** | **Blockchain:** sender, one-time address, amounts, claim path. **API:** sender, intended `to`, amount, stealth (discovery). **Default claim_mode=client:** no long-lived server-held spend key (key only presented at claim by client). Legacy `claim_mode=server` still optional. |
-| **Fuller privacy** | API becomes a thin relay / optional indexer: viewing-key-only discovery (no plain `to_address`); recipients control viewing/spending keys; minimize stored payment graph. |
+| **Now** | **Blockchain:** depositors, vault, withdraw recipients, amounts. **API:** SIWE sessions and optional advanced announce paths. Vault balance is on-chain by wallet. |
+| **Fuller privacy** | Minimize operator-visible payment graphs; viewing-key-only discovery for stealth paths. |
 
 ### 4) Sender privacy & amounts
 
 | | |
 |--|--|
-| **Now** | **No sender privacy.** Sender address and amount are visible on-chain on the funding transaction. |
-| **Fuller privacy** | Separate product layer if needed (not claimed today): shielding, pools, or other amount/sender privacy tech — with legal/compliance review. |
+| **Now** | Deposit wallet and amounts are public on-chain. Vault separates payout leg from A’s direct send to B. |
+| **Fuller privacy** | Shield pool / ZK amount hiding (staged; not production-claimed). |
 
-### 5) After claim
+### 5) After receive
 
 | | |
 |--|--|
-| **Now** | Once claimed, funds sit on the **recipient’s normal wallet** — public balance and future spends are normal chain visibility. |
-| **Fuller privacy** | Optional multi-hop, spend-from-stealth without consolidating to a known CEX deposit, user education on withdrawal hygiene (see disclaimer). |
+| **Now** | Funds sit on **B’s normal wallet**—public balance and future spends are normal chain visibility. |
+| **Fuller privacy** | Education on withdrawal hygiene; optional spend-from-stealth without consolidating to a known CEX deposit. |
 
 ---
 
@@ -85,46 +86,46 @@ Chain explorers still show public funding txs. **Sender address and amount remai
 
 | Feature | Safe label | Avoid |
 |---------|------------|--------|
-| One-time destination | Private transfer destination / one-time address | “Invisible transfer” |
-| Live wallet send | Real on-chain private send (testnet) | “Off-chain only / fake” when funded |
-| API announce | Payment discovery for recipient | “Decentralized-only discovery” |
-| Claim | Sweep to recipient wallet | “Untraceable claim” |
-| No KYC product | No product KYC | “Legal immunity / unregulated forever” |
+| Private vault | Private vault / vault payout | “Invisible cash” |
+| Auto receive | Recipients receive automatically | “Untraceable claim” (there is no claim) |
+| Harder to trace | Harder to trace than plain A→B | “Untraceable forever” |
+| Batch send | Batch private payout | “Perfect anonymity set” without proof |
+| Shield pool | Testnet shield notes | “Production Groth16 complete” |
+| Stealth (advanced) | ERC-5564 optional path | Sole product pitch if vault is primary |
+
+**Positioning note:** SilentTransfer is a **privacy transfer** product. Marketing should center **untraceable-oriented payouts** and vault UX—not identity onboarding. Do not lead with KYC as a feature or anti-feature; identity collection is simply out of product scope.
 
 ---
 
 ## Roadmap sketch (fuller privacy)
 
-Ordered roughly by impact / realism for this stack:
+1. **Private vault (deposit → single/batch send)** — ✅ **Live** (primary console tab).
+2. **Auto-receive (no claim for B)** — ✅ **Live** for vault path.
+3. **Wallet-as-key (no note backup)** — ✅ **Live** for `SilentUserVault`.
+4. **Stronger unlinkability** — 🚧 delayed / fixed-size payout patterns.
+5. **Shield pool ZK maturity** — 🚧 testnet pool exists; production ceremony not claimed.
+6. **ERC-5564 / ERC-6538 advanced path** — optional tooling in repo.
+7. **External audit before mainnet TVL claims** — ❌ not claimed.
 
-1. **Batch private transfer (1 → many)** — ✅ **Live** (`Batch send`): still one-time EOAs + client claim codes (not full ECDH per line yet).
-2. **Client-held spend path** — ✅ **Live** for legacy/batch claim codes.
-3. **Private A→B (ERC-5564 ECDH)** — ✅ **Default Send path**: meta-address → ECDH stealth → fund → viewing-key scan → derive claim. No claim code from sender.
-4. **ERC-6538 on-chain register** — ✅ optional button on Receive; registry/messenger addresses on testnet env.
-5. **SilentPrivateSend contract** — ✅ compiled/tested (atomic fund+announce); deploy when wiring `NEXT_PUBLIC_PRIVATE_SEND_ADDRESS`.
-6. **Amount / sender privacy (ZK shield)** — ❌ not live (public chain limits).
-7. **Public responses strip secrets** — ✅
-8. **UX privacy hygiene** — ✅
-
-Until ZK / amount privacy ships, do **not** market as fully shielded cash.
+Until production ZK / strong anonymity sets ship, do **not** market as fully shielded cash or absolute untraceability.
 
 ---
 
 ## Quick FAQ
 
-**Is it really private?**  
-Partially. Better than a normal send for recipient discovery; **not** full anonymity.
+**Is it really private / untraceable?**  
+Harder to trace than a normal public send when used as designed (vault + split timing). **Not** absolute anonymity.
 
-**Can SilentTransfer staff see who sent to whom?**  
-With the **current** funded path: the **API can** see intended parties and amounts (discovery metadata). Default client-held mode means staff **cannot** recover the one-time spend key from the DB after announce. Treat the backend as trusted for the payment graph, not as a cold-storage vault for claim keys.
+**Does B need the website?**  
+**No** on the private vault path.
 
-**Can a blockchain analyst link send and claim?**  
+**Can a blockchain analyst link deposit and withdraw?**  
 Often **yes**, especially with unique amounts and close timing.
 
 **Is the chain private?**  
 No. Public ledger remains public.
 
-**Is this illegal / for hiding crime?**  
+**Is this for hiding crime?**  
 Product is for legitimate private transfer UX. Users must follow local law (AML/tax/sanctions). See [PRIVACY_DISCLAIMER.md](./PRIVACY_DISCLAIMER.md).
 
 ---
@@ -133,18 +134,14 @@ Product is for legitimate private transfer UX. Users must follow local law (AML/
 
 | Goal | Today |
 |------|--------|
-| Better than plain MetaMask A→B | Yes |
-| Cryptographic private A→B (ERC-5564) | Yes (default Send) |
-| Hide recipient until claim (casual) | Yes (stealth address) |
-| Only B can derive spend key | Yes (ECDH + vault) |
-| Hide spend key from server | Yes (stealth mode) |
-| Hide payment graph from API operator | Partial (optional to_address hint; amounts logged) |
-| Hide from chain analysts | No (funding+claim linkable) |
-| Hide sender | No |
-| Hide amount | No |
-| Batch 1→many | Yes (legacy claim-code path) |
-| Full ZK / shielded pool | No |
+| Better than plain MetaMask A→B | Yes (vault path) |
+| B never opens the site | Yes (vault path) |
+| Wallet as key / no note backup | Yes (`SilentUserVault`) |
+| Batch 1→many | Yes |
+| Absolute untraceability | No |
+| Hide amount / full ZK production | No |
+| Formal mainnet audit | No |
 
 ---
 
-*Update this file when amount/sender shielding or pure on-chain discovery ships.*
+*Update this file when stronger unlinkability or production ZK ships.*

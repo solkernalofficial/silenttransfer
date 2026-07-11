@@ -214,8 +214,8 @@ export default function ScannerTab() {
           </button>
         </div>
         <p className="text-sm text-[var(--text-muted)] mb-4 leading-relaxed">
-          <strong>ERC-5564 scan:</strong> uses your local viewing key to find payments only you can
-          claim. No claim code from the sender.
+          Connect the wallet that was paid. We find private payments for that address — no setup
+          required for simple sends. If you enabled Receive, we also match stealth (ECDH) payments.
         </p>
 
         <div className="mb-4 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] text-[11px] text-[var(--text-muted)] flex items-start gap-2">

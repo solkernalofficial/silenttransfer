@@ -44,40 +44,40 @@ const NAV = [
 
 const FEATURES = [
   {
-    icon: EyeOff,
-    image: '/brand/feature-stealth.jpg',
-    title: 'One-time destinations',
-    body: 'Every payment lands on a fresh address—not a reused deposit link. Weaker public A→B link than a plain send; not full unlinkability on a public chain.',
-  },
-  {
     icon: Lock,
     image: '/brand/feature-enterprise.jpg',
-    title: 'No KYC in the path',
-    body: 'Connect a wallet and move. SilentTransfer never asks for identity and never routes payments through a compliance gate.',
+    title: 'Private vault',
+    body: 'Deposit into a wallet-bound vault. Later send any amount—once or in pieces—to any address. Your connected wallet is the key. No note files to back up.',
   },
   {
-    icon: ScanSearch,
-    image: '/brand/feature-discovery.jpg',
-    title: 'Private payment discovery',
-    body: 'Recipients scan for payments meant for them—without broadcasting a permanent public deposit address.',
+    icon: EyeOff,
+    image: '/brand/feature-stealth.jpg',
+    title: 'Break the public A→B link',
+    body: 'Payouts leave the vault, not your everyday wallet. Recipients receive ETH directly—without a public one-to-one send from your known address.',
   },
   {
     icon: Zap,
     image: '/brand/feature-gasless.jpg',
-    title: 'Claim into your wallet',
-    body: 'Funds sit at a one-time address until the recipient claims. On testnet, private send moves real ETH on-chain.',
+    title: 'Recipients never open the site',
+    body: 'Batch or single send from the vault. Funds land in their wallet automatically. No claim step, no app install for the receiver.',
+  },
+  {
+    icon: ScanSearch,
+    image: '/brand/feature-discovery.jpg',
+    title: 'Send when you choose',
+    body: 'Deposit once. Withdraw later—different times, different amounts, one wallet or many. Timing is under your control.',
   },
   {
     icon: Network,
     image: '/brand/feature-standards.jpg',
-    title: 'Standards-aligned',
-    body: 'Built around ERC-6538 registry and ERC-5564 announcement patterns—so privacy infrastructure stays interoperable.',
+    title: 'Standards path (advanced)',
+    body: 'Optional ERC-5564 / ERC-6538 stealth tooling and a shield pool remain available for power users. Docs mark what is live vs experimental.',
   },
   {
     icon: Shield,
     image: '/brand/feature-compliance.jpg',
-    title: 'One operations console',
-    body: 'Send, scan, claim, and review history in a single console. Docs spell out what is private today—and what is not.',
+    title: 'Honest privacy docs',
+    body: 'We document what is harder to trace today—and what still links on a public chain (amounts, timing, funding graph). No fake anonymity claims.',
   },
 ];
 
@@ -87,85 +87,89 @@ const STEPS = [
     icon: Wallet,
     image: '/brand/feature-enterprise.jpg',
     title: 'Connect your wallet',
-    body: 'Open the console, connect MetaMask or WalletConnect, and sign in with SIWE. No account form. No identity upload.',
+    body: 'Open the console and connect. Your wallet signs deposits and sends. That same wallet owns your vault balance—nothing else to store.',
   },
   {
     step: '02',
     icon: Send,
     image: '/brand/feature-stealth.jpg',
-    title: 'Send to a one-time address',
-    body: 'Enter the recipient and amount. SilentTransfer funds a fresh destination on-chain and announces the payment for claim.',
+    title: 'Deposit into the vault',
+    body: 'Move ETH into your private vault on-chain. A small protocol fee may apply on deposit. Balance sits ready until you decide to pay out.',
   },
   {
     step: '03',
     icon: Inbox,
     image: '/brand/feature-discovery.jpg',
-    title: 'Discover and claim',
-    body: 'The recipient scans for payments and claims into their wallet. Cleaner than a direct public send—documented as partial privacy, not full anonymity.',
+    title: 'Send single or batch anytime',
+    body: 'Pay one address or many. Recipients get funds in their wallet with no website visit. You control amounts and timing.',
   },
 ];
 
 const PROBLEMS = [
   {
-    title: 'Public chains leak intent',
-    body: 'A direct A→B transfer is forever readable. Counterparties, amounts, and patterns sit on a public ledger anyone can query.',
+    title: 'Public chains are permanent ledgers',
+    body: 'A direct A→B transfer is forever readable. Counterparties, amounts, and patterns sit on a public graph anyone can query.',
   },
   {
-    title: 'Reused addresses create history',
-    body: 'Every payment to the same wallet builds a permanent profile. Recipients who share one deposit link give up privacy by default.',
+    title: 'Reused wallets build a history',
+    body: 'Every payment from the same address deepens a profile. Private payouts need a different path than “send from main wallet.”',
   },
   {
-    title: 'Identity should not be the product',
-    body: 'Most “private” rails bolt on KYC or custody. SilentTransfer is built for transfers first—identity optional, never required.',
+    title: 'Claim UX kills privacy products',
+    body: 'If the receiver must visit a site, paste codes, or set up special keys, adoption dies. SilentTransfer pays wallets directly from the vault.',
   },
 ];
 
 const STATS = [
-  { value: '0', label: 'KYC steps' },
-  { value: '1', label: 'Primary CTA: open console' },
+  { value: '1', label: 'Primary flow: private vault' },
+  { value: '0', label: 'Claim steps for recipients' },
   { value: '1B', label: 'SILENT hard cap' },
   { value: '0%', label: 'Venture allocation' },
 ];
 
 const ROADMAP = [
   {
-    title: 'Batch private transfer (1 → many)',
-    body: 'Live in console: one wallet pays many recipients (CSV / address list), per-line amounts, bulk one-time destinations and client-held claim codes. Built for payroll-style and multi-vendor private payouts.',
+    title: 'Private vault (deposit → send)',
+    body: 'Live: wallet-bound vault balance, single and batch payout, auto-receive for recipients. Primary product path on testnet.',
   },
   {
-    title: 'Private A→B stealth (ERC-5564)',
-    body: 'Live: default Send derives a recipient-bound stealth address via ECDH—only B’s viewing/spending keys can scan and claim. No claim code from the sender.',
+    title: 'Stronger unlinkability',
+    body: 'Delayed and fixed-size payout patterns, batch mixing surfaces, and hygiene guidance so amount/timing correlation is harder.',
   },
   {
-    title: 'Gasless claim & self-withdraw',
-    body: 'ERC-4337 paymaster when ready, plus optional self-withdraw where the user pays network gas and keeps product fee at 0%.',
+    title: 'Shield pool (ZK path)',
+    body: 'Fixed-denomination notes and Merkle nullifiers on testnet; production Groth16 path-hiding remains staged—not claimed complete.',
   },
   {
-    title: 'Amount / sender shielding',
-    body: 'ZK or pool-based amount and sender privacy when product + legal scope allow—beyond today’s public-chain funding visibility.',
+    title: 'Standards stealth (ERC-5564)',
+    body: 'Optional advanced path: recipient-bound stealth addresses and viewing-key scan for operators who need it.',
   },
 ];
 
 const FAQS = [
   {
-    q: 'Is this full anonymity?',
-    a: 'No. Default Send is ERC-5564 recipient-private A→B stealth. On public chains, sender and amount on the funding tx remain visible. Not a ZK shielded pool.',
+    q: 'Is this fully untraceable?',
+    a: 'The product is built to make transfers harder to trace than a plain public send: payouts come from the vault, recipients do not claim on a website, and you can split amounts over time. On a public chain, funding, vault interactions, amounts, and timing can still be analyzed. We do not claim absolute anonymity or “invisible forever.”',
+  },
+  {
+    q: 'Does the recipient need SilentTransfer?',
+    a: 'No. When you send from the private vault, ETH arrives in their normal wallet. No site visit, no claim code, no setup.',
+  },
+  {
+    q: 'What is the main product flow today?',
+    a: 'Connect wallet → deposit into your private vault → later send single or batch to any 0x addresses. Your connected wallet is the key; no local note backup.',
   },
   {
     q: 'Is private send live?',
-    a: 'Yes on Robinhood Chain Testnet: A funds a stealth address derived for B; B claims with viewing-key scan. Mainnet production remains staged.',
-  },
-  {
-    q: 'Will you support batch payouts?',
-    a: 'Yes—batch private transfer (one wallet → many recipients) is live in the console for payroll-style and multi-destination private sends.',
+    a: 'Yes on Robinhood Chain Testnet: real on-chain vault deposit and withdraw. Mainnet production and formal audits are not claimed.',
   },
   {
     q: 'What is $SILENT?',
-    a: 'SILENT is the protocol asset—hard-capped at 1B. Virtual-style split: majority community, small protocol share, 0% VC / separate team pool. Fees are 0% today; a planned sponsored-claim fee funds ops and open-market buybacks.',
+    a: 'SILENT is the protocol asset—hard-capped at 1B. Community-majority allocation, 0% VC. Fees support ops and open-market buybacks when enabled.',
   },
   {
     q: 'Who is this for?',
-    a: 'Teams and individuals who need private receive and transfer on public rails—operators, builders, and privacy-conscious payers.',
+    a: 'Individuals and teams who need private, untraceable-oriented payouts on public rails—payroll-style batches, vendor pays, and personal transfers—without forcing receivers onto a privacy app.',
   },
 ];
 
@@ -326,38 +330,35 @@ export default function LandingPage() {
           <div className="lp-hero-copy">
             <div className="lp-eyebrow">
               <span className="lp-dot" />
-              Private transfer · public chains
+              Untraceable transfer · public chains
             </div>
             <h1 className="lp-h1">
-              Send crypto privately
-              <span className="lp-h1-accent"> without KYC</span>
+              Private payouts that are
+              <span className="lp-h1-accent"> harder to trace</span>
             </h1>
             <p className="lp-lead">
-              SilentTransfer turns public blockchains into private payment rails.
-              One-time destinations. Recipient claim. No identity gates.
-              Open the console and move value today on testnet.
+              SilentTransfer is private transfer infrastructure for public blockchains.
+              Deposit into a vault, then pay any wallet—single or batch, any time.
+              Recipients never open the site. Built to break the public A→B link.
             </p>
             <div className="lp-hero-cta">
               <Link href="/dashboard" className="lp-btn lp-btn--primary lp-btn--lg">
                 Open console
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <a
-                href="#how"
-                className="lp-btn lp-btn--secondary lp-btn--lg"
-              >
+              <a href="#how" className="lp-btn lp-btn--secondary lp-btn--lg">
                 See how it works
               </a>
             </div>
             <div className="lp-trust-row">
               <span className="lp-trust-item">
-                <CheckCircle2 className="w-3.5 h-3.5" /> No KYC required
+                <CheckCircle2 className="w-3.5 h-3.5" /> Vault-based payouts
               </span>
               <span className="lp-trust-item">
-                <CheckCircle2 className="w-3.5 h-3.5" /> One-time addresses
+                <CheckCircle2 className="w-3.5 h-3.5" /> Auto-receive for B
               </span>
               <span className="lp-trust-item">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Honest privacy docs
+                <CheckCircle2 className="w-3.5 h-3.5" /> Honest privacy limits
               </span>
             </div>
           </div>
@@ -376,16 +377,16 @@ export default function LandingPage() {
                   <span className="lp-panel-meta">Console</span>
                 </div>
                 <div className="lp-panel-intro">
-                  <div className="lp-panel-title">Private transfer flow</div>
+                  <div className="lp-panel-title">Private vault flow</div>
                   <p className="lp-panel-desc">
-                    Connect → fund a one-time address → recipient scans and claims.
+                    Deposit → vault balance → send single or batch. Wallet is the key.
                   </p>
                 </div>
                 <div className="lp-panel-rows">
                   {[
-                    ['Connect', 'Wallet + SIWE', 'Live'],
-                    ['Send', 'One-time address', 'Testnet'],
-                    ['Claim', 'Into your wallet', 'Testnet'],
+                    ['Deposit', 'Into private vault', 'Live'],
+                    ['Send', 'One or many wallets', 'Live'],
+                    ['Receive', 'Auto — no claim', 'Live'],
                   ].map(([a, b, c]) => (
                     <div key={a} className="lp-panel-row">
                       <span>{a}</span>
@@ -403,15 +404,19 @@ export default function LandingPage() {
       {/* ── Proof strip ──────────────────────────────────────────────────── */}
       <section className="lp-strip" aria-label="Product principles">
         <div className="lp-container lp-strip-inner">
-          <p className="lp-strip-label">Built for transfers—not identity theater</p>
+          <p className="lp-strip-label">Built for untraceable-oriented private transfers</p>
           <div className="lp-strip-items">
-            {['One-time destinations', 'Private discovery', 'No KYC', 'ERC-5564 aligned', 'Operations console'].map(
-              (t) => (
-                <span key={t} className="lp-strip-chip">
-                  {t}
-                </span>
-              )
-            )}
+            {[
+              'Private vault',
+              'Batch & single payout',
+              'No recipient claim',
+              'Wallet as key',
+              'Honest docs',
+            ].map((t) => (
+              <span key={t} className="lp-strip-chip">
+                {t}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -423,8 +428,9 @@ export default function LandingPage() {
             <p className="lp-kicker">The problem</p>
             <h2 className="lp-h2">Public rails were never designed for private payments</h2>
             <p className="lp-section-lead">
-              Every direct transfer is a permanent public record. Reused wallets build history.
-              Most fixes either demand identity or overpromise anonymity. SilentTransfer does neither.
+              Every direct transfer is a permanent public record. Privacy tools that force receivers
+              through claim portals fail in the real world. SilentTransfer focuses on vault payouts
+              that land in ordinary wallets—harder to map as a simple A→B payment.
             </p>
           </div>
           <div className="lp-problem-grid">
@@ -448,8 +454,8 @@ export default function LandingPage() {
             <p className="lp-kicker">Product</p>
             <h2 className="lp-h2">Everything you need to move value privately</h2>
             <p className="lp-section-lead">
-              A console and API for private receive, transfer, discovery, and claim—
-              focused on unlinkability, not collecting who you are.
+              A minimal console for vault deposit, private send, and batch payout—focused on
+              breaking public payment graphs, not collecting identity.
             </p>
           </div>
           <div className="lp-feature-grid">
@@ -474,9 +480,9 @@ export default function LandingPage() {
         <div className="lp-container">
           <div className="lp-section-head">
             <p className="lp-kicker">How it works</p>
-            <h2 className="lp-h2">Three steps. No identity form.</h2>
+            <h2 className="lp-h2">Three steps. Wallet is the key.</h2>
             <p className="lp-section-lead">
-              From wallet connect to claim in one continuous flow—designed so the “aha” is the transfer, not the paperwork.
+              From deposit to payout in one continuous flow—designed so receivers never need the app.
             </p>
           </div>
           <div className="lp-steps">
@@ -524,9 +530,9 @@ export default function LandingPage() {
             <p className="lp-kicker">Roadmap</p>
             <h2 className="lp-h2">What we&apos;re building next</h2>
             <p className="lp-section-lead">
-              Live today: one-to-one private send, scan, and claim on testnet.
-              Next: batch payouts, fuller privacy, and standards-complete stealth—documented as
-              intentions, not ship dates.
+              Live today: private vault deposit and send on testnet. Next: stronger unlinkability,
+              shield-pool maturity, and optional standards stealth—documented as intentions, not
+              ship dates.
             </p>
           </div>
           <div className="lp-roadmap-grid">
@@ -561,7 +567,7 @@ export default function LandingPage() {
             <p className="lp-section-lead">
               Maximum supply of <strong>{SILENT_TOTAL_SUPPLY_SHORT}</strong>.{' '}
               {silentAllocationSummary()} · Venture capital <strong>0%</strong> · separate team pool{' '}
-              <strong>0%</strong>. Virtual-style fair launch.
+              <strong>0%</strong>. Community-first fair launch design.
             </p>
           </div>
 
@@ -569,7 +575,7 @@ export default function LandingPage() {
             <div className="lp-silent-card">
               <div className="lp-silent-label">Name / ticker</div>
               <div className="lp-silent-value">Silent · SILENT</div>
-              <p className="lp-silent-hint">No KYC · zero VC · community-majority</p>
+              <p className="lp-silent-hint">Zero VC · community-majority</p>
             </div>
             <div className="lp-silent-card">
               <div className="lp-silent-label">Hard-capped supply</div>
@@ -621,8 +627,9 @@ export default function LandingPage() {
               minting above the cap.
             </p>
             <p>
-              <strong>Fees (current):</strong> {feePct} protocol fee.{' '}
-              <strong>Fees (planned):</strong> {plannedPct} on sponsored claims—for protocol
+              <strong>Fees (current):</strong> {feePct} product fee on many paths; vault deposit may
+              charge a protocol fee on-chain.{' '}
+              <strong>Fees (planned):</strong> {plannedPct} on sponsored flows—for protocol
               operations and open-market SILENT buybacks.
             </p>
             <p className="lp-silent-policy">{FEE_COPY.policy}</p>
@@ -648,8 +655,8 @@ export default function LandingPage() {
             <p className="lp-kicker lp-kicker--light">Security & trust</p>
             <h2 className="lp-h2 lp-h2--light">Privacy claims you can audit</h2>
             <p className="lp-section-lead lp-section-lead--light">
-              We ship capabilities and limits with equal rigor. No “untraceable” marketing.
-              No identity theater.
+              We ship capabilities and limits with equal rigor. Harder to trace—not invisible to
+              every analyst forever.
             </p>
           </div>
           <div className="lp-security-grid">
@@ -657,7 +664,7 @@ export default function LandingPage() {
               <Network className="w-5 h-5" />
               <h3>Testnet live · mainnet staged</h3>
               <p>
-                Real private send and claim run on Robinhood Chain Testnet. Mainnet production
+                Real vault deposit and send run on Robinhood Chain Testnet. Mainnet production
                 money movement is staged and should not be assumed audited.
               </p>
             </div>
@@ -665,16 +672,17 @@ export default function LandingPage() {
               <Shield className="w-5 h-5" />
               <h3>Documented threat model</h3>
               <p>
-                Partial privacy, public metadata, timing linkability, and trusted API limits—
-                written down so operators know the real envelope.
+                Public metadata, amount fingerprinting, timing linkability, and vault interaction
+                graphs—written down so operators know the real envelope.
               </p>
             </div>
             <div className="lp-security-card">
               <EyeOff className="w-5 h-5" />
-              <h3>No KYC requirement</h3>
+              <h3>What “untraceable” means here</h3>
               <p>
-                The product path does not collect identity or route through a compliance oracle.
-                Users remain responsible for applicable law.
+                Payouts leave a shared vault path rather than a plain A→B send; receivers need no
+                app. We still disclose residual chain analysis risk. Users remain responsible for
+                applicable law.
               </p>
             </div>
           </div>
@@ -725,10 +733,10 @@ export default function LandingPage() {
           </div>
           <div className="lp-cta-inner">
             <div>
-              <h2 className="lp-h2">Start with a private transfer</h2>
+              <h2 className="lp-h2">Start with a private vault transfer</h2>
               <p className="lp-section-lead lp-section-lead--left">
-                Connect a wallet, send on testnet, discover payments, and claim.
-                Limitations are documented. The path is real.
+                Connect a wallet, deposit on testnet, send single or batch. Limitations are
+                documented. The path is real.
               </p>
             </div>
             <div className="lp-cta-actions">
@@ -763,9 +771,8 @@ export default function LandingPage() {
             <div>
               <div className="lp-footer-h">Product</div>
               <Link href="/dashboard">Console</Link>
-              <Link href="/dashboard?tab=send">Send</Link>
+              <Link href="/dashboard">Private vault</Link>
               <Link href={SILENT_PAGE_URL}>$SILENT</Link>
-              <Link href="/dashboard?tab=scanner">Scanner</Link>
             </div>
             <div>
               <div className="lp-footer-h">Resources</div>
@@ -808,8 +815,8 @@ export default function LandingPage() {
         </div>
         <div className="lp-container lp-footer-bottom">
           <p>
-            Testnet private send is real on-chain. Privacy is partial—not full anonymity.
-            Scope and limitations live in Docs.
+            Testnet vault send is real on-chain. Built for harder-to-trace private payouts—not full
+            anonymity. Scope and limitations live in Docs.
           </p>
           <p>© {new Date().getFullYear()} SilentTransfer</p>
         </div>

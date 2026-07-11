@@ -267,7 +267,7 @@ export default function SilentTokenPage() {
                   ['Fees planned', '0.5% gasless → ops + market buyback'],
                   ['Standard', 'ERC-20 (OpenZeppelin)'],
                   ['Decimals', String(DECIMALS)],
-                  ['KYC / whitelist', 'None'],
+                  ['Transfer restrictions', 'None (standard ERC-20)'],
                   ['Upgradeable', 'No'],
                 ].map(([k, v]) => (
                   <tr key={k} className="border-b border-[var(--border)]">

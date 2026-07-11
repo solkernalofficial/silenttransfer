@@ -9,7 +9,7 @@ see **[PRIVACY_STATUS.md](./PRIVACY_STATUS.md)** — use that for marketing and 
 
 ## 1. No Guarantee of Complete Anonymity
 
-SilentTransfer aims to provide **recipient-oriented privacy** for transfers on public blockchains (one-time destinations; longer-term ERC-5564 / ERC-6538-style stealth). The **live funded path** may still use a trusted API for payment discovery and claim assistance. This technology **does not guarantee complete anonymity**. Users should be aware of the following limitations:
+SilentTransfer aims to provide **untraceable-oriented private transfers** on public blockchains—harder to map as a plain A→B send via private vault payouts (and optional advanced stealth/shield modules). This technology **does not guarantee complete anonymity or permanent untraceability**. Users should be aware of the following limitations:
 
 - **Metadata leakage:** Transaction timestamps, gas amounts, calldata patterns, and contract interaction sequences are publicly visible on the blockchain and can be used for statistical analysis.
 - **Timing analysis:** The timing between announcement creation and scanning/withdrawal may reveal links between stealth addresses and their recipients.
@@ -34,7 +34,7 @@ Users of SilentTransfer are solely responsible for ensuring their use of the pro
 - Tax reporting obligations
 - Data protection and privacy laws (GDPR, CCPA, etc.)
 
-This product does not require KYC. Users remain responsible for legal compliance in their jurisdiction.
+SilentTransfer is a transfer privacy product, not an identity service. Users remain responsible for legal compliance in their jurisdiction.
 
 ## 5. Product identity
 

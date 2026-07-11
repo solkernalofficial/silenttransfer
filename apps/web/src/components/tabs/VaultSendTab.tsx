@@ -38,10 +38,11 @@ export default function VaultSendTab() {
     wallet: sessionWallet,
     source,
     connectWallet,
+    ensureLiveWallet,
     signInWithEthereum,
     needsSiwe,
+    isWagmiConnected,
     wrongChain,
-    chainName,
     expectedChainId,
   } = useSessionWallet();
   const { switchChainAsync } = useSwitchChain();
@@ -57,7 +58,7 @@ export default function VaultSendTab() {
   > | null>(null);
 
   const fromWallet = sessionWallet || '';
-  const isRealWallet = source === 'wallet' && Boolean(fromWallet);
+  const isRealWallet = isWagmiConnected && Boolean(fromWallet);
   const walletAddr =
     fromWallet && isAddress(fromWallet) ? (fromWallet as `0x${string}`) : undefined;
 
@@ -90,9 +91,11 @@ export default function VaultSendTab() {
 
   const sendMutation = useMutation({
     mutationFn: async () => {
-      if (!fromWallet || !isAddress(fromWallet)) throw new Error('Connect a wallet first');
-      if (source !== 'wallet') {
-        throw new Error('Connect MetaMask / a real wallet to send on-chain');
+      // Must have a live wagmi connector — not just a saved address in localStorage
+      setStatusMsg('Connecting wallet…');
+      const liveAddr = await ensureLiveWallet();
+      if (!liveAddr || !isAddress(liveAddr)) {
+        throw new Error('Connect MetaMask and approve the connection, then try again.');
       }
       if (!lines.length) throw new Error(mode === 'one' ? 'Enter address and amount' : 'Add recipients');
       if (mode === 'one') {
@@ -114,10 +117,10 @@ export default function VaultSendTab() {
         currentChainId: undefined,
         switchChain: (args) => switchChainAsync(args),
       });
-      await ensureAuth(fromWallet);
+      await ensureAuth(liveAddr);
 
       return executeVaultPrivateTransfer({
-        fromWallet,
+        fromWallet: liveAddr,
         chainId: expectedChainId,
         lines,
         writeContractAsync: writeContractAsync as never,

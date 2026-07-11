@@ -130,7 +130,11 @@ export async function executePrivateSend(
     throw new Error('On-chain transfer failed / reverted');
   }
 
-  onStatus?.('Recording private payment (client-held claim)…');
+  onStatus?.(
+    claimMode === 'server'
+      ? 'Recording private payment (recipient can claim with their wallet)…'
+      : 'Recording private payment (client-held claim)…'
+  );
 
   const eph = generatePrivateKey() as Hex;
   const body = {
@@ -142,7 +146,7 @@ export async function executePrivateSend(
     amount: toWeiString(line.amount),
     block_number: Number(receipt.blockNumber),
     funding_tx_hash: hash,
-    // Prove ownership of stealth at announce; not stored when claim_mode=client
+    // Always prove key matches address; server mode stores it for easy claim by B
     claim_private_key: claimPrivateKey,
     claim_mode: claimMode,
     metadata: {
@@ -151,6 +155,7 @@ export async function executePrivateSend(
       real_transfer: true,
       funded_on_chain: true,
       claim_mode: claimMode,
+      simple_send: claimMode === 'server',
     },
   };
 

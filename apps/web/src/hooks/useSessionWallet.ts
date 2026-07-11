@@ -27,10 +27,41 @@ import { switchOrAddAppChain } from '@/lib/addChain';
 
 export type ConnectSource = 'wallet' | 'operator';
 
+function pickConnector(
+  connectors: ReturnType<typeof useConnectors>,
+  connectorId?: string
+) {
+  if (connectorId) {
+    const found = connectors.find((c) => c.id === connectorId);
+    if (found) return found;
+  }
+  const hasInjected =
+    typeof window !== 'undefined' &&
+    Boolean((window as unknown as { ethereum?: unknown }).ethereum);
+
+  if (hasInjected) {
+    return (
+      connectors.find(
+        (c) =>
+          c.type === 'injected' ||
+          c.id === 'injected' ||
+          /metamask|injected|rabby/i.test(`${c.id} ${c.name}`)
+      ) || connectors[0]
+    );
+  }
+  return (
+    connectors.find((c) => /walletConnect|walletconnect/i.test(c.id + c.name)) ||
+    connectors[0]
+  );
+}
+
 /**
  * Unified session:
- * - Real wallets via Wagmi (injected / MetaMask / WalletConnect) + SIWE
- * - Operator profiles (Alice/Bob) via demo-login JWT (testnet evaluation)
+ * - Real wallets via Wagmi (injected / WalletConnect) + SIWE
+ * - Operator profiles via demo-login JWT (testnet evaluation)
+ *
+ * Critical: isWagmiConnected must be true before writeContract / sendTransaction.
+ * Session address alone is NOT enough — that caused "Connector not connected".
  */
 export function useSessionWallet() {
   const { address, isConnected: wagmiConnected, chainId, status } = useConnection();
@@ -67,18 +98,19 @@ export function useSessionWallet() {
     }
   }, [address, wagmiConnected]);
 
+  const isWagmiConnected = Boolean(wagmiConnected && address);
+
   const wallet = useMemo(() => {
     if (source === 'operator') return sessionWallet;
     if (address) return address.toLowerCase();
+    // Don't treat stale session as connected for txs — only display until reconnect
     return sessionWallet;
   }, [address, sessionWallet, source]);
 
-  const isConnected = Boolean(wallet);
+  /** Console unlock: live wallet connector OR operator demo session */
+  const isConnected =
+    source === 'operator' ? Boolean(sessionWallet) : isWagmiConnected;
 
-  /**
-   * Switch to app chain; if wallet does not know it, prompt wallet_addEthereumChain
-   * with Robinhood (or env) RPC / explorer details.
-   */
   const ensureCorrectChain = useCallback(async () => {
     if (chainId === appChain.id) return 'already' as const;
     try {
@@ -96,75 +128,125 @@ export function useSessionWallet() {
     }
   }, [chainId, switchChainAsync]);
 
-  /** Connect auto-detected wallet then SIWE sign-in. */
+  /** Connect browser wallet then SIWE. */
   const connectWallet = useCallback(
     async (connectorId?: string) => {
       setAuthError(null);
       setAuthBusy(true);
       try {
-        // Auto-detect order: explicit id → injected browser wallet → MetaMask → WalletConnect → first
-        const hasInjected =
-          typeof window !== 'undefined' &&
-          Boolean((window as unknown as { ethereum?: unknown }).ethereum);
+        // Already live — just SIWE if needed
+        if (wagmiConnected && address) {
+          const addr = address.toLowerCase();
+          try {
+            await ensureCorrectChain();
+          } catch {
+            /* continue */
+          }
+          setSessionWallet(addr);
+          setLocalSession(addr);
+          setSource('wallet');
+          if (getAuthMode() !== 'siwe' || getStoredWallet() !== addr) {
+            await loginWithSiwe(addr, async ({ message }) =>
+              signMessageAsync({ message })
+            );
+          }
+          return addr;
+        }
 
-        const connector =
-          (connectorId && connectors.find((c) => c.id === connectorId)) ||
-          (hasInjected &&
-            connectors.find(
-              (c) =>
-                c.type === 'injected' ||
-                c.id === 'injected' ||
-                c.id === 'metaMaskSDK' ||
-                c.id === 'metaMask' ||
-                /metamask|injected/i.test(c.name)
-            )) ||
-          connectors.find((c) => c.id === 'metaMaskSDK' || c.id === 'metaMask') ||
-          connectors.find((c) => /walletConnect|walletconnect/i.test(c.id + c.name)) ||
-          connectors[0];
+        const connector = pickConnector(connectors, connectorId);
         if (!connector) {
           throw new Error(
-            'No wallet found. Install MetaMask or another Web3 wallet, then retry.'
+            'No wallet found. Install MetaMask (or another Web3 wallet), refresh, then try again.'
           );
         }
 
-        const result = await connectAsync({ connector, chainId: appChain.id });
-        const addr = (result.accounts[0] || '').toLowerCase();
-        if (!addr) throw new Error('No account returned from wallet');
-
+        // If connector thinks it's connected but wagmi isn't, force reconnect
         try {
-          await ensureCorrectChain();
-        } catch {
-          // continue — some wallets auto-add on next sign
+          const result = await connectAsync({
+            connector,
+            chainId: appChain.id,
+          });
+          const addr = (result.accounts[0] || '').toLowerCase();
+          if (!addr) throw new Error('No account returned from wallet');
+
+          try {
+            await ensureCorrectChain();
+          } catch {
+            /* some wallets add chain on next prompt */
+          }
+
+          setSessionWallet(addr);
+          setLocalSession(addr);
+          setSource('wallet');
+
+          await loginWithSiwe(addr, async ({ message }) => {
+            return signMessageAsync({ message });
+          });
+
+          return addr;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          // Already connected to this connector — pull address via reconnect path
+          if (/already connected|connected/i.test(msg) && address) {
+            const addr = address.toLowerCase();
+            setSessionWallet(addr);
+            setLocalSession(addr);
+            setSource('wallet');
+            await loginWithSiwe(addr, async ({ message }) =>
+              signMessageAsync({ message })
+            );
+            return addr;
+          }
+          throw e;
         }
-
-        setSessionWallet(addr);
-        setLocalSession(addr);
-        setSource('wallet');
-
-        await loginWithSiwe(addr, async ({ message }) => {
-          return signMessageAsync({ message });
-        });
-
-        return addr;
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'Wallet connect failed';
-        setAuthError(msg);
-        throw e;
+        // Friendlier message for the common wagmi error
+        const friendly = /connector not connected/i.test(msg)
+          ? 'Wallet disconnected. Click Connect wallet and approve in MetaMask.'
+          : msg;
+        setAuthError(friendly);
+        throw new Error(friendly);
       } finally {
         setAuthBusy(false);
       }
     },
-    [connectors, connectAsync, ensureCorrectChain, signMessageAsync]
+    [
+      connectors,
+      connectAsync,
+      ensureCorrectChain,
+      signMessageAsync,
+      wagmiConnected,
+      address,
+    ]
   );
 
-  /** Re-run SIWE for an already-connected wagmi wallet. */
+  /**
+   * Call before any sendTransaction / writeContract.
+   * Reconnects the connector if session exists but wagmi is dead.
+   */
+  const ensureLiveWallet = useCallback(async () => {
+    if (source === 'operator') {
+      throw new Error(
+        'Operator/demo profiles cannot send on-chain. Connect MetaMask for real transfers.'
+      );
+    }
+    if (isWagmiConnected && address) {
+      try {
+        await ensureCorrectChain();
+      } catch {
+        /* user may switch manually */
+      }
+      return address.toLowerCase();
+    }
+    return connectWallet();
+  }, [source, isWagmiConnected, address, ensureCorrectChain, connectWallet]);
+
   const signInWithEthereum = useCallback(async () => {
-    const addr = (address || wallet || '').toLowerCase();
-    if (!addr) throw new Error('Connect a wallet first');
+    const addr = await ensureLiveWallet();
     setAuthBusy(true);
     setAuthError(null);
     try {
-      await ensureCorrectChain();
       await loginWithSiwe(addr, async ({ message }) => signMessageAsync({ message }));
       setSessionWallet(addr);
       setLocalSession(addr);
@@ -177,37 +259,36 @@ export function useSessionWallet() {
     } finally {
       setAuthBusy(false);
     }
-  }, [address, wallet, ensureCorrectChain, signMessageAsync]);
+  }, [ensureLiveWallet, signMessageAsync]);
 
-  /**
-   * Operator login (Alice/Bob/manual address) — no MetaMask.
-   * Used for evaluation walkthroughs on testnet.
-   */
-  const connect = useCallback(async (addressInput: string) => {
-    const addr = addressInput.toLowerCase();
-    setAuthError(null);
-    setAuthBusy(true);
-    try {
-      // Disconnect real wallet so UI doesn't mix sources
+  const connect = useCallback(
+    async (addressInput: string) => {
+      const addr = addressInput.toLowerCase();
+      setAuthError(null);
+      setAuthBusy(true);
       try {
-        await disconnectAsync();
-      } catch {
-        /* ignore */
+        try {
+          await disconnectAsync();
+        } catch {
+          /* ignore */
+        }
+        setSessionWallet(addr);
+        setLocalSession(addr);
+        setSource('operator');
+        const token = await ensureOperatorAuth(addr);
+        if (!token)
+          throw new Error('Operator login failed — is ALLOW_OPERATOR_LOGIN enabled?');
+        return addr;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Operator login failed';
+        setAuthError(msg);
+        throw e;
+      } finally {
+        setAuthBusy(false);
       }
-      setSessionWallet(addr);
-      setLocalSession(addr);
-      setSource('operator');
-      const token = await ensureOperatorAuth(addr);
-      if (!token) throw new Error('Operator login failed — is ALLOW_OPERATOR_LOGIN enabled?');
-      return addr;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Operator login failed';
-      setAuthError(msg);
-      throw e;
-    } finally {
-      setAuthBusy(false);
-    }
-  }, [disconnectAsync]);
+    },
+    [disconnectAsync]
+  );
 
   const disconnect = useCallback(async () => {
     try {
@@ -223,7 +304,7 @@ export function useSessionWallet() {
   }, [disconnectAsync]);
 
   const needsSiwe =
-    source === 'wallet' &&
+    isWagmiConnected &&
     Boolean(wallet) &&
     (getAuthMode() !== 'siwe' || getStoredWallet() !== wallet);
 
@@ -232,9 +313,11 @@ export function useSessionWallet() {
     ready,
     connect,
     connectWallet,
+    ensureLiveWallet,
     signInWithEthereum,
     disconnect,
     isConnected,
+    isWagmiConnected,
     source,
     authBusy,
     authError,
@@ -244,7 +327,7 @@ export function useSessionWallet() {
     chainId,
     expectedChainId: appChain.id,
     chainName: appChain.name,
-    wrongChain: Boolean(address && chainId && chainId !== appChain.id),
+    wrongChain: Boolean(isWagmiConnected && chainId && chainId !== appChain.id),
     ensureCorrectChain,
     needsSiwe,
     wagmiStatus: status,

@@ -52,10 +52,11 @@ export default function ShieldPoolTab() {
     wallet: sessionWallet,
     source,
     connectWallet,
+    ensureLiveWallet,
     signInWithEthereum,
     needsSiwe,
+    isWagmiConnected,
     wrongChain,
-    chainName,
     expectedChainId,
   } = useSessionWallet();
   const { switchChainAsync } = useSwitchChain();
@@ -69,7 +70,7 @@ export default function ShieldPoolTab() {
   const pool = getShieldPoolAddress();
   const denom = DEFAULT_DENOMINATION_ETH;
   const fromWallet = sessionWallet || '';
-  const isReal = source === 'wallet' && Boolean(fromWallet);
+  const isReal = isWagmiConnected && Boolean(fromWallet);
   const walletAddr =
     fromWallet && isAddress(fromWallet) ? (fromWallet as `0x${string}`) : undefined;
 
@@ -99,7 +100,7 @@ export default function ShieldPoolTab() {
 
   const depositMutation = useMutation({
     mutationFn: async () => {
-      if (!isReal) throw new Error('Connect a real wallet');
+      await ensureLiveWallet();
       if (!pool) {
         throw new Error(
           'Shield pool not deployed yet. Set NEXT_PUBLIC_SHIELD_POOL_ADDRESS after deploy.'
@@ -181,9 +182,9 @@ export default function ShieldPoolTab() {
 
   const withdrawMutation = useMutation({
     mutationFn: async (note: ShieldNote) => {
-      if (!isReal) throw new Error('Connect a real wallet');
+      const live = await ensureLiveWallet();
       if (!pool) throw new Error('Shield pool address not configured');
-      const recipient = (withdrawTo || fromWallet).toLowerCase();
+      const recipient = (withdrawTo || live).toLowerCase();
       if (!isAddress(recipient)) throw new Error('Invalid withdraw address');
 
       await switchOrAddAppChain({

@@ -377,8 +377,8 @@ export default function RelayerTab() {
           </div>
         </div>
         <p className="text-xs text-[var(--text-muted)] mb-4 leading-relaxed">
-          Connect the recipient wallet, load the payment from Scanner, and claim. Client-held
-          sends need the claim code from the sender. Funded payments sweep real ETH on-chain.
+          Connect the recipient wallet and claim. Simple private sends need no claim code — just
+          your wallet. Stealth/client-held paths may fill a key from Scanner automatically.
         </p>
 
         {prefillNote && (
@@ -441,7 +441,7 @@ export default function RelayerTab() {
               className="rh-input font-mono text-xs resize-y min-h-[56px]"
             />
             <p className="text-[11px] text-[var(--text-faint)] mt-1">
-              Required for new private sends. Auto-filled if this browser holds the vault entry.
+              Usually empty for simple sends. Only needed for stealth / claim-code payments.
             </p>
           </div>
 

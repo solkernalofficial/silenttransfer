@@ -113,26 +113,13 @@ The amount transferred to a stealth address is visible on-chain (unless the toke
 
 ---
 
-## Compliance / Oracle Model
+## Product scope (identity)
 
-SilentTransfer includes a compliance mechanism that enables **KYB/KYC oracle** integration. This is a design choice to support regulated use cases while maintaining privacy for compliant users.
+SilentTransfer is a **privacy transfer** product. The public product path centers private vault payouts and optional stealth/shield modules—not identity onboarding or compliance oracles.
 
-### How It Works
+Historical demo contracts may include optional registry/oracle stubs for experiments. They are **not** the marketed product and must not be described as a live identity pipeline.
 
-1. A **compliance oracle** (operated by the protocol or a trusted third party) attests to the KYC status of registered users.
-2. The Registry contract tracks KYC status per address.
-3. The Paymaster contract can restrict gas sponsorship to KYC-approved addresses.
-4. The API enforces KYC checks before relaying withdrawals.
-
-### Privacy Implications
-
-- The compliance oracle knows which addresses are KYC-approved and thus can correlate on-chain activity with off-chain identity.
-- The protocol minimizes oracle involvement: it only sees registration events and KYC status updates, not individual transactions.
-- The oracle model is **opt-in** for the recipient. Users who do not need KYC compliance can interact with the protocol without oracle involvement (in permissionless deployments).
-
-### Why Include Compliance?
-
-Many jurisdictions require regulated entities (e.g., exchanges, financial institutions) to perform KYC on their users. By including a compliance oracle, institutions can adopt stealth address technology while meeting regulatory requirements. The protocol is designed to support both permissioned and permissionless deployments.
+Users remain responsible for applicable law (AML, tax, sanctions) in their jurisdiction. See [PRIVACY_DISCLAIMER.md](./PRIVACY_DISCLAIMER.md).
 
 ---
 
@@ -165,7 +152,7 @@ Many jurisdictions require regulated entities (e.g., exchanges, financial instit
 | **IP logging** | RPC provider logs user IPs associating them with query patterns | Medium | VPN/Tor, decentralized RPC |
 | **Consolidation tracking** | Multiple stealth addresses sending to same known address | High | Churn strategy, fresh withdrawal addresses |
 | **Metadata analysis** | Gas amounts, calldata patterns reveal user behavior | Low-Medium | Pad transactions, use consistent gas |
-| **Sybil KYC attack** | Attacker registers multiple KYC-verified identities | Low | Robust KYC verification, liveness checks |
+| **Sybil registration** | Attacker floods meta-address / announce spam | Low | Rate limits, SIWE sessions, deposit costs |
 | **Replay attack** | Replaying an old announcement | Low | Nonce checking in Messenger contract |
 | **Front-running** | MEV bots front-run announcements | Low | Use private mempool / flashbots |
 

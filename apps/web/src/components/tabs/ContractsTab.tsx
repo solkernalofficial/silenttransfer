@@ -39,7 +39,7 @@ const FALLBACK: ApiContract[] = [
     name: 'SilentToken (SILENT)',
     address: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     network: 'Local Hardhat default',
-    description: 'Product ERC-20 — Silent ticker, no KYC.',
+    description: 'Product ERC-20 — Silent ticker, hard-capped supply.',
   },
 ];
 
@@ -61,9 +61,9 @@ export default function ContractsTab() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="rh-card p-4 border border-sky-100 bg-sky-50/50 text-xs text-sky-900 leading-relaxed">
-        Product surface covers registry, announcements, and paymaster interfaces. No KYC or
-        compliance oracle in the application path. Evaluation environments may record transfers
-        off-chain even when contracts are deployed on testnet.
+        Primary product surface is SilentUserVault (deposit and private send). Advanced modules
+        (shield, stealth) are optional. Evaluation environments may record transfers off-chain
+        even when contracts are deployed on testnet.
       </div>
 
       {isLoading ? (

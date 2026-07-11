@@ -1,6 +1,6 @@
 /**
  * Token addresses.
- * SILENT = SilentTransfer product token (privacy-first ERC-20, no KYC).
+ * SILENT = SilentTransfer product token (privacy transfer ERC-20).
  * Override via NEXT_PUBLIC_SILENT_ADDRESS after deploy.
  */
 

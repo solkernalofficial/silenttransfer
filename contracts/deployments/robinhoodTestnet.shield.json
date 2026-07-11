@@ -1,0 +1,11 @@
+{
+  "network": "robinhoodTestnet",
+  "chainId": "46630",
+  "SilentShieldPool": "0xb9eBf6d7909746242185D3a73CE0b3AB0D96Ae48",
+  "levels": 20,
+  "denominationWei": "100000000000000000",
+  "denominationEth": "0.1",
+  "testnetWitness": true,
+  "deployer": "0x9d41FF3cC91b341113a89e96AF1D75c0aC06B26B",
+  "deployedAt": "2026-07-11T10:45:44.641Z"
+}
