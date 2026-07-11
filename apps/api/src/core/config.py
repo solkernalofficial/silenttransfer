@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     paymaster_contract_address: str = ""
     silent_token_address: str = ""
     vault_contract_address: str = ""
+    shield_pool_address: str = ""
 
     protocol_fee_bps: int = 0
     # Vault private transfer fee (default 0.5% = 50 bps when vault is used)

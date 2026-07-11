@@ -9,5 +9,6 @@ from src.models.database import (
     ContractDeployment,
     AuditLog,
     VaultBatch,
+    ShieldCommitment,
 )
 from src.models.session import get_db, init_db, async_session, engine

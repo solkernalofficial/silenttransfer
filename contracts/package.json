@@ -18,7 +18,12 @@
     "wire:apps:sepolia": "node scripts/wire-apps-from-deployment.js sepolia",
     "wire:apps:hardhat": "node scripts/wire-apps-from-deployment.js hardhat"
   },
-  "keywords": ["silenttransfer", "silent", "privacy", "stealth"],
+  "keywords": [
+    "silenttransfer",
+    "silent",
+    "privacy",
+    "stealth"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
@@ -33,9 +38,12 @@
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.20",
     "chai": "^4.5.0",
+    "circomlibjs": "^0.1.7",
     "dotenv": "^17.4.2",
+    "ffjavascript": "^0.3.1",
     "hardhat": "^2.28.6",
     "hardhat-gas-reporter": "^2.3.0",
+    "snarkjs": "^0.7.6",
     "solidity-coverage": "^0.8.17",
     "typescript": "^7.0.2"
   }

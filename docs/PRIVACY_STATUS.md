@@ -11,15 +11,14 @@ Related: [PRIVACY_DISCLAIMER.md](./PRIVACY_DISCLAIMER.md), [SECURITY_MODEL.md](.
 
 ## One-line truth
 
-SilentTransfer offers two product paths on a **public** chain:
+SilentTransfer offers three privacy paths on a **public** chain:
 
-1. **Vault private transfer (primary UX):** A deposits into SilentVault (amount + fee); B/C/D are paid **from the vault**. Recipients **do not see A’s wallet** on the receive leg. Batch 1→many supported.
-2. **ERC-5564 stealth send (optional):** recipient-bound one-time addresses when Receive is enabled.
+1. **ZK shielded pool:** fixed-denomination notes (commitments + nullifiers + Merkle tree). Deposit shields ETH; withdraw unshields to any address. Testnet uses Merkle-witness proofs; production upgrades to Groth16 path-hiding.
+2. **Vault private transfer:** A deposits into SilentVault (amount + fee); B/C/D paid **from the vault** (recipient does not see A on receive leg). Batch 1→many.
+3. **ERC-5564 stealth send:** recipient-bound one-time addresses when Receive is enabled.
 
-**Not** full ZK anonymity: deposits A→Vault remain visible on-chain; amounts can still be correlated without a shielded pool.
-
-**Do say:** vault payout hides sender from recipient · batch B/C/D · protocol fee on deposit  
-**Don’t say:** fully shielded ZK cash · untraceable forever · deposit is invisible
+**Do say:** shielded notes · nullifiers · vault payout · batch B/C/D  
+**Don’t say:** production Groth16 ceremony complete · untraceable forever · deposit invisible to chain analysts
 
 ---
 

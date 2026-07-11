@@ -80,6 +80,7 @@ def create_app() -> FastAPI:
         contracts,
         config_public,
         vault,
+        shield,
     )
 
     app.include_router(health.router)
@@ -92,5 +93,6 @@ def create_app() -> FastAPI:
     app.include_router(contracts.router)
     app.include_router(config_public.router)
     app.include_router(vault.router)
+    app.include_router(shield.router)
 
     return app

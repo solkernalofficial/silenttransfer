@@ -24,6 +24,7 @@ import {
   Users,
   Vault,
   Inbox,
+  Sparkles,
 } from 'lucide-react';
 import { useSessionWallet } from '@/hooks/useSessionWallet';
 import { truncAddr } from '@/lib/tokens';
@@ -34,6 +35,7 @@ type Tab =
   | 'dashboard'
   | 'vault'
   | 'inbox'
+  | 'shield'
   | 'send'
   | 'batch'
   | 'receive'
@@ -52,7 +54,8 @@ interface DashboardLayoutProps {
 
 const navItems: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'vault', label: 'Private send', icon: Vault },
+  { id: 'shield', label: 'Shield pool', icon: Sparkles },
+  { id: 'vault', label: 'Vault send', icon: Vault },
   { id: 'inbox', label: 'Vault inbox', icon: Inbox },
   { id: 'send', label: 'Stealth send', icon: Send },
   { id: 'batch', label: 'Batch (legacy)', icon: Users },

@@ -117,3 +117,16 @@ class VaultBatch(Base):
     recipients = Column(JSON, default=[])  # [{address, amount_wei, payout_id, status, tx_hash}]
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ShieldCommitment(Base):
+    """Public shielded-pool commitments (Merkle leaves). No secrets."""
+
+    __tablename__ = "st_shield_commitments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    commitment = Column(String(66), unique=True, nullable=False, index=True)
+    leaf_index = Column(Integer, nullable=False, index=True)
+    pool_address = Column(String(42), default="")
+    tx_hash = Column(String(66), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

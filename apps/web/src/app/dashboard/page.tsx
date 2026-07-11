@@ -9,6 +9,7 @@ import DashboardTab from '@/components/tabs/DashboardTab';
 import SendTab from '@/components/tabs/SendTab';
 import VaultSendTab from '@/components/tabs/VaultSendTab';
 import VaultInboxTab from '@/components/tabs/VaultInboxTab';
+import ShieldPoolTab from '@/components/tabs/ShieldPoolTab';
 import BatchSendTab from '@/components/tabs/BatchSendTab';
 import ReceiveTab from '@/components/tabs/ReceiveTab';
 import ScannerTab from '@/components/tabs/ScannerTab';
@@ -22,6 +23,7 @@ type Tab =
   | 'dashboard'
   | 'vault'
   | 'inbox'
+  | 'shield'
   | 'send'
   | 'batch'
   | 'receive'
@@ -36,6 +38,7 @@ const validTabs: Set<string> = new Set([
   'dashboard',
   'vault',
   'inbox',
+  'shield',
   'send',
   'batch',
   'receive',
@@ -68,6 +71,8 @@ function DashboardContent() {
         return <VaultSendTab />;
       case 'inbox':
         return <VaultInboxTab />;
+      case 'shield':
+        return <ShieldPoolTab />;
       case 'send':
         return <SendTab />;
       case 'batch':
