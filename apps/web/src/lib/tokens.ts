@@ -1,12 +1,15 @@
 /**
  * Token addresses.
- * SILENT = SilentTransfer product token (privacy transfer ERC-20).
- * Override via NEXT_PUBLIC_SILENT_ADDRESS after deploy.
+ * Product token: sthood (display symbol + name).
+ * Address override: NEXT_PUBLIC_SILENT_ADDRESS (legacy env key; value is sthood CA).
  */
+
+/** Official product token symbol shown in UI. */
+export const TOKEN_SYMBOL = 'sthood';
 
 /**
  * Fallback if env not set.
- * Robinhood Chain Testnet (46630) SilentToken deployment.
+ * Official sthood contract address.
  */
 const SILENT_FALLBACK = '0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a';
 
@@ -20,13 +23,16 @@ export const SILENT_ADDRESS =
     ? silentFromEnv
     : SILENT_FALLBACK;
 
+/** Alias — same CA as SILENT_ADDRESS. */
+export const STHOOD_ADDRESS = SILENT_ADDRESS;
+
 /** Native ETH uses zero address; remaining entries are ERC-20s. */
 export const NATIVE_ETH_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-/** Deployed token addresses + native ETH + SILENT product token. */
+/** Deployed token addresses + native ETH + sthood product token. */
 export const TOKENS: Record<string, string> = {
   ETH: NATIVE_ETH_ADDRESS,
-  SILENT: SILENT_ADDRESS,
+  sthood: SILENT_ADDRESS,
   USDG: '0x03592B5E147d7752000723A9AA23fc6c70d968Ce',
   AAPL: '0x702175Be5D1888a054E5545312849464Daf29a24',
   NVDA: '0xFb97026d12bA25e36A3D95fF5E8eF455Df6597fF',
@@ -39,7 +45,7 @@ export const TOKEN_META: Record<
   { name: string; primary?: boolean; decimals: number }
 > = {
   ETH: { name: 'Ether', primary: true, decimals: 18 },
-  SILENT: { name: 'sthood', decimals: 18 },
+  sthood: { name: 'sthood', decimals: 18 },
   USDG: { name: 'USDG Stablecoin', decimals: 18 },
   AAPL: { name: 'Apple Stock Token', decimals: 18 },
   NVDA: { name: 'NVIDIA Stock Token', decimals: 18 },
@@ -47,10 +53,10 @@ export const TOKEN_META: Record<
   MSFT: { name: 'Microsoft Stock Token', decimals: 18 },
 };
 
-/** ETH first in dropdowns (default send asset). */
+/** ETH first in dropdowns (default send asset). Hide legacy aliases. */
 export const TOKEN_LIST = [
   'ETH',
-  ...Object.keys(TOKENS).filter((k) => k !== 'ETH'),
+  ...Object.keys(TOKENS).filter((k) => k !== 'ETH' && k !== 'SILENT'),
 ];
 
 export const DEFAULT_TOKEN = 'ETH';

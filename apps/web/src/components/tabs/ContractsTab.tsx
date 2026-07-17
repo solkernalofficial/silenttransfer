@@ -36,10 +36,10 @@ const FALLBACK: ApiContract[] = [
     description: 'Gasless paymaster interface (ERC-4337 path staged; live claim uses EOA sweep).',
   },
   {
-    name: 'sthood (SILENT)',
+    name: 'sthood',
     address: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     network: 'Local Hardhat default',
-    description: 'Product ERC-20 — name sthood, ticker SILENT, hard-capped supply.',
+    description: 'Product ERC-20 — name and ticker sthood, hard-capped supply.',
   },
 ];
 

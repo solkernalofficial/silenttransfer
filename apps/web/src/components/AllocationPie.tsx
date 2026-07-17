@@ -39,7 +39,7 @@ export default function AllocationPie({
         height={size}
         viewBox="0 0 200 200"
         role="img"
-        aria-label={`SILENT allocation pie chart: ${silentAllocationSummary()}`}
+        aria-label={`sthood allocation pie chart: ${silentAllocationSummary()}`}
         className="drop-shadow-sm"
       >
         {/* Soft plate */}
@@ -54,7 +54,7 @@ export default function AllocationPie({
             strokeWidth="2"
             className="transition-opacity hover:opacity-90"
           >
-            <title>{`${s.label}: ${s.percent}% (${s.amountLabel} SILENT)`}</title>
+            <title>{`${s.label}: ${s.percent}% (${s.amountLabel} sthood)`}</title>
           </path>
         ))}
 

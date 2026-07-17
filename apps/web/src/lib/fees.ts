@@ -3,7 +3,7 @@
  *
  * Current: 0% product fee on private send and gasless claim.
  * Planned: 0.5% (50 bps) on gasless / protocol-sponsored flows, allocated to
- * protocol operations and open-market SILENT buybacks.
+ * protocol operations and open-market sthood buybacks.
  *
  * Private send remains 0% product fee (network gas applies only on-chain).
  * Self-funded withdrawal: 0% product fee.
@@ -61,9 +61,9 @@ export const FEE_COPY = {
     'Protocol fee on private transfer: 0%. When executed on-chain, only network gas applies.',
   gasless: (percent: string) =>
     Number(percent.replace('%', '')) === 0
-      ? 'Sponsored claim fee: 0% in the current environment. Planned rate: 0.5%, allocated to protocol operations and open-market SILENT buybacks.'
-      : `Sponsored claim fee: ${percent} of amount. Proceeds support protocol operations and open-market SILENT buybacks.`,
+      ? 'Sponsored claim fee: 0% in the current environment. Planned rate: 0.5%, allocated to protocol operations and open-market sthood buybacks.'
+      : `Sponsored claim fee: ${percent} of amount. Proceeds support protocol operations and open-market sthood buybacks.`,
   selfWithdraw: 'Self-funded withdrawal (user pays gas): 0% protocol fee.',
   policy:
-    'Product fees are currently 0%. A planned 0.5% fee on sponsored claims will fund protocol operations and open-market SILENT buybacks—not venture distributions.',
+    'Product fees are currently 0%. A planned 0.5% fee on sponsored claims will fund protocol operations and open-market sthood buybacks—not venture distributions.',
 } as const;

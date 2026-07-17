@@ -39,7 +39,7 @@ const NAV = [
   { label: 'How it works', href: '#how' },
   { label: 'Roadmap', href: '#roadmap' },
   { label: 'Security', href: '#security' },
-  { label: '$SILENT', href: SILENT_PAGE_URL },
+  { label: '$sthood', href: SILENT_PAGE_URL },
 ];
 
 const FEATURES = [
@@ -123,7 +123,7 @@ const PROBLEMS = [
 const STATS = [
   { value: '1', label: 'Primary flow: private vault' },
   { value: '0', label: 'Claim steps for recipients' },
-  { value: '1B', label: 'SILENT hard cap' },
+  { value: '1B', label: 'sthood hard cap' },
   { value: '0%', label: 'Venture allocation' },
 ];
 
@@ -144,8 +144,8 @@ const ROADMAP: {
   },
   {
     status: 'Live',
-    title: 'Console, docs & $SILENT',
-    body: 'Minimal operations console, honest privacy docs, and SILENT (1B hard cap, community-majority, 0% VC) on testnet.',
+    title: 'Console, docs & $sthood',
+    body: 'Minimal operations console, honest privacy docs, and sthood (1B hard cap, community-majority, 0% VC) on testnet.',
   },
   {
     status: 'Next',
@@ -192,8 +192,8 @@ const FAQS = [
     a: 'Yes on Robinhood Chain Testnet: real on-chain vault deposit and withdraw. Mainnet production and formal audits are not claimed.',
   },
   {
-    q: 'What is $SILENT?',
-    a: 'SILENT is the protocol asset—hard-capped at 1B. Community-majority allocation, 0% VC. Fees support ops and open-market buybacks when enabled.',
+    q: 'What is $sthood?',
+    a: 'sthood is the protocol asset—hard-capped at 1B. Community-majority allocation, 0% VC. Fees support ops and open-market buybacks when enabled.',
   },
   {
     q: 'Who is this for?',
@@ -400,7 +400,7 @@ export default function LandingPage() {
                 <div className="lp-panel-top">
                   <div className="lp-panel-pills">
                     <span className="lp-pill lp-pill--live">Testnet live</span>
-                    <span className="lp-pill">SILENT</span>
+                    <span className="lp-pill">sthood</span>
                   </div>
                   <span className="lp-panel-meta">Console</span>
                 </div>
@@ -609,12 +609,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── $SILENT ──────────────────────────────────────────────────────── */}
+      {/* ── $sthood ──────────────────────────────────────────────────────── */}
       <section id="silent" className="lp-section">
         <div className="lp-container">
           <div className="lp-section-head">
             <p className="lp-kicker">Protocol asset</p>
-            <h2 className="lp-h2">$SILENT — hard-capped. Community-majority.</h2>
+            <h2 className="lp-h2">$sthood — hard-capped. Community-majority.</h2>
             <p className="lp-section-lead">
               Maximum supply of <strong>{SILENT_TOTAL_SUPPLY_SHORT}</strong>.{' '}
               {silentAllocationSummary()} · Venture capital <strong>0%</strong> · separate team pool{' '}
@@ -625,7 +625,7 @@ export default function LandingPage() {
           <div className="lp-silent-cards">
             <div className="lp-silent-card">
               <div className="lp-silent-label">Name / ticker</div>
-              <div className="lp-silent-value">sthood · SILENT</div>
+              <div className="lp-silent-value">sthood</div>
               <p className="lp-silent-hint">Zero VC · community-majority</p>
             </div>
             <div className="lp-silent-card">
@@ -674,14 +674,14 @@ export default function LandingPage() {
               <strong>Launch:</strong> {SILENT_LAUNCH_NOTE}
             </p>
             <p>
-              <strong>Hard cap:</strong> Maximum supply is 1B SILENT. The contract does not permit
+              <strong>Hard cap:</strong> Maximum supply is 1B sthood. The contract does not permit
               minting above the cap.
             </p>
             <p>
               <strong>Fees (current):</strong> {feePct} product fee on many paths; vault deposit may
               charge a protocol fee on-chain.{' '}
               <strong>Fees (planned):</strong> {plannedPct} on sponsored flows—for protocol
-              operations and open-market SILENT buybacks.
+              operations and open-market sthood buybacks.
             </p>
             <p className="lp-silent-policy">{FEE_COPY.policy}</p>
             <p>
@@ -689,7 +689,7 @@ export default function LandingPage() {
               are outside current product claims.
             </p>
             <Link href={SILENT_PAGE_URL} className="lp-silent-link">
-              Full $SILENT overview <ExternalLink className="w-3.5 h-3.5" />
+              Full $sthood overview <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
@@ -815,7 +815,7 @@ export default function LandingPage() {
           <div className="lp-footer-brand">
             <BrandLogo size={36} subtitle="" href="/" />
             <p className="lp-footer-tag">
-              Private transfer infrastructure for public blockchains. Protocol asset: SILENT.
+              Private transfer infrastructure for public blockchains. Protocol asset: sthood.
             </p>
           </div>
           <div className="lp-footer-cols">
@@ -823,7 +823,7 @@ export default function LandingPage() {
               <div className="lp-footer-h">Product</div>
               <Link href="/dashboard">Console</Link>
               <Link href="/dashboard">Private vault</Link>
-              <Link href={SILENT_PAGE_URL}>$SILENT</Link>
+              <Link href={SILENT_PAGE_URL}>$sthood</Link>
             </div>
             <div>
               <div className="lp-footer-h">Resources</div>

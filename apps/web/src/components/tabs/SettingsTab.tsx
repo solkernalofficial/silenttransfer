@@ -129,7 +129,7 @@ export default function SettingsTab() {
               value: wcProjectId ? `${wcProjectId.slice(0, 8)}…` : 'not configured',
             },
             {
-              label: 'SILENT',
+              label: 'sthood',
               value: silentAddress
                 ? `${silentAddress.slice(0, 10)}…${silentAddress.slice(-8)}`
                 : '—',

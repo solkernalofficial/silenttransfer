@@ -145,7 +145,7 @@ export default function AnalyticsTab() {
 
         <div className="mt-4 text-[10px] text-[var(--text-faint)] leading-relaxed">
           SilentTransfer provides private vault payouts (deposit, single/batch send, auto-receive).
-          Protocol asset: SILENT (hard-capped). Production mainnet settlement is staged and
+          Protocol asset: sthood (hard-capped). Production mainnet settlement is staged and
           documented separately.
         </div>
       </div>

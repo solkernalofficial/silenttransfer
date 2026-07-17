@@ -21,7 +21,7 @@
 | ERC5564Messenger | [`0x5EA9fA89796fA28dA351E3A187478eC863AFE45C`](https://explorer.testnet.chain.robinhood.com/address/0x5EA9fA89796fA28dA351E3A187478eC863AFE45C) |
 | MockComplianceOracle | [`0x0fA63a04f44a6eFd55406b5901Af6723775a77df`](https://explorer.testnet.chain.robinhood.com/address/0x0fA63a04f44a6eFd55406b5901Af6723775a77df) |
 | SilentPaymaster | [`0x25D8241235f5e71f008605b2E29999978C92AAC0`](https://explorer.testnet.chain.robinhood.com/address/0x25D8241235f5e71f008605b2E29999978C92AAC0) |
-| **sthood (SILENT)** | [`0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`](https://explorer.testnet.chain.robinhood.com/address/0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a) |
+| **sthood** | [`0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`](https://explorer.testnet.chain.robinhood.com/address/0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a) |
 | USDG | `0x03592B5E147d7752000723A9AA23fc6c70d968Ce` |
 | AAPL | `0x702175Be5D1888a054E5545312849464Daf29a24` |
 | NVDA | `0xFb97026d12bA25e36A3D95fF5E8eF455Df6597fF` |

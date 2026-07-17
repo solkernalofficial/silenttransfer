@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: '%s · SilentTransfer',
   },
   description:
-    'Private vault payouts on public blockchains. Deposit, then send single or batch anytime. Recipients receive automatically. Protocol asset: SILENT (1B hard cap).',
+    'Private vault payouts on public blockchains. Deposit, then send single or batch anytime. Recipients receive automatically. Protocol asset: sthood (1B hard cap).',
   icons: {
     icon: '/brand/logo.svg',
     apple: '/brand/logo.svg',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'SilentTransfer — Untraceable-oriented private transfers',
     description:
-      'Vault-based private payouts on public chains. Break the public A→B link. Recipients never open the site. Protocol asset: SILENT.',
+      'Vault-based private payouts on public chains. Break the public A→B link. Recipients never open the site. Protocol asset: sthood.',
     images: [{ url: '/brand/hero-bg.jpg', width: 1280, height: 720 }],
   },
 };

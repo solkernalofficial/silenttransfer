@@ -250,7 +250,7 @@ export default function BatchSendTab() {
           placeholder={'0xabc…,0.01,ETH\n0xdef…,0.005,ETH'}
         />
         <p className="text-[11px] text-[var(--text-faint)] mt-1.5 mb-3">
-          Format: <code className="text-[var(--text-muted)]">address,amount[,ETH|SILENT]</code>
+          Format: <code className="text-[var(--text-muted)]">address,amount[,ETH|sthood]</code>
           {' · '}
           Parsed: <strong className="text-[var(--text)]">{parsed.lines.length}</strong> lines
           {totalEth > 0 && (

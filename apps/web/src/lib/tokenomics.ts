@@ -1,6 +1,6 @@
 /**
  * SILENT tokenomics — public allocation policy.
- * Hard cap: 1,000,000,000 SILENT (enforced on-chain; no mint above cap).
+ * Hard cap: 1,000,000,000 sthood (enforced on-chain; no mint above cap).
  *
  * Launch model: Virtual (and similar fair-launch) style —
  * majority community supply, small protocol share for ops. No VC. No separate team pool.
@@ -19,7 +19,7 @@ export const SILENT_TEAM_PERCENT = 0;
 
 export const SILENT_HARD_CAP = true;
 export const SILENT_HARD_CAP_NOTE =
-  'Maximum supply is hard-capped at 1,000,000,000 SILENT on-chain. Minting above the cap is not permitted.';
+  'Maximum supply is hard-capped at 1,000,000,000 sthood on-chain. Minting above the cap is not permitted.';
 
 export const SILENT_LAUNCH_NOTE =
   'Intended Virtual-style fair launch: community-majority supply with a small protocol share for operations. No venture allocation and no separate team pool.';

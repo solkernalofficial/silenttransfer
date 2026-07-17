@@ -33,8 +33,8 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: '$SILENT — SilentTransfer token',
-  description: `SILENT: 1B total supply. ${silentAllocationSummary()}. Virtual-style fair launch. No VC.`,
+  title: '$sthood — SilentTransfer token',
+  description: `sthood: 1B total supply. ${silentAllocationSummary()}. Virtual-style fair launch. No VC.`,
 };
 
 const DECIMALS = 18;
@@ -56,7 +56,7 @@ export default function SilentTokenPage() {
     <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text)]">
       <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-white/90 backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <BrandLogo size={36} subtitle="$SILENT" />
+          <BrandLogo size={36} subtitle="$sthood" />
           <div className="flex items-center gap-2 text-sm">
             <a
               href={DOCS_URL}
@@ -68,7 +68,7 @@ export default function SilentTokenPage() {
               href="/dashboard?tab=send"
               className="px-3 py-1.5 rounded-lg bg-[var(--accent)] text-white text-xs font-semibold"
             >
-              Send SILENT
+              Send sthood
             </Link>
           </div>
         </div>
@@ -86,11 +86,11 @@ export default function SilentTokenPage() {
             <Coins className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-wider">Token</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">$SILENT</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">$sthood</h1>
           <p className="text-[var(--text-muted)] leading-relaxed text-[15px]">
             Product token for SilentTransfer. Name:{' '}
             <strong className="text-[var(--text)]">sthood</strong>. Ticker:{' '}
-            <strong className="text-[var(--text)]">SILENT</strong>. Total supply{' '}
+            <strong className="text-[var(--text)]">sthood</strong>. Total supply{' '}
             <strong className="text-[var(--text)]">{SILENT_TOTAL_SUPPLY_SHORT}</strong>.{' '}
             <strong className="text-[var(--text)]">Community-majority · no VC.</strong>
           </p>
@@ -100,7 +100,7 @@ export default function SilentTokenPage() {
           <div className="flex gap-2 p-4 rounded-xl border border-sky-200 bg-sky-50 text-sky-950 text-sm leading-relaxed">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <div>
-              <strong>Testnet:</strong> {networkName} (chain {chainId}). SILENT contract{' '}
+              <strong>Testnet:</strong> {networkName} (chain {chainId}). sthood contract{' '}
               <span className="font-mono text-xs">{truncAddr(SILENT_ADDRESS)}</span>. Allocation
               below is published policy for a Virtual-style fair launch. On-chain distribution
               mechanics follow the launch venue.
@@ -143,7 +143,7 @@ export default function SilentTokenPage() {
           <div>
             <h2 className="text-lg font-semibold">Allocation (Virtual-style)</h2>
             <p className="text-xs text-[var(--text-muted)] mt-1">
-              1B SILENT · {silentAllocationSummary()} · VC {SILENT_VC_PERCENT}% · Team pool{' '}
+              1B sthood · {silentAllocationSummary()} · VC {SILENT_VC_PERCENT}% · Team pool{' '}
               {SILENT_TEAM_PERCENT}%
             </p>
           </div>
@@ -214,7 +214,7 @@ export default function SilentTokenPage() {
           <ul className="text-sm text-[var(--text-muted)] space-y-2.5 leading-relaxed list-disc pl-5">
             <li>
               <strong className="text-[var(--text)]">Supported transfer asset</strong> in private
-              send / claim console (default send asset is ETH; SILENT remains available).
+              send / claim console (default send asset is ETH; sthood remains available).
             </li>
             <li>
               <strong className="text-[var(--text)]">Fees now:</strong> {feePct} product fee (bps=
@@ -224,7 +224,7 @@ export default function SilentTokenPage() {
               <strong className="text-[var(--text)]">Fees soon:</strong> planned{' '}
               <strong className="text-[var(--text)]">{plannedPct}</strong> on gasless / protocol use
               — used for <strong className="text-[var(--text)]">protocol running costs</strong> and
-              to <strong className="text-[var(--text)]">buy SILENT from the market (buyback)</strong>.
+              to <strong className="text-[var(--text)]">buy sthood from the market (buyback)</strong>.
               Not VC revenue.
             </li>
             <li>
@@ -250,7 +250,7 @@ export default function SilentTokenPage() {
               <tbody>
                 {[
                   ['Name', 'sthood'],
-                  ['Ticker', 'SILENT'],
+                  ['Ticker', 'sthood'],
                   ['Hard cap', `${SILENT_TOTAL_SUPPLY_LABEL} (1B) — no mint above`],
                   ['Launch style', 'Virtual-style fair launch (community-majority)'],
                   ['VC allocation', `${SILENT_VC_PERCENT}%`],
@@ -290,13 +290,13 @@ export default function SilentTokenPage() {
             </li>
             <li>0.5% fee is planned policy, not charged until enabled (env / paymaster bps).</li>
             <li>Demo app does not settle mainnet money by itself.</li>
-            <li>No audit claim for SilentToken yet.</li>
+            <li>No audit claim for sthood token yet.</li>
           </ul>
         </section>
 
         <div className="flex flex-wrap gap-3">
           <Link href="/dashboard?tab=send" className="rh-btn-primary text-sm px-4 py-2.5 rounded-lg">
-            Try private send (SILENT)
+            Try private send (sthood)
           </Link>
           <a
             href={DOCS_URL}

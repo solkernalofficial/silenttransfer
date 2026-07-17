@@ -233,8 +233,8 @@ export function parseBatchLines(raw: string): { lines: PrivateSendLine[]; errors
       errors.push(`Line ${i + 1}: invalid amount`);
       return;
     }
-    if (token !== 'ETH' && token !== 'SILENT') {
-      errors.push(`Line ${i + 1}: token must be ETH or SILENT`);
+    if (token !== 'ETH' && token !== 'sthood' && token !== 'SILENT') {
+      errors.push(`Line ${i + 1}: token must be ETH or sthood`);
       return;
     }
     lines.push({ toWallet: addr, amount, token });

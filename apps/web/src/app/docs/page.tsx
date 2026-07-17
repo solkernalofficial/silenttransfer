@@ -32,7 +32,7 @@ import {
 export const metadata: Metadata = {
   title: 'Docs — SilentTransfer',
   description:
-    'Honest documentation: private vault payouts on testnet, privacy limits, fees, $SILENT — no fake completion claims.',
+    'Honest documentation: private vault payouts on testnet, privacy limits, fees, $sthood — no fake completion claims.',
 };
 
 const TOC = [
@@ -44,7 +44,7 @@ const TOC = [
   { id: 'architecture', label: '6. Architecture' },
   { id: 'privacy', label: '7. Privacy guarantees & limits' },
   { id: 'fees', label: '8. Fees' },
-  { id: 'token', label: '9. $SILENT' },
+  { id: 'token', label: '9. $sthood' },
   { id: 'status', label: '10. Status: done / not done' },
   { id: 'future', label: '11. Future roadmap' },
   { id: 'threats', label: '12. Threat model notes' },
@@ -73,9 +73,9 @@ const DONE = [
       'If the wallet is on another chain, the UI offers wallet_addEthereumChain for Robinhood Chain Testnet (RPC, chain ID, explorer).',
   },
   {
-    title: 'sthood (SILENT)',
+    title: 'sthood',
     detail:
-      'Token name sthood, ticker SILENT. Non-upgradeable ERC-20, hard-capped at 1B. Vault deposit may charge an on-chain protocol fee; planned sponsored-flow fee for ops + buyback.',
+      'Token name and ticker sthood. Non-upgradeable ERC-20, hard-capped at 1B. Vault deposit may charge an on-chain protocol fee; planned sponsored-flow fee for ops + buyback.',
   },
   {
     title: 'Console + docs + landing',
@@ -163,7 +163,7 @@ export default function DocsPage() {
               href={SILENT_PAGE_URL}
               className="hidden sm:inline text-[var(--text-muted)] hover:text-[var(--accent)] font-medium"
             >
-              $SILENT
+              $sthood
             </Link>
             <Link
               href="/dashboard"
@@ -214,7 +214,7 @@ export default function DocsPage() {
             </h1>
             <p className="text-[var(--text-muted)] leading-relaxed text-[15px] max-w-2xl">
               Technical reference for operators and integrators: stealth address standards,
-              product capabilities, privacy properties, fees, $SILENT, and current limitations—stated
+              product capabilities, privacy properties, fees, $sthood, and current limitations—stated
               precisely without overstatement.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -265,7 +265,7 @@ export default function DocsPage() {
               receives ETH in a normal wallet automatically.
             </p>
             <p>
-              Product token: <strong className="text-[var(--text)]">SILENT</strong> (see §9). Console
+              Product token: <strong className="text-[var(--text)]">sthood</strong> (see §9). Console
               transfers use <strong className="text-[var(--text)]">ETH</strong> by default. This is a
               privacy product, not an identity product—scope is transfer mechanics, not user
               onboarding forms.
@@ -565,7 +565,7 @@ export default function DocsPage() {
             </pre>
             <ul className="list-disc pl-5 space-y-2">
               <li>
-                <strong className="text-[var(--text)]">apps/web</strong> — landing, docs, $SILENT,
+                <strong className="text-[var(--text)]">apps/web</strong> — landing, docs, $sthood,
                 private vault console; real wallet deposit/send.
               </li>
               <li>
@@ -637,7 +637,7 @@ export default function DocsPage() {
                 <strong className="text-[var(--text)]">{plannedPct}</strong> fee on sponsored / protocol
                 claim paths. Proceeds intended for{' '}
                 <strong className="text-[var(--text)]">protocol ops</strong> and{' '}
-                <strong className="text-[var(--text)]">open-market SILENT buyback</strong> — not VC
+                <strong className="text-[var(--text)]">open-market sthood buyback</strong> — not VC
                 extraction.
               </li>
               <li>
@@ -652,10 +652,10 @@ export default function DocsPage() {
             <p className="text-xs text-[var(--text-faint)]">{FEE_COPY.policy}</p>
           </Section>
 
-          <Section id="token" icon={Coins} title="9. $SILENT">
+          <Section id="token" icon={Coins} title="9. $sthood">
             <p>
               <strong className="text-[var(--text)]">sthood</strong> / ticker{' '}
-              <strong className="text-[var(--text)]">SILENT</strong> is the product ERC-20.{' '}
+              <strong className="text-[var(--text)]">sthood</strong> is the product ERC-20.{' '}
               <strong className="text-[var(--text)]">Hard cap:</strong>{' '}
               {SILENT_TOTAL_SUPPLY_SHORT} (1,000,000,000) — contract does not allow mint above the
               cap. <strong className="text-[var(--text)]">No VC allocation</strong> (
@@ -671,7 +671,7 @@ export default function DocsPage() {
                   <strong className="text-[var(--text)]">
                     {a.label} {a.percent}%
                   </strong>{' '}
-                  — {a.amountLabel} SILENT. {a.lock}
+                  — {a.amountLabel} sthood. {a.lock}
                 </li>
               ))}
             </ul>
@@ -691,7 +691,7 @@ export default function DocsPage() {
               href={SILENT_PAGE_URL}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--accent)] hover:underline not-prose"
             >
-              Open full $SILENT page <ExternalLink className="w-3.5 h-3.5" />
+              Open full $sthood page <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           </Section>
 
@@ -829,7 +829,7 @@ export default function DocsPage() {
               href={SILENT_PAGE_URL}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-semibold hover:bg-white"
             >
-              $SILENT details
+              $sthood details
             </Link>
             <Link
               href="/"
