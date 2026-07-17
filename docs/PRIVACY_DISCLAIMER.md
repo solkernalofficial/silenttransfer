@@ -38,7 +38,7 @@ SilentTransfer is a transfer privacy product, not an identity service. Users rem
 
 ## 5. Product identity
 
-**SilentTransfer** (silenttransfer.com) is an independent privacy transfer project. Token ticker: **SILENT**.  
+**SilentTransfer** (silenttransfer.com) is an independent privacy transfer project. Token: **sthood**. CA: `0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`.  
 It is not affiliated with Robinhood Markets, Inc. or any other third-party trading platform.
 
 ## 6. Recommended Privacy Practices

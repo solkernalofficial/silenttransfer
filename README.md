@@ -11,7 +11,7 @@ Deposit into a wallet-bound **private vault**, then pay any address—single or 
 | Organization | [github.com/SilentTransfer](https://github.com/SilentTransfer) |
 | X | [x.com/silenttransfer](https://x.com/silenttransfer) |
 | Protocol asset | **sthood** (1B hard cap · 0% VC) |
-| SILENT CA | [`0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`](https://silenttransfer.com/silent) |
+| sthood CA | [`0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`](https://silenttransfer.com/silent) |
 | Network (current) | Robinhood Chain Testnet (`46630`) |
 | License | See `LICENSE` |
 
@@ -54,7 +54,8 @@ Full detail: [`docs/ROADMAP.md`](./docs/ROADMAP.md) · also on the [website](htt
 - Single and **batch** send from vault  
 - **Auto-receive** for recipients (no claim)  
 - Wallet as key · minimal console · honest docs  
-- $SILENT (1B hard cap, community-majority)  
+- $sthood (1B hard cap, community-majority) · CA `0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`  
+
 - Shield pool & stealth modules available as advanced tooling  
 
 ### Next
@@ -179,7 +180,7 @@ Do not push if the script reports failures.
 | [docs/PRIVACY_DISCLAIMER.md](./docs/PRIVACY_DISCLAIMER.md) | Legal / user responsibility |
 | [docs/SECURITY_MODEL.md](./docs/SECURITY_MODEL.md) | Threat model notes |
 | In-app `/docs` | Operator-facing product docs |
-| `/silent` | $SILENT overview |
+| `/silent` | $sthood overview + CA |
 
 ---
 

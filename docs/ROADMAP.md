@@ -28,7 +28,7 @@ Private transfer infrastructure for public blockchains.
 | Wallet as key | **Live** | No local note backup for vault path |
 | Recipient no website | **Live** | Funds land in normal wallets |
 | Console + landing + docs | **Live** | English, international product copy |
-| $SILENT token (1B hard cap) | **Live (testnet)** | Community-majority policy; 0% VC |
+| $sthood token (1B hard cap) | **Live (testnet)** | CA `0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a` · community-majority; 0% VC |
 | Shield pool (advanced) | **Live (testnet / staged)** | Notes + Merkle; not production Groth16 |
 | ERC-5564 stealth modules | **Available (advanced)** | Optional; not primary UX |
 
