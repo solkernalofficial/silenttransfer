@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Check, Copy, ExternalLink, FileCode, X } from 'lucide-react';
 import { SILENT_ADDRESS, TOKEN_SYMBOL } from '@/lib/tokens';
 
-const STORAGE_KEY = 'sthood_ca_popup_dismissed_v1';
+const STORAGE_KEY = 'sthood_ca_popup_dismissed_v2';
 
 /** Official buy link — Pons launchpad. */
 export const STHOOD_BUY_URL =
