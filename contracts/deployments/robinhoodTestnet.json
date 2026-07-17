@@ -9,13 +9,13 @@
     "messenger": "0x5EA9fA89796fA28dA351E3A187478eC863AFE45C",
     "oracle": "0x0fA63a04f44a6eFd55406b5901Af6723775a77df",
     "paymaster": "0x25D8241235f5e71f008605b2E29999978C92AAC0",
-    "silent": "0xE429a44C3572353E3EE6a3c9100FF9BeC74498C4",
+    "silent": "0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a",
     "silentNote": "Deployed on Robinhood Chain Testnet 46630",
     "protocolFeeBps": 0,
     "tokens": [
       {
         "symbol": "SILENT",
-        "address": "0xE429a44C3572353E3EE6a3c9100FF9BeC74498C4",
+        "address": "0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a",
         "name": "Silent"
       },
       {

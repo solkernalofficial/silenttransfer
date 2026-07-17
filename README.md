@@ -11,6 +11,7 @@ Deposit into a wallet-bound **private vault**, then pay any address—single or 
 | Organization | [github.com/SilentTransfer](https://github.com/SilentTransfer) |
 | X | [x.com/silenttransfer](https://x.com/silenttransfer) |
 | Protocol asset | **SILENT** (1B hard cap · 0% VC) |
+| SILENT CA | [`0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`](https://silenttransfer.com/silent) |
 | Network (current) | Robinhood Chain Testnet (`46630`) |
 | License | See `LICENSE` |
 
@@ -191,7 +192,7 @@ Do not push if the script reports failures.
 | Team (separate pool) | **0%** |
 | Venture capital | **0%** |
 
-Hard cap: **1B SILENT** (contract-enforced). Vault deposit may charge an on-chain protocol fee. Planned sponsored-flow fee **0.5%** for protocol operations and open-market buybacks.
+Hard cap: **1B SILENT** (contract-enforced). Official CA: `0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`. Vault deposit may charge an on-chain protocol fee. Planned sponsored-flow fee **0.5%** for protocol operations and open-market buybacks.
 
 ---
 

@@ -8,7 +8,7 @@
  * Fallback if env not set.
  * Robinhood Chain Testnet (46630) SilentToken deployment.
  */
-const SILENT_FALLBACK = '0xE429a44C3572353E3EE6a3c9100FF9BeC74498C4';
+const SILENT_FALLBACK = '0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a';
 
 const silentFromEnv =
   typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SILENT_ADDRESS

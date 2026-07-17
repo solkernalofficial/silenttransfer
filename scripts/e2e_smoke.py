@@ -69,7 +69,7 @@ def main() -> int:
             "to_address": bob,
             "stealth_address": stealth,
             "ephemeral_pubkey": "0x04" + "ee" * 32,
-            "token_address": "0xE429a44C3572353E3EE6a3c9100FF9BeC74498C4",
+            "token_address": "0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a",
             "amount": "1000000",
             "block_number": 1,
             "metadata": {"note": "smoke"},
