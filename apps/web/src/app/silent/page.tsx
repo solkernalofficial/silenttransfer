@@ -34,7 +34,7 @@ import {
 
 export const metadata: Metadata = {
   title: '$sthood — SilentTransfer token',
-  description: `sthood: 1B total supply. ${silentAllocationSummary()}. Virtual-style fair launch. No VC.`,
+  description: `sthood: 1B total supply. ${silentAllocationSummary()}. Pons launchpad. No VC.`,
 };
 
 const DECIMALS = 18;
@@ -102,7 +102,7 @@ export default function SilentTokenPage() {
             <div>
               <strong>Testnet:</strong> {networkName} (chain {chainId}). sthood contract{' '}
               <span className="font-mono text-xs">{truncAddr(SILENT_ADDRESS)}</span>. Allocation
-              below is published policy for a Virtual-style fair launch. On-chain distribution
+              below is published policy. Launched on Pons launchpad. On-chain distribution
               mechanics follow the launch venue.
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function SilentTokenPage() {
         {/* Allocation — pie chart */}
         <section className="rh-card p-6 space-y-6">
           <div>
-            <h2 className="text-lg font-semibold">Allocation (Virtual-style)</h2>
+            <h2 className="text-lg font-semibold">Allocation (Pons launchpad)</h2>
             <p className="text-xs text-[var(--text-muted)] mt-1">
               1B sthood · {silentAllocationSummary()} · VC {SILENT_VC_PERCENT}% · Team pool{' '}
               {SILENT_TEAM_PERCENT}%
@@ -252,7 +252,7 @@ export default function SilentTokenPage() {
                   ['Name', 'sthood'],
                   ['Ticker', 'sthood'],
                   ['Hard cap', `${SILENT_TOTAL_SUPPLY_LABEL} (1B) — no mint above`],
-                  ['Launch style', 'Virtual-style fair launch (community-majority)'],
+                  ['Launch style', 'Pons launchpad (community-majority)'],
                   ['VC allocation', `${SILENT_VC_PERCENT}%`],
                   ['Team (separate pool)', `${SILENT_TEAM_PERCENT}%`],
                   [
@@ -285,8 +285,7 @@ export default function SilentTokenPage() {
           <ul className="list-disc pl-5 space-y-1.5">
             <li>Supply hard-capped at 1B — owner cannot mint past cap (contract enforced).</li>
             <li>
-              Allocation is product policy; actual Virtual (or other venue) parameters must match
-              at launch.
+              Allocation is product policy; Pons launchpad parameters govern live distribution.
             </li>
             <li>0.5% fee is planned policy, not charged until enabled (env / paymaster bps).</li>
             <li>Demo app does not settle mainnet money by itself.</li>

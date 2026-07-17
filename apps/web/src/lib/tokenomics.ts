@@ -2,7 +2,7 @@
  * SILENT tokenomics — public allocation policy.
  * Hard cap: 1,000,000,000 sthood (enforced on-chain; no mint above cap).
  *
- * Launch model: Virtual (and similar fair-launch) style —
+ * Launch model: Pons launchpad fair-launch style —
  * majority community supply, small protocol share for ops. No VC. No separate team pool.
  */
 
@@ -22,7 +22,7 @@ export const SILENT_HARD_CAP_NOTE =
   'Maximum supply is hard-capped at 1,000,000,000 sthood on-chain. Minting above the cap is not permitted.';
 
 export const SILENT_LAUNCH_NOTE =
-  'Intended Virtual-style fair launch: community-majority supply with a small protocol share for operations. No venture allocation and no separate team pool.';
+  'Launched on Pons launchpad: community-majority supply with a small protocol share for operations. No venture allocation and no separate team pool.';
 
 export type SilentAllocationId = 'community' | 'protocol';
 
@@ -53,7 +53,7 @@ export const SILENT_ALLOCATION: SilentAllocationSlice[] = [
     percent: SILENT_COMMUNITY_PERCENT,
     amount: silentAmountFromPercent(SILENT_COMMUNITY_PERCENT),
     amountLabel: amountLabelFromPercent(SILENT_COMMUNITY_PERCENT),
-    lock: 'Public / community supply via fair-launch rails (e.g. Virtual). Ecosystem, users, and open-market float—not a VC pool.',
+    lock: 'Public / community supply via Pons launchpad. Ecosystem, users, and open-market float—not a VC pool.',
     color: '#059669',
     soft: '#ecfdf5',
     border: '#a7f3d0',

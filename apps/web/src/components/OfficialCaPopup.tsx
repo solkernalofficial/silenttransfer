@@ -1,10 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Copy, FileCode, X } from 'lucide-react';
+import { Check, Copy, ExternalLink, FileCode, X } from 'lucide-react';
 import { SILENT_ADDRESS, TOKEN_SYMBOL } from '@/lib/tokens';
 
 const STORAGE_KEY = 'sthood_ca_popup_dismissed_v1';
+
+/** Official buy link — Pons launchpad. */
+export const STHOOD_BUY_URL =
+  'https://pons.family/launchpad/0x01f44addf4af1db2d9016a4992ffef5163648c0a';
 
 /**
  * Site-wide popup: Official CA for sthood.
@@ -112,7 +116,8 @@ export default function OfficialCaPopup() {
         <div className="px-5 pb-5 space-y-4">
           <p className="text-sm text-[var(--text-muted)] leading-relaxed">
             Official contract address for <strong className="text-[var(--text)]">{TOKEN_SYMBOL}</strong>.
-            Tap the address to copy.
+            Launched on <strong className="text-[var(--text)]">Pons</strong> launchpad. Tap the
+            address to copy.
           </p>
 
           <button
@@ -142,15 +147,25 @@ export default function OfficialCaPopup() {
             </code>
           </button>
 
+          <a
+            href={STHOOD_BUY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent)] text-white text-sm font-semibold px-4 py-2.5 hover:opacity-95 transition-opacity"
+          >
+            Buy on Pons launchpad
+            <ExternalLink className="h-4 w-4 opacity-90" />
+          </a>
+
           <div className="flex flex-col sm:flex-row gap-2">
             <button
               type="button"
               onClick={copyCa}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--accent)] text-white text-sm font-semibold px-4 py-2.5 hover:opacity-95 transition-opacity"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] text-sm font-semibold px-4 py-2.5 text-[var(--text)] hover:bg-[var(--bg-muted)] transition-colors"
             >
               {copied ? (
                 <>
-                  <Check className="h-4 w-4" /> Copied to clipboard
+                  <Check className="h-4 w-4 text-emerald-600" /> Copied
                 </>
               ) : (
                 <>

@@ -36,7 +36,7 @@ The protocol asset is **sthood** (hard-capped at 1,000,000,000). Official contra
 
 `0x01f44ADdf4af1DB2d9016a4992FFef5163648c0a`
 
-Allocation policy targets a Virtual-style fair launch: community-majority supply with a small protocol share for operations—**0% VC**.
+Launched on **Pons** launchpad: community-majority supply with a small protocol share for operations—**0% VC**.
 
 ## Why SilentTransfer exists
 
@@ -115,7 +115,8 @@ SilentTransfer is a full-stack monorepo: web console, API, and Solidity contract
 | Protocol (ops) | **10%** |
 | Team pool | **0%** |
 | Venture capital | **0%** |
-| Launch model | Virtual-style fair launch (community-majority) |
+| Launch model | Pons launchpad (community-majority) |
+| Buy | [Pons launchpad](https://pons.family/launchpad/0x01f44addf4af1db2d9016a4992ffef5163648c0a) |
 
 Fees currently **0%**; a small sponsored-claim fee is planned for protocol operations. Details: [silenttransfer.com/silent](https://silenttransfer.com/silent).
 
