@@ -39,7 +39,7 @@ export const TOKEN_META: Record<
   { name: string; primary?: boolean; decimals: number }
 > = {
   ETH: { name: 'Ether', primary: true, decimals: 18 },
-  SILENT: { name: 'Silent', decimals: 18 },
+  SILENT: { name: 'sthood', decimals: 18 },
   USDG: { name: 'USDG Stablecoin', decimals: 18 },
   AAPL: { name: 'Apple Stock Token', decimals: 18 },
   NVDA: { name: 'NVIDIA Stock Token', decimals: 18 },

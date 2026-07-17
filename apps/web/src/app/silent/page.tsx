@@ -89,7 +89,7 @@ export default function SilentTokenPage() {
           <h1 className="text-3xl font-bold tracking-tight mb-2">$SILENT</h1>
           <p className="text-[var(--text-muted)] leading-relaxed text-[15px]">
             Product token for SilentTransfer. Name:{' '}
-            <strong className="text-[var(--text)]">Silent</strong>. Ticker:{' '}
+            <strong className="text-[var(--text)]">sthood</strong>. Ticker:{' '}
             <strong className="text-[var(--text)]">SILENT</strong>. Total supply{' '}
             <strong className="text-[var(--text)]">{SILENT_TOTAL_SUPPLY_SHORT}</strong>.{' '}
             <strong className="text-[var(--text)]">Community-majority · no VC.</strong>
@@ -115,7 +115,7 @@ export default function SilentTokenPage() {
             </div>
             <div className="font-mono text-sm break-all text-[var(--text)]">{SILENT_ADDRESS}</div>
             <div className="text-[11px] text-[var(--text-faint)] mt-2">
-              SilentToken · {DECIMALS} decimals · non-upgradeable ERC-20
+              sthood · {DECIMALS} decimals · non-upgradeable ERC-20
             </div>
           </div>
           <div className="rh-card p-5">
@@ -249,7 +249,7 @@ export default function SilentTokenPage() {
             <table className="w-full text-xs font-mono">
               <tbody>
                 {[
-                  ['Name', 'Silent'],
+                  ['Name', 'sthood'],
                   ['Ticker', 'SILENT'],
                   ['Hard cap', `${SILENT_TOTAL_SUPPLY_LABEL} (1B) — no mint above`],
                   ['Launch style', 'Virtual-style fair launch (community-majority)'],

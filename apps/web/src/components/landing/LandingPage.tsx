@@ -625,7 +625,7 @@ export default function LandingPage() {
           <div className="lp-silent-cards">
             <div className="lp-silent-card">
               <div className="lp-silent-label">Name / ticker</div>
-              <div className="lp-silent-value">Silent · SILENT</div>
+              <div className="lp-silent-value">sthood · SILENT</div>
               <p className="lp-silent-hint">Zero VC · community-majority</p>
             </div>
             <div className="lp-silent-card">

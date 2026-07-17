@@ -227,7 +227,7 @@ export default function DashboardTab() {
 
             {/* Paymaster */}
             <rect x="275" y="115" width="100" height="45" rx="6" fill="#f1f5f9" stroke="#ca8a04" strokeWidth="1.5" />
-            <text x="325" y="134" textAnchor="middle" fill="#ca8a04" fontSize="9" fontWeight="bold">Silent</text>
+            <text x="325" y="134" textAnchor="middle" fill="#ca8a04" fontSize="9" fontWeight="bold">sthood</text>
             <text x="325" y="148" textAnchor="middle" fill="#ca8a04" fontSize="9" fontWeight="bold">Paymaster</text>
 
             {/* Arrow right */}

@@ -73,9 +73,9 @@ const DONE = [
       'If the wallet is on another chain, the UI offers wallet_addEthereumChain for Robinhood Chain Testnet (RPC, chain ID, explorer).',
   },
   {
-    title: 'SilentToken (SILENT)',
+    title: 'sthood (SILENT)',
     detail:
-      'Non-upgradeable ERC-20, hard-capped at 1B. Vault deposit may charge an on-chain protocol fee; planned sponsored-flow fee for ops + buyback.',
+      'Token name sthood, ticker SILENT. Non-upgradeable ERC-20, hard-capped at 1B. Vault deposit may charge an on-chain protocol fee; planned sponsored-flow fee for ops + buyback.',
   },
   {
     title: 'Console + docs + landing',
@@ -654,7 +654,7 @@ export default function DocsPage() {
 
           <Section id="token" icon={Coins} title="9. $SILENT">
             <p>
-              <strong className="text-[var(--text)]">Silent</strong> / ticker{' '}
+              <strong className="text-[var(--text)]">sthood</strong> / ticker{' '}
               <strong className="text-[var(--text)]">SILENT</strong> is the product ERC-20.{' '}
               <strong className="text-[var(--text)]">Hard cap:</strong>{' '}
               {SILENT_TOTAL_SUPPLY_SHORT} (1,000,000,000) — contract does not allow mint above the

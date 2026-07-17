@@ -41,10 +41,10 @@ async def get_contracts(db: AsyncSession = Depends(get_db)):
 
     if settings.silent_token_address:
         contracts.append(ContractInfo(
-            name="SILENT (SilentToken)",
+            name="sthood (SILENT)",
             address=settings.silent_token_address,
             network=f"Chain ID: {settings.chain_id}",
-            description="SilentTransfer product ERC-20 — no KYC",
+            description="SilentTransfer product ERC-20 — name sthood, ticker SILENT",
         ))
 
     # Only fall back to placeholders when nothing is configured
@@ -69,10 +69,10 @@ async def get_contracts(db: AsyncSession = Depends(get_db)):
                 description="Paymaster — deploy to testnet first",
             ),
             ContractInfo(
-                name="SILENT (SilentToken)",
+                name="sthood (SILENT)",
                 address="0x5FbDB2315678afecb367f032d93F642f64180aa3",
                 network="Local Hardhat default — run deploy:silent",
-                description="Product ERC-20 — deploy with npm run deploy:silent",
+                description="Product ERC-20 name sthood — deploy with npm run deploy:silent",
             ),
         ]
 
